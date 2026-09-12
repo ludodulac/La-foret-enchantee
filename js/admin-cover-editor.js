@@ -1,19 +1,10 @@
-// admin-cover-editor.js — enrichit les formulaires audio sans changer le rendu public.
+// admin-cover-editor.js — permet d’importer une couverture ou de choisir une image finale prête à l’emploi.
 (() => {
-  const BANK_URL = 'assets/illustrations/grimm/manifest.json';
-  const BANK_BASE = 'assets/illustrations/grimm/';
-  const COLORS = [
-    '#F6D66A','#E9B96E','#D98E63','#C96F5D','#E7A0A8','#D98EB7',
-    '#A989C8','#8178C8','#677FC0','#5D96BF','#62AFAF','#77BE9B',
-    '#98C77E','#BCD67B','#D7C774','#B78967','#826D72','#334E68'
-  ];
+  const BANK_URL = 'assets/covers/manifest.json';
+  const BANK_BASE = 'assets/covers/';
 
   let bank = [];
   const states = new Map();
-
-  function safeColor(value) {
-    return window.ForestCoverComposer?.normalizeHex(value) || '#8FC9A6';
-  }
 
   function makeEditor(kind, fileInputId, titleInputId) {
     const fileInput = document.getElementById(fileInputId);
@@ -24,14 +15,11 @@
       kind,
       mode: 'upload',
       key: bank[0]?.id || '',
-      color: '#8FC9A6',
       fileInput,
       titleInput,
       current: null,
       initialMode: 'upload',
       initialKey: null,
-      initialColor: null,
-      renderToken: 0,
     };
 
     const root = document.createElement('div');
@@ -40,22 +28,18 @@
     root.innerHTML = `
       <div class="cover-mode-switch" role="group" aria-label="Mode de couverture">
         <button type="button" class="cover-mode active" data-cover-mode="upload">Importer ma propre couverture</button>
-        <button type="button" class="cover-mode" data-cover-mode="composed">Créer une couverture</button>
+        <button type="button" class="cover-mode" data-cover-mode="library">Choisir une image prête</button>
       </div>
       <div class="cover-builder" hidden>
         <div class="cover-builder-copy">
-          <strong>Choisis un dessin</strong>
-          <span>Le nom aide seulement dans l’administration.</span>
+          <strong>Choisis une image</strong>
+          <span>L’image est utilisée telle quelle, sans couleur ni transparence ajoutée.</span>
         </div>
-        <div class="cover-gallery" role="listbox" aria-label="Illustrations Grimm"></div>
-        <div class="cover-builder-copy color-copy"><strong>Choisis une couleur</strong><span>Le dessin passe automatiquement en noir ou en blanc.</span></div>
-        <div class="cover-color-row">
-          <div class="cover-swatches" aria-label="Couleurs proposées"></div>
-          <label class="cover-custom-color"><span>Libre</span><input type="color" value="#8FC9A6" aria-label="Couleur personnalisée"></label>
-        </div>
+        <div class="cover-gallery" role="listbox" aria-label="Images de couverture prêtes"></div>
+        <div class="cover-gallery-empty" data-cover-bank-empty hidden>Aucune image finale n’est encore disponible.</div>
         <div class="cover-preview-wrap">
-          <canvas class="cover-preview" width="600" height="600" aria-label="Aperçu de la couverture"></canvas>
-          <div class="cover-preview-note">Aperçu de la vignette finale</div>
+          <img class="cover-preview cover-preview-image" alt="Aperçu de la couverture sélectionnée">
+          <div class="cover-preview-note">Aperçu de l’image finale</div>
         </div>
       </div>`;
 
@@ -63,69 +47,55 @@
     state.root = root;
     state.builder = root.querySelector('.cover-builder');
     state.gallery = root.querySelector('.cover-gallery');
-    state.swatches = root.querySelector('.cover-swatches');
-    state.customColor = root.querySelector('.cover-custom-color input');
-    state.canvas = root.querySelector('.cover-preview');
+    state.preview = root.querySelector('.cover-preview-image');
+    state.bankEmpty = root.querySelector('[data-cover-bank-empty]');
     states.set(kind, state);
 
     root.querySelectorAll('[data-cover-mode]').forEach(button => {
       button.addEventListener('click', () => setMode(state, button.dataset.coverMode));
     });
-    state.customColor.addEventListener('input', () => {
-      state.color = safeColor(state.customColor.value);
-      syncColorSelection(state);
-      renderPreview(state);
-    });
 
     renderGallery(state);
-    renderSwatches(state);
     setMode(state, 'upload');
     return state;
   }
 
   function setMode(state, mode) {
-    state.mode = mode === 'composed' ? 'composed' : 'upload';
+    state.mode = mode === 'library' && bank.length ? 'library' : 'upload';
     state.root.querySelectorAll('[data-cover-mode]').forEach(button => {
-      button.classList.toggle('active', button.dataset.coverMode === state.mode);
-      button.setAttribute('aria-pressed', button.dataset.coverMode === state.mode ? 'true' : 'false');
+      const selected = button.dataset.coverMode === state.mode;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
-    state.builder.hidden = state.mode !== 'composed';
-    state.fileInput.hidden = state.mode === 'composed';
+    state.builder.hidden = state.mode !== 'library';
+    state.fileInput.hidden = state.mode === 'library';
     const hint = state.fileInput.parentElement?.querySelector('.upload-hint,.keep-file-hint');
-    if (hint) hint.hidden = state.mode === 'composed';
-    if (state.mode === 'composed') renderPreview(state);
+    if (hint) hint.hidden = state.mode === 'library';
+    if (state.mode === 'library') renderPreview(state);
   }
 
   function renderGallery(state) {
+    const libraryButton = state.root.querySelector('[data-cover-mode="library"]');
+    if (libraryButton) libraryButton.hidden = bank.length === 0;
+    state.bankEmpty.hidden = bank.length !== 0;
+
     state.gallery.innerHTML = bank.map(item => `
       <button type="button" class="cover-illustration" data-illustration-key="${item.id}" role="option" aria-label="${item.label}">
         <span class="cover-illustration-art"><img src="${BANK_BASE}${item.file}" alt=""></span>
         <span>${item.label}</span>
       </button>`).join('');
+
     state.gallery.querySelectorAll('[data-illustration-key]').forEach(button => {
       button.addEventListener('click', () => {
         state.key = button.dataset.illustrationKey;
-        syncIllustrationSelection(state);
+        syncSelection(state);
         renderPreview(state);
       });
     });
-    syncIllustrationSelection(state);
+    syncSelection(state);
   }
 
-  function renderSwatches(state) {
-    state.swatches.innerHTML = COLORS.map(color => `<button type="button" class="cover-swatch" data-cover-color="${color}" style="--swatch:${color}" aria-label="${color}"></button>`).join('');
-    state.swatches.querySelectorAll('[data-cover-color]').forEach(button => {
-      button.addEventListener('click', () => {
-        state.color = safeColor(button.dataset.coverColor);
-        state.customColor.value = state.color;
-        syncColorSelection(state);
-        renderPreview(state);
-      });
-    });
-    syncColorSelection(state);
-  }
-
-  function syncIllustrationSelection(state) {
+  function syncSelection(state) {
     state.gallery.querySelectorAll('[data-illustration-key]').forEach(button => {
       const selected = button.dataset.illustrationKey === state.key;
       button.classList.toggle('selected', selected);
@@ -133,46 +103,29 @@
     });
   }
 
-  function syncColorSelection(state) {
-    state.swatches.querySelectorAll('[data-cover-color]').forEach(button => {
-      button.classList.toggle('selected', safeColor(button.dataset.coverColor) === safeColor(state.color));
-    });
-  }
-
   function selectedAsset(state) {
     return bank.find(item => item.id === state.key) || bank[0] || null;
   }
 
-  async function renderPreview(state) {
-    if (state.mode !== 'composed' || !window.ForestCoverComposer) return;
+  function renderPreview(state) {
+    if (state.mode !== 'library') return;
     const asset = selectedAsset(state);
-    if (!asset) return;
-    const token = ++state.renderToken;
-    try {
-      await window.ForestCoverComposer.render({
-        canvas: state.canvas,
-        illustrationUrl: BANK_BASE + asset.file,
-        color: state.color,
-        framing: asset,
-      });
-      if (token !== state.renderToken) return;
-    } catch (error) {
-      console.warn('Aperçu de couverture indisponible.', error);
+    if (!asset) {
+      state.preview.removeAttribute('src');
+      state.preview.alt = 'Aucune couverture sélectionnée';
+      return;
     }
+    state.preview.src = BANK_BASE + asset.file;
+    state.preview.alt = `Aperçu : ${asset.label}`;
   }
 
-  async function composedFile(state) {
+  async function assetFile(state) {
     const asset = selectedAsset(state);
-    if (!asset) throw new Error('Choisis une illustration.');
-    state.color = safeColor(state.color);
-    await window.ForestCoverComposer.render({
-      canvas: state.canvas,
-      illustrationUrl: BANK_BASE + asset.file,
-      color: state.color,
-      framing: asset,
-    });
-    const blob = await window.ForestCoverComposer.toBlob(state.canvas, 'image/png');
-    return new File([blob], 'couverture-composee.png', { type: 'image/png' });
+    if (!asset) throw new Error('Choisis une image de couverture.');
+    const response = await fetch(BANK_BASE + asset.file, { cache: 'no-cache' });
+    if (!response.ok) throw new Error('L’image de couverture sélectionnée est indisponible.');
+    const blob = await response.blob();
+    return new File([blob], asset.file, { type: blob.type || 'image/png' });
   }
 
   async function resolveAdd() {
@@ -181,10 +134,10 @@
       return { file: state?.fileInput.files[0] || null, illustrationKey: null, coverColor: null, generated: false };
     }
     return {
-      file: await composedFile(state),
+      file: await assetFile(state),
       illustrationKey: selectedAsset(state).id,
-      coverColor: safeColor(state.color),
-      generated: true,
+      coverColor: null,
+      generated: false,
     };
   }
 
@@ -194,12 +147,9 @@
     const importedFile = state.fileInput.files[0] || null;
 
     if (state.mode === 'upload') {
-      if (state.initialMode === 'composed' && !importedFile) {
-        throw new Error('Choisis une image à importer pour remplacer la couverture créée.');
-      }
       return {
         file: importedFile,
-        illustrationKey: null,
+        illustrationKey: importedFile ? null : state.initialKey,
         coverColor: null,
         generated: false,
         replace: Boolean(importedFile),
@@ -207,18 +157,14 @@
     }
 
     const asset = selectedAsset(state);
-    if (!asset) throw new Error('Choisis une illustration.');
-    const color = safeColor(state.color);
-    const mustRegenerate = state.initialMode !== 'composed'
-      || asset.id !== state.initialKey
-      || color !== safeColor(state.initialColor);
-
+    if (!asset) throw new Error('Choisis une image de couverture.');
+    const mustReplace = state.initialMode !== 'library' || asset.id !== state.initialKey;
     return {
-      file: mustRegenerate ? await composedFile(state) : null,
+      file: mustReplace ? await assetFile(state) : null,
       illustrationKey: asset.id,
-      coverColor: color,
-      generated: mustRegenerate,
-      replace: mustRegenerate,
+      coverColor: null,
+      generated: false,
+      replace: mustReplace,
     };
   }
 
@@ -227,15 +173,11 @@
     if (!state || !audio) return;
     state.current = audio;
     state.initialKey = audio.illustration_key || null;
-    state.initialColor = audio.cover_color || null;
-    state.initialMode = state.initialKey && state.initialColor ? 'composed' : 'upload';
+    state.initialMode = state.initialKey && bank.some(item => item.id === state.initialKey) ? 'library' : 'upload';
     state.fileInput.value = '';
-    if (state.initialMode === 'composed') {
-      state.key = bank.some(item => item.id === state.initialKey) ? state.initialKey : (bank[0]?.id || '');
-      state.color = safeColor(state.initialColor);
-      state.customColor.value = state.color;
-      syncIllustrationSelection(state);
-      syncColorSelection(state);
+    if (state.initialMode === 'library') {
+      state.key = state.initialKey;
+      syncSelection(state);
     }
     setMode(state, state.initialMode);
   }
@@ -245,13 +187,9 @@
     if (!state) return;
     state.current = null;
     state.initialKey = null;
-    state.initialColor = null;
     state.initialMode = 'upload';
     state.key = bank[0]?.id || '';
-    state.color = '#8FC9A6';
-    state.customColor.value = state.color;
-    syncIllustrationSelection(state);
-    syncColorSelection(state);
+    syncSelection(state);
     setMode(state, 'upload');
   }
 
@@ -317,7 +255,7 @@
         audio_path: audPath,
         duration: Math.floor(duration) || null,
         illustration_key: cover.illustrationKey,
-        cover_color: cover.coverColor,
+        cover_color: null,
       };
       const { data: row, error: dbErr } = await dbClient.from('audios').insert(payload)
         .select('id,title,image_path,audio_path,illustration_key,cover_color').single();
@@ -327,7 +265,7 @@
         image_path: imagePath,
         audio_path: audPath,
         illustration_key: cover.illustrationKey,
-        cover_color: cover.coverColor,
+        cover_color: null,
       });
 
       uploaded.length = 0;
@@ -384,7 +322,7 @@
         image_path: imagePath,
         audio_path: audioPath,
         illustration_key: cover.illustrationKey,
-        cover_color: cover.coverColor,
+        cover_color: null,
       };
       if (audFile) patch.duration = Math.floor(await getAudioDuration(audFile)) || null;
 
@@ -396,7 +334,7 @@
         image_path: imagePath,
         audio_path: audioPath,
         illustration_key: cover.illustrationKey,
-        cover_color: cover.coverColor,
+        cover_color: null,
       });
 
       const oldFiles = [];
@@ -420,8 +358,9 @@
   async function init() {
     try {
       const response = await fetch(BANK_URL, { cache: 'no-cache' });
-      if (!response.ok) throw new Error('Banque Grimm indisponible.');
-      bank = await response.json();
+      if (!response.ok) throw new Error('Banque d’images finales indisponible.');
+      const manifest = await response.json();
+      bank = Array.isArray(manifest) ? manifest.filter(item => item?.id && item?.label && item?.file) : [];
     } catch (error) {
       console.warn(error);
       bank = [];
@@ -441,13 +380,13 @@
 
   function bindEnhancedForms() {
     const addForm = document.getElementById('form-add-audio');
-    if (addForm && !addForm.dataset.composedCoverBound) {
-      addForm.dataset.composedCoverBound = 'true';
+    if (addForm && !addForm.dataset.coverImageBound) {
+      addForm.dataset.coverImageBound = 'true';
       addForm.addEventListener('submit', enhancedAddAudio, true);
     }
     const editForm = document.getElementById('form-edit-audio');
-    if (editForm && !editForm.dataset.composedCoverBound) {
-      editForm.dataset.composedCoverBound = 'true';
+    if (editForm && !editForm.dataset.coverImageBound) {
+      editForm.dataset.coverImageBound = 'true';
       editForm.addEventListener('submit', enhancedEditAudio, true);
     }
   }

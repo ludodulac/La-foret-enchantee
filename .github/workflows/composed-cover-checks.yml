@@ -1,4 +1,4 @@
-name: Composed cover checks
+name: Cover image checks
 
 on:
   pull_request:
@@ -15,51 +15,72 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Check composed cover files
+      - name: Check cover image files
         shell: bash
         run: |
           set -euo pipefail
-          test -f js/cover-composer.js
           test -f js/admin-cover-editor.js
           test -f js/admin-story-flow.js
           test -f css/admin-covers.css
           test -f css/admin-story-flow.css
-          test -f assets/illustrations/grimm/manifest.json
+          test -f assets/covers/manifest.json
+          test -f assets/covers/keywords.json
           test -f supabase/migrations/20260910_add_composed_cover_metadata.sql
-          for file in renard grenouille sorciere miroir arbre oiseau couronne lune; do
-            test -f "assets/illustrations/grimm/${file}.png"
-          done
       - name: Check JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          node --check js/cover-composer.js
           node --check js/admin-cover-editor.js
           node --check js/admin-story-flow.js
-      - name: Check manifest
+      - name: Check semantic image catalog
         shell: bash
         run: |
           set -euo pipefail
-          node -e 'const fs=require("fs");const p="assets/illustrations/grimm/manifest.json";const x=JSON.parse(fs.readFileSync(p,"utf8"));if(!Array.isArray(x)||x.length<8)process.exit(1);for(const a of x){if(!a.id||!a.label||!a.file)process.exit(1);if(!fs.existsSync("assets/illustrations/grimm/"+a.file))process.exit(1)}'
-      - name: Check graphic-only cover contracts
+          node <<'NODE'
+          const fs = require('fs');
+          const items = JSON.parse(fs.readFileSync('assets/covers/manifest.json', 'utf8'));
+          const index = JSON.parse(fs.readFileSync('assets/covers/keywords.json', 'utf8'));
+          if (!Array.isArray(items) || items.length !== 252) throw new Error('252 illustrations attendues.');
+          if (!index || typeof index.baseUrl !== 'string' || !/^https:\/\//.test(index.baseUrl)) throw new Error('baseUrl publique requise.');
+          if (!index.concepts || typeof index.concepts !== 'object') throw new Error('Index sémantique manquant.');
+          const ids = new Set();
+          for (const item of items) {
+            if (!item.id || !item.label || !/^s[1-5]_r\d+_c\d+\.webp$/.test(item.file || '')) throw new Error('Entrée de catalogue invalide.');
+            if (ids.has(item.id)) throw new Error('Identifiant dupliqué: ' + item.id);
+            ids.add(item.id);
+            const concept = item.id.split('--')[0];
+            const meta = index.concepts[concept];
+            if (!meta || !meta.label || !Array.isArray(meta.keywords) || meta.keywords.length < 2) throw new Error('Mots-clés manquants pour ' + concept);
+          }
+          NODE
+      - name: Check semantic search contracts
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "ARTWORK_BOX = 440" js/cover-composer.js
-          grep -q "drawY = (SIZE - drawH) / 2" js/cover-composer.js
-          if grep -q "fillText" js/cover-composer.js; then
-            echo 'Cover composer must not draw story titles or other text.'
+          grep -q "assets/covers/manifest.json" js/admin-cover-editor.js
+          grep -q "assets/covers/keywords.json" js/admin-story-flow.js
+          grep -q "normalize('NFD')" js/admin-story-flow.js
+          grep -q "data.search\|dataset.search" js/admin-story-flow.js
+          grep -q "illustrationBaseUrl" js/admin-story-flow.js
+          grep -q "Choisir une image prête" js/admin-cover-editor.js
+          grep -q "cover_color: null" js/admin-cover-editor.js
+          grep -q "assetFile" js/admin-cover-editor.js
+          if grep -q "ForestCoverComposer" js/admin-cover-editor.js; then
+            echo 'Final cover images must not use the old composition engine.'
             exit 1
           fi
-          if grep -q "title !== state.initialTitle" js/admin-cover-editor.js; then
-            echo 'Title-only edits must not regenerate composed covers.'
+          if grep -q "cover-composer.js" js/auth.js; then
+            echo 'Admin must not load the old composition engine.'
+            exit 1
+          fi
+          if grep -q "cover-swatch\|customColor\|safeColor" js/admin-cover-editor.js; then
+            echo 'Color controls must not remain in the final image selector.'
             exit 1
           fi
       - name: Check admin integration contracts
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "js/cover-composer.js" js/auth.js
           grep -q "js/admin-cover-editor.js" js/auth.js
           grep -q "js/admin-story-flow.js" js/auth.js
           grep -q "css/admin-covers.css" js/auth.js
@@ -69,7 +90,7 @@ jobs:
           grep -q "uploadVerified" js/admin-cover-editor.js
           grep -q "verifyRow" js/admin-cover-editor.js
           grep -q "Choisir une histoire proposée" js/admin-story-flow.js
-          grep -q "Rechercher un dessin" js/admin-story-flow.js
+          grep -q "Rechercher une image" js/admin-story-flow.js
           grep -q "illustration_key" supabase/migrations/20260910_add_composed_cover_metadata.sql
           grep -q "cover_color" supabase/migrations/20260910_add_composed_cover_metadata.sql
       - name: Ensure no embedded base64 architecture

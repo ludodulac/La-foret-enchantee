@@ -87,8 +87,7 @@ if (isAdminPage) {
     }
 
     try {
-      await loadAdminScript('js/cover-composer.js?v=20260912-graphic-covers');
-      await loadAdminScript('js/admin-cover-editor.js?v=20260912-graphic-covers');
+      await loadAdminScript('js/admin-cover-editor.js?v=20260912-final-cover-images');
       await loadAdminScript('js/admin-story-flow.js');
       await loadAdminScript('js/admin-blog-safety.js');
       await loadAdminScript('js/admin-ux.js');
