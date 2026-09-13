@@ -69,17 +69,7 @@
       const avatar = dialog.querySelector('#create-profile-avatar')?.value || '🌿';
       if (!name) return;
       const list = readProfiles();
-      const profile = {
-        id: `child-local-${Date.now()}`,
-        name,
-        avatar,
-        language:'fr',
-        antiZap:0,
-        timer:0,
-        progressBar:true,
-        nightMode:false,
-        likes:false
-      };
+      const profile = { id:`child-local-${Date.now()}`, name, avatar, language:'fr', antiZap:0, timer:0, progressBar:true, nightMode:false, likes:false };
       list.push(profile);
       saveProfiles(list);
       localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
@@ -135,5 +125,56 @@
       ensureCreateProfileChoice();
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  });
+})();
+
+// Audio player corrections: keep playback stopped at the end and expose ±10 s + progress on mobile.
+(() => {
+  function addPlayerStyle() {
+    if (document.getElementById('mobile-player-controls-style')) return;
+    const style = document.createElement('style');
+    style.id = 'mobile-player-controls-style';
+    style.textContent = `
+      .mini-player #prev-track,.mini-player #next-track{font-weight:900;font-size:.78rem}
+      @media(max-width:800px){
+        body.child-experience .mini-player{grid-template-columns:1fr!important;gap:8px!important;padding:11px 12px!important;bottom:86px!important}
+        body.child-experience .mini-player .player-center{display:grid!important;gap:7px!important;width:100%}
+        body.child-experience .mini-player .transport{display:flex!important;justify-content:center!important;align-items:center!important;gap:12px!important}
+        body.child-experience .mini-player #prev-track,body.child-experience .mini-player #next-track{display:grid!important;place-items:center!important;width:46px!important;height:46px!important;border-radius:50%!important}
+        body.child-experience .mini-player .progress-line{display:grid!important;grid-template-columns:38px minmax(0,1fr) 38px!important;align-items:center!important;gap:7px!important;width:100%!important;font-size:.68rem!important}
+        body.child-experience .mini-player #player-progress{width:100%!important;min-width:0!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    addPlayerStyle();
+    if (typeof player === 'undefined') return;
+    const back = document.getElementById('prev-track');
+    const forward = document.getElementById('next-track');
+    if (back) {
+      back.textContent = '−10';
+      back.setAttribute('aria-label', 'Reculer de 10 secondes');
+      back.title = 'Reculer de 10 secondes';
+    }
+    if (forward) {
+      forward.textContent = '+10';
+      forward.setAttribute('aria-label', 'Avancer de 10 secondes');
+      forward.title = 'Avancer de 10 secondes';
+    }
+    window.stepTrack = function(direction) {
+      if (!Number.isFinite(player.currentTime)) return;
+      const duration = Number.isFinite(player.duration) ? player.duration : Infinity;
+      player.currentTime = Math.max(0, Math.min(duration, player.currentTime + direction * 10));
+    };
+    player.addEventListener('ended', () => {
+      if (Number.isFinite(player.duration)) player.currentTime = player.duration;
+      const button = document.getElementById('play-pause');
+      if (button) {
+        button.textContent = '▶';
+        button.setAttribute('aria-label', 'Réécouter depuis le début');
+      }
+    });
   });
 })();
