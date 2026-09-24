@@ -26,6 +26,8 @@ jobs:
           done
       - name: Run Studio export integration tests
         run: node tests/studio-export-core.test.cjs
+      - name: Run Studio autosave recovery tests
+        run: node tests/studio-autosave.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
