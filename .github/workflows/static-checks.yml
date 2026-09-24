@@ -24,6 +24,8 @@ jobs:
             [ -f "$file" ] || continue
             node --check "$file"
           done
+      - name: Run Studio export integration tests
+        run: node tests/studio-export-core.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
