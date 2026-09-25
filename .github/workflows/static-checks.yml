@@ -28,6 +28,8 @@ jobs:
         run: node tests/studio-export-core.test.cjs
       - name: Run Studio autosave recovery tests
         run: node tests/studio-autosave.test.cjs
+      - name: Run Studio recording hardening tests
+        run: node tests/studio-recording-core.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
