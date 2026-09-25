@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),R=require('../js/studio-recording-core.js');
+function MR(supported){return{isTypeSupported:t=>supported.includes(t)}}
+assert.equal(R.chooseMimeType(MR(['audio/webm;codecs=opus','audio/webm'])),'audio/webm;codecs=opus');
+assert.equal(R.chooseMimeType(MR(['audio/webm'])),'audio/webm');
+assert.equal(R.chooseMimeType(MR(['audio/ogg;codecs=opus'])),'audio/ogg;codecs=opus');
+assert.equal(R.chooseMimeType(MR(['audio/mp4'])),'audio/mp4');
+assert.equal(R.chooseMimeType(MR([])),'');
+assert.equal(R.chooseMimeType({}),'');
+assert.equal(R.resolveBlobType('audio/webm','audio/ogg',[new Blob([],{type:'audio/mp4'})]),'audio/webm');
+assert.equal(R.resolveBlobType('','audio/ogg',[new Blob([],{type:'audio/mp4'})]),'audio/ogg');
+assert.equal(R.resolveBlobType('','',[new Blob([],{type:'audio/mp4'})]),'audio/mp4');
+assert.throws(()=>R.validateRecordedBlob(new Blob([])));
+assert.equal(R.userMessage('get-user-media',{name:'NotAllowedError'}),'Autorise le microphone pour enregistrer');
+assert.equal(R.userMessage('get-user-media',{name:'NotFoundError'}),'Aucun microphone disponible');
+assert.equal(R.userMessage('get-user-media',{name:'NotReadableError'}),'Le microphone est déjà utilisé ou indisponible');
+assert.equal(R.userMessage('recorder-create',{}),'Impossible de préparer l’enregistrement sur ce téléphone');
+assert.equal(R.userMessage('recorder-start',{}),'Impossible de démarrer l’enregistrement');
+assert.equal(R.userMessage('recorder-error',{}),'L’enregistrement a été interrompu');
+assert.equal(R.userMessage('track-ended',{}),'Le microphone a été interrompu');
+assert.equal(R.userMessage('decode',{}),'La prise a été enregistrée mais reste illisible');
+console.log('Studio recording core tests PASS');
