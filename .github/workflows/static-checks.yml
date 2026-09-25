@@ -30,6 +30,8 @@ jobs:
         run: node tests/studio-autosave.test.cjs
       - name: Run Studio recording hardening tests
         run: node tests/studio-recording-core.test.cjs
+      - name: Run Studio post-recording mobile regression tests
+        run: node tests/studio-post-recording-mobile.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
