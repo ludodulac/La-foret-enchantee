@@ -15,63 +15,137 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 .time{color:var(--px-yellow);font-variant-numeric:tabular-nums;letter-spacing:2px;text-shadow:2px 2px 0 #5c4d00}.quick,.metro{padding:2px}.timeline{border-radius:2px;background:#050d1d;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);padding:10px 8px;background-image:linear-gradient(rgba(8,124,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(8,124,255,.07) 1px,transparent 1px);background-size:16px 16px}.ruler{color:var(--px-muted);border-bottom:2px solid var(--px-blue)}.track{border-left:2px solid #0a65cb;padding-left:5px}.head{color:#bcd9ff;letter-spacing:.5px}.lane{border-radius:1px;background:#08162e;border:1px solid #123e72;background-image:linear-gradient(90deg,rgba(32,164,255,.06) 1px,transparent 1px);background-size:12px 100%}.clip{border-radius:1px;background:#075cc8;border:2px solid #56b8ff;box-shadow:3px 3px 0 #001a38}.clip.sound{background:color-mix(in srgb,var(--track-color,#087cff) 70%,#07336a);border-color:#58baff}.clip.sel{outline:3px solid var(--px-yellow);outline-offset:-4px;box-shadow:3px 3px 0 #001a38,0 0 0 2px #604f00}.clipname{color:#fff;text-shadow:2px 2px 0 #00152e}.trimhandle{border-radius:0!important;background:rgba(255,226,59,.78)}.trimhandle:after{border-radius:0;background:#2b2500}.playhead{width:3px;background:#fff;box-shadow:0 0 0 1px var(--px-blue)}.playhead:before{border-top-color:var(--px-yellow)}.selection{background:rgba(255,226,59,.12);border-color:var(--px-yellow)}.selectionmark{background:var(--px-yellow);box-shadow:0 0 0 2px #050914}.selectionmark::before{border-radius:0;background:#050914;color:var(--px-yellow);border:1px solid var(--px-yellow)}.addtrack,.addsound{border-style:dashed!important;border-color:var(--px-blue)!important;color:#8dc8ff!important;background:#061127!important}.help,.libname small{color:var(--px-muted)}.soundlib h2{color:var(--px-blue2);letter-spacing:1.5px}.libsearch{box-shadow:none!important}.libsearch:focus{outline:2px solid var(--px-yellow);outline-offset:1px}.editor,.tools{background:#050b18f5;backdrop-filter:none;border-color:var(--px-blue);box-shadow:0 -3px 0 #02050b}.editor button,.transport{background:#0c1d3d!important}.toast{border-radius:1px;background:var(--px-yellow);color:#111827;border:2px solid #fff3a0;box-shadow:4px 4px 0 #000}.exportdiag{color:#cfe7ff}.liberrors{border-color:var(--px-red)!important;color:#ffd5da}.studio-back{text-decoration:none}.lane.drag-target{outline:2px solid var(--px-yellow);outline-offset:-3px}
 @media(max-width:520px){.app{padding-left:7px;padding-right:7px}.brand{font-size:14px;letter-spacing:1px}.brand:before,.brand:after{display:none}.projectbar{grid-template-columns:1fr 1fr}.projectbar button{min-height:46px;font-size:10px}.quick{gap:5px}.quick button{font-size:10px;padding:0 4px}.metro{gap:5px}.timeline{padding-left:5px;padding-right:5px}.tools{padding-left:7px;padding-right:7px}.toolsin{gap:5px}.transport{min-width:0}.record{font-size:11px}.libitem{gap:4px;padding:6px}.libitem button{padding:0 7px}}
 </style><style>.studio-gate{visibility:hidden}.studio-back{display:inline-flex;align-items:center;min-height:40px;padding:0 12px;border-radius:14px;background:#282a31;color:#fff;text-decoration:none;font-weight:800;font-size:12px}.brand{font-size:17px} .exportdiag{display:none;white-space:pre-line;margin:8px 0;padding:10px;border:1px solid #555;border-radius:10px;background:#17191e;font-size:12px;line-height:1.4}.exportdiag.show{display:block}</style><style id="mobile-space-ux-010">
-.mobile-menu-toggle{display:none}
-.secondarytools{display:contents}
+.mobile-menu-toggle,.bottomcmd,.zoomstrip,.multitrack,.track-controls-column{display:none}
 .autosave-compact{font-size:12px;font-weight:800;color:#b9bec8}
+.clip-context-name{display:none}
 @media(max-width:520px){
-  .app{position:relative;padding-left:7px;padding-right:7px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
-  header{height:44px;margin-bottom:4px;gap:5px}
-  header .brand{display:none}
-  header .studio-back,header .export,.mobile-menu-toggle{min-height:38px;height:38px;padding:0 8px;font-size:10px;white-space:nowrap}
-  .mobile-menu-toggle{display:inline-flex;align-items:center;justify-content:center;flex:1}
-  header .studio-back{flex:0 0 auto}
-  header .export{flex:0 0 auto}
-  .autosave-compact{height:22px;min-height:22px;display:flex;align-items:center;padding:0 5px;margin:0 0 4px;border-left:2px solid var(--px-line);font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-  .time{font-size:20px;line-height:24px;margin:0 0 4px}
-  .quick.primary{grid-template-columns:repeat(5,1fr);gap:4px;padding:0;margin:0 0 6px}
-  .quick.primary button{min-height:40px;height:40px;font-size:9px;padding:0 2px}
-  .projectbar{display:none;margin:0;padding:7px;position:fixed;top:48px;left:7px;right:7px;z-index:45;grid-template-columns:1fr 1fr;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black)}
+  .app{position:relative;padding:env(safe-area-inset-top) 7px calc(10px + env(safe-area-inset-bottom))}
+  header{height:44px;margin:0 0 4px;display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center}
+  header .studio-back{min-height:36px;height:36px;padding:0 7px;font-size:10px}
+  header .brand{display:block;font-size:12px;letter-spacing:.5px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .export{min-height:36px;height:36px;padding:0 8px;font-size:10px}
+  .autosave-compact{height:20px;min-height:20px;display:flex;align-items:center;padding:0 5px;margin:0 0 4px;border-left:2px solid var(--px-line);font-size:9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .time{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:10px;line-height:12px;margin:0;pointer-events:none;opacity:.75}
+  .projectbar{display:none;margin:0;padding:7px;position:fixed;left:7px;right:7px;bottom:58px;z-index:45;grid-template-columns:1fr 1fr;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
   .projectbar.menu-open{display:grid}
-  .projectbar button{min-height:42px}.projectbar .projectpanel{grid-column:1/-1;margin:0}
-  .secondarytools{display:none;position:fixed;top:48px;left:7px;right:7px;z-index:45;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black)}
+  .projectbar button{min-height:42px}
+  .projectbar .projectpanel{grid-column:1/-1;margin:0}
+  .secondarytools{display:none;position:fixed;left:7px;right:7px;bottom:58px;z-index:45;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
   .secondarytools.menu-open{display:block}
   .secondarytools .quick{margin-bottom:6px;padding:0}
   .secondarytools .quick button{min-height:40px}
   .secondarytools .metro{margin:0;padding:0}
   .secondarytools .metro button,.secondarytools .bpm{min-height:40px}
-  .timeline{padding:8px 5px}
-  .help{display:none}
-  .track{margin-top:7px}
-  .head{height:24px;font-size:11px}
-  .lane{min-height:72px}
-  .clip{height:62px;top:5px}
+
+  .tools{position:relative;bottom:auto;margin:0 0 5px;padding:4px;background:#050b18;border:2px solid var(--px-blue);z-index:20}
+  .toolsin{display:grid;grid-template-columns:.55fr .85fr .7fr .7fr .55fr .65fr .65fr;gap:3px;align-items:center}
+  .transport,.record{height:42px;min-width:0;padding:0 2px;font-size:10px}
+  .record{font-size:8px}
+  .record b{display:inline;font-size:11px;margin-right:2px}
+  #stop{border-color:var(--px-red)!important;color:#ff9aa8!important}
+
+  .multitrack{display:block;height:min(480px,57dvh);min-height:360px;overflow-y:auto;overscroll-behavior:contain;border:2px solid var(--px-blue);background:#050d1d;box-shadow:4px 4px 0 var(--px-black);scrollbar-width:thin}
+  .multitrack-body{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:start;min-height:100%}
+  .track-controls-column{display:block;position:sticky;left:0;z-index:18;background:#061127;border-right:2px solid var(--px-blue);min-height:100%}
+  .track-ruler-spacer{height:27px;display:flex;align-items:center;padding:0 6px;font-size:9px;font-weight:900;color:var(--px-muted);border-bottom:2px solid var(--px-blue)}
+  .track-control{margin-top:7px;padding:5px 4px;background:#08162e;border-bottom:1px solid #123e72;display:flex;flex-direction:column;justify-content:flex-start;gap:4px;overflow:hidden}
+  .track-control-name{font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .track-control-buttons{display:grid;grid-template-columns:1fr;gap:3px}
+  .track-control-buttons button{min-height:28px;height:28px;padding:0 2px;font-size:9px}
+
+  .timeline{display:block;position:relative;border:0;box-shadow:none;border-radius:0;padding:0;overflow-x:auto;overflow-y:visible;touch-action:pan-x pan-y;scrollbar-width:thin;background:#050d1d}
+  .canvas{min-height:100%}
+  .ruler{height:27px}
+  #tracks .track{margin-top:7px;padding-left:0;border-left:0}
+  #tracks .head{display:none}
+  .lane{min-height:76px}
+  .clip{height:66px;top:5px}
   .clip.sel{overflow:visible}
   .trimhandle{width:24px;background:transparent!important;top:0;bottom:0}
   .trimhandle.left{left:-20px}
   .trimhandle.right{right:-20px}
-  .trimhandle:after{top:13px;bottom:13px;width:5px;background:var(--px-yellow);border:1px solid #2b2500}
+  .trimhandle:after{top:15px;bottom:15px;width:5px;background:var(--px-yellow);border:1px solid #2b2500}
   .trimhandle.left:after{left:auto;right:-1px}
   .trimhandle.right:after{left:-1px}
-  .tools{position:sticky;bottom:0;margin:6px 0;padding:5px 6px calc(5px + env(safe-area-inset-bottom));z-index:24}
-  .toolsin{gap:4px;grid-template-columns:.65fr .8fr 1.2fr .65fr}
-  .transport{height:44px;font-size:14px}
-  .record{height:50px;font-size:10px}
-  .record b{font-size:15px}
-  .editor{position:static;bottom:auto;padding:5px 0;border:0;box-shadow:none;background:transparent}
+  .help{display:none}
+
+  .zoomstrip{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:5px 0}
+  .zoomstrip button{min-height:38px;font-size:10px}
+
+  .editor{position:static;bottom:auto;padding:4px 0;margin:0 0 5px;border:0;box-shadow:none;background:transparent}
   .editor.show{display:block}
+  .clip-context-name{display:block;grid-column:1/-1;min-height:24px;padding:4px 6px;border-left:2px solid var(--px-blue2);font-size:10px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .editin{gap:4px}
-  .editor button{min-height:38px;font-size:9px}
+  .editor button{min-height:36px;font-size:9px}
   .volrow{min-height:28px}
+
+  .bottomcmd{display:grid;position:sticky;bottom:0;z-index:35;grid-template-columns:repeat(5,1fr);gap:3px;margin:0 0 6px;padding:4px;background:#050b18f5;border:2px solid var(--px-blue);box-shadow:0 -2px 0 #02050b}
+  .bottomcmd button{min-height:42px;padding:0 2px;font-size:8px}
+  .bottomcmd #addtrack{width:auto;margin:0;min-height:42px}
+  .mobile-menu-toggle{display:block}
   .soundlib{margin-top:8px}
+  .soundlib .libactions{grid-template-columns:1fr}
 }
 </style></head><body class="studio-gate"><main class="app" id="app">
 <header>
-  <a class="studio-back" href="admin.html">← ADMIN</a>
-  <div class="brand">🎙 STUDIO</div>
+  <a class="studio-back" href="admin.html">←</a>
+  <div class="brand">🎙 STUDIO AUDIO</div>
+  <button class="export" id="export">EXPORT</button>
+</header>
+<input id="project-file" type="file" accept=".foreststudio,application/json" style="display:none">
+<div class="autosave-compact" id="autosave-status">Sauvegarde locale : initialisation…</div>
+<div class="time" id="clock">00:00.0</div>
+
+<nav class="tools" aria-label="Transport principal"><div class="toolsin">
+  <button class="transport" id="back">−5s</button>
+  <button class="record" id="record"><b>●</b> REC</button>
+  <button class="transport" id="play">▶</button>
+  <button class="transport" id="stop">■</button>
+  <button class="transport" id="forward">+5s</button>
+  <button class="transport" id="undo">↶</button>
+  <button class="transport" id="redo">↷</button>
+</div></nav>
+
+<section class="multitrack" id="multitrack">
+  <div class="multitrack-body">
+    <aside class="track-controls-column" aria-label="Commandes des pistes">
+      <div class="track-ruler-spacer">PISTES</div>
+      <div id="track-controls"></div>
+    </aside>
+    <section class="timeline" id="timeline"><div class="canvas" id="canvas">
+      <div class="playhead" id="playhead"></div>
+      <div class="selectionmark start" id="selection-start-mark" style="display:none"></div>
+      <div class="selectionmark end" id="selection-end-mark" style="display:none"></div>
+      <div class="selection" id="selection" style="display:none"></div>
+      <div class="ruler" id="ruler"></div>
+      <div id="tracks"></div>
+      <input id="file" type="file" accept="audio/*">
+    </div></section>
+  </div>
+</section>
+
+<div class="zoomstrip" aria-label="Zoom timeline">
+  <button id="minus">− ZOOM</button>
+  <button id="plus">＋ ZOOM</button>
+</div>
+
+<div class="editor" id="editor"><div class="editin">
+  <div class="clip-context-name" id="clip-context-name"></div>
+  <div class="volrow">🔊 <input id="clipvol" type="range" min="0" max="150" value="100"></div>
+  <button id="cut" title="Couper au curseur">✂ COUPER</button>
+  <button id="duplicate" title="Dupliquer">⧉ DUPLIQUER</button>
+  <button id="del" title="Supprimer">🗑 SUPPRIMER</button>
+  <button id="clipmute" title="Couper ou réactiver le son">🔊 MUET</button>
+</div></div>
+
+<nav class="bottomcmd" aria-label="Commandes générales">
+  <button class="libbtn" id="import-library">＋ IMPORTER</button>
+  <button id="sound-library-jump">🎧 SONS</button>
+  <button class="addtrack" id="addtrack">＋ PISTE</button>
   <button class="mobile-menu-toggle" id="project-menu-toggle" type="button">PROJET</button>
   <button class="mobile-menu-toggle" id="tools-menu-toggle" type="button">OUTILS</button>
-  <button class="export" id="export">EXPORTER</button>
-</header>
+</nav>
+
 <div class="projectbar" id="project-menu-panel">
   <button id="save-project">💾 ENREGISTRER</button>
   <button id="projects">📂 MES PROJETS</button>
@@ -80,16 +154,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button id="download-project">📱 COPIE TÉLÉPHONE</button>
   <div class="projectpanel" id="project-panel"></div>
 </div>
-<input id="project-file" type="file" accept=".foreststudio,application/json" style="display:none">
-<div class="autosave-compact" id="autosave-status">Sauvegarde locale : initialisation…</div>
-<div class="time" id="clock">00:00.0</div>
-<div class="quick primary">
-  <button id="undo">↶ ANNULER</button>
-  <button id="redo">↷ RÉTABLIR</button>
-  <button id="minus">− ZOOM</button>
-  <button id="plus">＋ ZOOM</button>
-  <button class="addtrack" id="addtrack">＋ PISTE</button>
-</div>
+
 <div class="secondarytools" id="tools-menu-panel">
   <div class="quick">
     <button id="sel-start">⟦ DÉBUT</button>
@@ -105,31 +170,9 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button id="bpm-plus">＋</button>
   </div>
 </div>
-<section class="timeline" id="timeline"><div class="canvas" id="canvas">
-  <div class="playhead" id="playhead"></div>
-  <div class="selectionmark start" id="selection-start-mark" style="display:none"></div>
-  <div class="selectionmark end" id="selection-end-mark" style="display:none"></div>
-  <div class="selection" id="selection" style="display:none"></div>
-  <div class="ruler" id="ruler"></div>
-  <div id="tracks"></div>
-  <input id="file" type="file" accept="audio/*">
-  <div class="help" id="help">Touche la timeline pour placer le curseur • attrape la ligne blanche pour la déplacer</div>
-</div></section>
-<nav class="tools"><div class="toolsin">
-  <button class="transport" id="back">↶ 5s</button>
-  <button class="transport" id="play">▶</button>
-  <button class="record" id="record"><b>●</b>ENREGISTRER</button>
-  <button class="transport" id="forward">5s ↷</button>
-</div></nav>
-<div class="editor" id="editor"><div class="editin">
-  <button id="cut" title="Couper au curseur">✂<br>COUPER</button>
-  <button id="duplicate" title="Dupliquer">⧉<br>DUPLIQUER</button>
-  <button id="clipmute" title="Couper ou réactiver le son">🔊<br>SON</button>
-  <button id="del" title="Supprimer">🗑<br>SUPPRIMER</button>
-  <div class="volrow">🔊 <input id="clipvol" type="range" min="0" max="150" value="100"></div>
-</div></div>
+
 <section class="soundlib"><h2>🎧 SONOTHÈQUE</h2>
-  <div class="libactions"><button class="libbtn" id="import-library">＋ IMPORTER DES SONS</button><button class="libbtn" id="refresh-library">↻ ACTUALISER</button></div>
+  <div class="libactions"><button class="libbtn" id="refresh-library">↻ ACTUALISER</button></div>
   <div class="folderpicker" id="folder-picker"><b>📁 Dans quel dossier ?</b><div class="folderbuttons" id="folder-buttons"></div></div>
   <input class="libsearch" id="library-search" type="search" placeholder="Rechercher : forêt, oiseau, pluie, magie…">
   <input id="library-files" type="file" accept="audio/*" multiple>
@@ -141,14 +184,14 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
-function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t}))}}function restore(s){clips=s.clips;tracks=s.tracks;selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has}
+function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t}))}}function restore(s){clips=s.clips;tracks=s.tracks;selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 function toggleMobileMenu(panel,other){let p=$(panel),o=$(other);if(o)o.classList.remove('menu-open');if(p)p.classList.toggle('menu-open')}
 $('#project-menu-toggle').onclick=()=>toggleMobileMenu('#project-menu-panel','#tools-menu-panel');
-$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel','#project-menu-panel');
+$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel','#project-menu-panel');$('#sound-library-jump').onclick=()=>document.querySelector('.soundlib')?.scrollIntoView({behavior:'smooth',block:'start'});
 function xToTime(clientX){let r=$('#canvas').getBoundingClientRect();return Math.max(0,Math.min(projectDuration(),(clientX-r.left)/pixelsPerSecond()))}function setCursor(t,scroll=false){cursor=Math.max(0,Math.min(projectDuration(),t));let pps=pixelsPerSecond();$('#playhead').style.left=(cursor*pps)+'px';$('#clock').textContent=fmt(cursor);if(scroll){let x=cursor*pps,tl=$('#timeline'),target=x-tl.clientWidth*.72;tl.scrollLeft=Math.max(0,target)}}
 function waveform(canvas,c){let cached=waveformCache.get(c.sourceId);if(!cached){canvas.style.display='none';return}let tl=$('#timeline'),pps=pixelsPerSecond(),h=Math.max(1,canvas.parentElement?.clientHeight||66),dpr=devicePixelRatio||1,plan=StudioWaveform.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft:tl.scrollLeft,viewportWidth:tl.clientWidth,sourceDuration:cached.duration,peakRate:cached.peakRate,dpr});if(!plan.visible){canvas.style.display='none';return}canvas.style.display='block';canvas.style.left=plan.canvasLeft+'px';canvas.style.width=plan.cssWidth+'px';canvas.style.height=h+'px';canvas.width=plan.bitmapWidth;canvas.height=Math.max(1,Math.ceil(h*dpr));let g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,plan.cssWidth,h);g.strokeStyle='rgba(255,255,255,.78)';g.lineWidth=1;g.beginPath();for(let i=0;i<plan.columns;i++){let m=StudioWaveform.peakForColumn(cached,plan,i,plan.columns),x=i*StudioWaveform.DRAW_STEP_PX,y=m*h*.46;g.moveTo(x,h/2-y);g.lineTo(x,h/2+y)}g.stroke()}
 let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;document.querySelectorAll('.wavecanvas').forEach(cv=>{if(cv._clip)waveform(cv,cv._clip)})}$('#timeline').addEventListener('scroll',()=>{if(!waveformScrollRaf)waveformScrollRaf=requestAnimationFrame(refreshVisibleWaveforms)},{passive:true});
-function pixelsPerSecond(){return Math.max(1,$('#timeline').clientWidth/15)*zoom}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){let d=projectDuration(),pps=pixelsPerSecond(),w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let marks=Math.max(5,Math.floor(d/5)+1),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let i=0;i<marks;i++){let tm=Math.min(d,i*5),s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks');root.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="head"><span>'+t.name+'</span><span class="trackctrl"><button data-mute>'+ (t.muted?'🔇':'🔊')+'</button><button data-vol>'+Math.round(t.gain*100)+'%</button></span></div><div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0;lane.style.height=Math.max(76,(maxRow+1)*71+5)+'px';if(!arr.length&&t.type!=='voice'){let b=document.createElement('button');b.className='addsound';b.textContent='＋ AJOUTER UN SON';b.onclick=()=>chooseFile(t.id);lane.appendChild(b)}placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});sec.querySelector('[data-mute]').onclick=()=>{checkpoint();t.muted=!t.muted;render()};sec.querySelector('[data-vol]').onclick=()=>{let v=prompt('Volume de la piste (0 à 150 %)',Math.round(t.gain*100));if(v!==null&&!isNaN(v)){checkpoint();t.gain=Math.max(0,Math.min(1.5,+v/100));render()}};root.appendChild(sec)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
+function pixelsPerSecond(){return Math.max(1,$('#timeline').clientWidth/15)*zoom}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){let d=projectDuration(),pps=pixelsPerSecond(),w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let marks=Math.max(5,Math.floor(d/5)+1),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let i=0;i<marks;i++){let tm=Math.min(d,i*5),s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(76,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(!arr.length&&t.type!=='voice'){let b=document.createElement('button');b.className='addsound';b.textContent='＋ SON';b.onclick=()=>chooseFile(t.id);lane.appendChild(b)}placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control';ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-control-name">'+t.name+'</div><div class="track-control-buttons"><button data-mute>'+(t.muted?'🔇':'🔊')+' MUET</button><button data-vol>'+Math.round(t.gain*100)+'%</button></div>';ctrl.querySelector('[data-mute]').onclick=()=>{checkpoint();t.muted=!t.muted;render()};ctrl.querySelector('[data-vol]').onclick=()=>{let v=prompt('Volume de la piste (0 à 150 %)',Math.round(t.gain*100));if(v!==null&&!isNaN(v)){checkpoint();t.gain=Math.max(0,Math.min(1.5,+v/100));render()}};controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
 function dragLaneAt(clientY){for(const lane of document.querySelectorAll('#tracks .lane[data-track-id]')){let r=lane.getBoundingClientRect();if(clientY>=r.top&&clientY<=r.bottom)return{lane,trackId:lane.dataset.trackId}}return null}
 function setDragLaneFeedback(lane){document.querySelectorAll('#tracks .lane.drag-target').forEach(x=>x.classList.remove('drag-target'));if(lane)lane.classList.add('drag-target')}
 function clipGesture(el,c,d){let sx=null,sy=null,startState=null,moved=false,pointerId=null;function releasePointer(){if(pointerId===null)return;try{if(!el.hasPointerCapture||el.hasPointerCapture(pointerId))el.releasePointerCapture(pointerId)}catch{}pointerId=null}function finish(e,cancelled){if(sx===null)return;e.preventDefault();e.stopPropagation();releasePointer();setDragLaneFeedback(null);if(cancelled){c.start=startState.start;c.track=startState.track}else if(moved){let after=snapshot();undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,start:startState.start,track:startState.track}:x)});redo=[];buttons();markProjectDirty()}else{selected=c;$('#editor').classList.add('show');$('#clipvol').value=c.gain*100;$('#clipmute').textContent=c.muted?'🔇 RÉACTIVER':'🔊 MUET'}sx=sy=null;startState=null;moved=false;render()}el.onpointerdown=e=>{if(e.pointerType==='touch'&&e.isPrimary===false)return;sx=e.clientX;sy=e.clientY;startState={start:c.start,track:c.track};moved=false;pointerId=e.pointerId;el.setPointerCapture(e.pointerId);e.preventDefault()};el.onpointermove=e=>{if(sx===null)return;let dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)>5)moved=true;if(!moved)return;e.preventDefault();e.stopPropagation();c.start=Math.max(0,startState.start+dx/pixelsPerSecond());let hit=dragLaneAt(e.clientY);if(hit){c.track=hit.trackId;if(el.parentElement!==hit.lane){hit.lane.appendChild(el);el.style.top='5px'}setDragLaneFeedback(hit.lane)}el.style.left=(c.start*pixelsPerSecond())+'px'};el.onpointerup=e=>finish(e,false);el.onpointercancel=e=>finish(e,true)}
@@ -171,7 +214,7 @@ function renderSelection(){let e=$('#selection'),a=$('#selection-start-mark'),b=
 $('#sel-start').onclick=()=>{selectionStart=cursor;if(selectionEnd!==null&&selectionEnd<=selectionStart)selectionEnd=null;renderSelection();selectionDiagnostic('SÉLECTION DÉBUT = '+selectionSeconds(selectionStart)+' s');markProjectDirty();msg('Début de sélection posé')};
 $('#sel-end').onclick=()=>{if(selectionStart===null){selectionDiagnostic('SÉLECTION INVALIDE — pose d’abord le DÉBUT');return msg('Pose d’abord le début')}if(cursor<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — FIN = '+selectionSeconds(cursor)+' s, DÉBUT = '+selectionSeconds(selectionStart)+' s');return msg('Place le curseur après le début')}selectionEnd=cursor;renderSelection();selectionDiagnostic('SÉLECTION = '+selectionSeconds(selectionStart)+' → '+selectionSeconds(selectionEnd)+' s\nDURÉE = '+selectionSeconds(selectionEnd-selectionStart)+' s');markProjectDirty();msg('Fin de sélection posée')};
 $('#sel-clear').onclick=()=>{selectionStart=selectionEnd=null;renderSelection();markProjectDirty();msg('Sélection effacée')};
-$('#record').onclick=record;$('#play').onclick=()=>playing||playPreparing?stopPlay():play();$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
+$('#record').onclick=record;$('#play').onclick=()=>playing||playPreparing?stopPlay():play();$('#stop').onclick=()=>stopPlay();$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
 $('#undo').onclick=()=>{if(!undo.length)return;redo.push(snapshot());restore(undo.pop())};$('#redo').onclick=()=>{if(!redo.length)return;undo.push(snapshot());restore(redo.pop())};
 $('#cut').onclick=()=>{if(!selected)return;let rel=cursor-selected.start;if(rel<=.05||rel>=selected.len-.05)return msg('Place le curseur à l’intérieur du morceau');checkpoint();let right={...selected,id:crypto.randomUUID(),start:cursor,trim:selected.trim+rel,len:selected.len-rel};selected.len=rel;clips.push(right);selected=right;render();msg('Morceau coupé ✓')};$('#duplicate').onclick=()=>{if(!selected)return;checkpoint();let c={...selected,id:crypto.randomUUID(),start:selected.start+selected.len+.1};clips.push(c);selected=c;render()};$('#del').onclick=()=>{if(!selected)return;checkpoint();clips=clips.filter(c=>c!==selected);selected=null;$('#editor').classList.remove('show');render()};$('#clipmute').onclick=()=>{if(!selected)return;checkpoint();selected.muted=!selected.muted;$('#clipmute').textContent=selected.muted?'🔇 RÉACTIVER':'🔊 MUET';render();msg(selected.muted?'Morceau coupé du son':'Morceau réactivé')};let volStart=null;$('#clipvol').onpointerdown=()=>{volStart=snapshot()};$('#clipvol').oninput=e=>{if(selected)selected.gain=e.target.value/100};$('#clipvol').onchange=()=>{if(volStart){undo.push(volStart);redo=[];volStart=null;buttons();markProjectDirty()}};
 function wav(ab){let n=ab.length,ch=ab.numberOfChannels,sr=ab.sampleRate,b=new ArrayBuffer(44+n*ch*2),v=new DataView(b),p=0,str=s=>{for(let x of s)v.setUint8(p++,x.charCodeAt(0))},u16=x=>{v.setUint16(p,x,true);p+=2},u32=x=>{v.setUint32(p,x,true);p+=4};str('RIFF');u32(36+n*ch*2);str('WAVEfmt ');u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);str('data');u32(n*ch*2);for(let i=0;i<n;i++)for(let c=0;c<ch;c++){let x=Math.max(-1,Math.min(1,ab.getChannelData(c)[i]));v.setInt16(p,x<0?x*32768:x*32767,true);p+=2}return new Blob([b],{type:'audio/wav'})}
