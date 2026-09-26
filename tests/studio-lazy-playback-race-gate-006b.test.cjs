@@ -9,6 +9,7 @@ const transportSource=section('function stopPlay(keep=true)','function selection
 
 function deferred(){let resolve,reject;const promise=new Promise((r,j)=>{resolve=r;reject=j});return{promise,resolve,reject}}
 function fakeBuffer(id){return{id,duration:1,length:48000,sampleRate:48000,numberOfChannels:1,getChannelData:()=>new Float32Array(48000)}}
+async function flushMicrotasks(n=6){for(let i=0;i<n;i++)await Promise.resolve()}
 
 function makeHarness({ids=['A'],runtime=null}={}){
   const elements={play:{textContent:'▶'}};
@@ -69,7 +70,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
 
   // CASE 2
   const d2=deferred();const r2=R.createDecodedSourceCache({getBlob:async()=>new Blob([2]),decodeBlob:async()=>d2.promise});
-  const h2=makeHarness({runtime:r2});const p2=h2.play(0,false);h2.sync();h2.stop();h2.sync();
+  const h2=makeHarness({runtime:r2});const p2=h2.play(0,false);await flushMicrotasks();assert.equal(r2.metrics().inflightCount,1);h2.sync();h2.stop();h2.sync();
   assert.equal(h2.state.playing,false);assert.equal(h2.state.playPreparing,false);
   d2.resolve(fakeBuffer('A'));assert.equal(await p2,false);h2.sync();
   assert.equal(h2.state.starts,0);assert.equal(h2.state.playing,false);assert.equal(h2.state.playPreparing,false);
@@ -79,7 +80,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
   // CASE 3
   const d3=deferred();let d3calls=0;
   const r3=R.createDecodedSourceCache({getBlob:async()=>new Blob([3]),decodeBlob:async()=>{d3calls++;return d3.promise}});
-  const h3=makeHarness({runtime:r3});const gen1=h3.play(0,false);h3.sync();h3.stop();h3.sync();const gen2=h3.play(.2,false);h3.sync();
+  const h3=makeHarness({runtime:r3});const gen1=h3.play(0,false);await flushMicrotasks();assert.equal(r3.metrics().inflightCount,1);h3.sync();h3.stop();h3.sync();const gen2=h3.play(.2,false);await flushMicrotasks();h3.sync();
   assert.equal(d3calls,1,'generation 2 must share inflight decode');
   d3.resolve(fakeBuffer('A'));
   assert.equal(await gen1,false);assert.equal(await gen2,true);h3.sync();
@@ -88,7 +89,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
 
   // CASE 4A: real UI policy is second command while preparing => stopPlay, not second play.
   const d4=deferred();let d4calls=0;const r4=R.createDecodedSourceCache({getBlob:async()=>new Blob([4]),decodeBlob:async()=>{d4calls++;return d4.promise}});
-  const h4=makeHarness({runtime:r4});const first=h4.play(0,false);h4.sync();
+  const h4=makeHarness({runtime:r4});const first=h4.play(0,false);await flushMicrotasks();assert.equal(r4.metrics().inflightCount,1);h4.sync();
   assert.equal(h4.state.playPreparing,true);
   h4.stop(); // same branch used by $('#play'): playing||playPreparing ? stopPlay() : play()
   d4.resolve(fakeBuffer('A'));assert.equal(await first,false);h4.sync();
@@ -97,7 +98,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
 
   // CASE 4B: even two direct play() calls cannot double transport/decode.
   const d4b=deferred();let d4bcalls=0;const r4b=R.createDecodedSourceCache({getBlob:async()=>new Blob([4]),decodeBlob:async()=>{d4bcalls++;return d4b.promise}});
-  const h4b=makeHarness({runtime:r4b});const q1=h4b.play(0,false),q2=h4b.play(0,false);d4b.resolve(fakeBuffer('A'));
+  const h4b=makeHarness({runtime:r4b});const q1=h4b.play(0,false);await flushMicrotasks();assert.equal(r4b.metrics().inflightCount,1);const q2=h4b.play(0,false);await flushMicrotasks();d4b.resolve(fakeBuffer('A'));
   assert.equal(await q1,false);assert.equal(await q2,true);h4b.sync();
   assert.equal(d4bcalls,1);assert.equal(h4b.state.starts,1);
   console.log('DOUBLE_PLAY_DIRECT PASS decode=1 transport=1');
