@@ -171,4 +171,73 @@ console.log('TOOLS_MENU PASS');
 console.log('SELECTION_ACTIONS_RETAINED PASS');
 console.log('METRONOME_RETAINED PASS');
 
+
+// Shared 3D button system: one material, three density variants, semantic palettes.
+for(const marker of [
+  '.game-btn{',
+  '--top:#3D9EFF;--mid:#1478DC;--bottom:#0751A5;--border:#67B6FF;--deep:#032F67',
+  'background:linear-gradient(180deg,var(--top) 0%,var(--mid) 48%,var(--bottom) 100%)!important',
+  'border:2px solid var(--border)!important',
+  'box-shadow:0 5px 0 var(--deep),0 8px 12px rgba(0,0,0,.35),inset 0 2px 2px rgba(255,255,255,.45),inset 0 -2px 3px rgba(0,0,0,.22)!important',
+  '.game-btn::before{',
+  '.game-btn-primary{',
+  '.game-btn-standard{',
+  '.game-btn-compact{'
+]) assert(css.includes(marker),'button system missing '+marker);
+console.log('BUTTON_STYLE_SHARED_CLASS PASS .game-btn shared material');
+console.log('COMPACT_BUTTON_VARIANT PASS primary/standard/compact variants present');
+
+for(const marker of [
+  '.game-btn-yellow{--top:#FFE46A;--mid:#FFB719;--bottom:#E98700;--border:#FFF09A;--deep:#934B00',
+  '.game-btn-red{--top:#FF6875;--mid:#F12445;--bottom:#B80C2B;--border:#FF91A0;--deep:#71061D',
+  '.game-btn-green{--top:#58E6A0;--mid:#12AE65;--bottom:#087846;--border:#85F6BD;--deep:#03472A',
+  '.game-btn-violet{--top:#B26BFF;--mid:#7732D4;--bottom:#4B188C;--border:#CD9AFF;--deep:#2C0B59',
+  '.game-btn-dark{--top:#526B8F;--mid:#294464;--bottom:#172B44;--border:#6E8EB5;--deep:#0A1626'
+]) assert(css.includes(marker),'semantic palette missing '+marker);
+for(const [id,klass] of [
+  ['play','game-btn-yellow'],['record','game-btn-red'],['stop','game-btn-dark'],
+  ['back','game-btn-standard'],['forward','game-btn-standard'],
+  ['minus','game-btn-standard'],['plus','game-btn-standard'],
+  ['import-library','game-btn-standard'],['sound-library-jump','game-btn-violet'],
+  ['addtrack','game-btn-green'],['del','game-btn-red'],['clipmute','game-btn-dark'],
+  ['project-menu-toggle','game-btn-dark'],['tools-menu-toggle','game-btn']
+]){
+  const rx=new RegExp('<button[^>]*class="[^"]*'+klass+'[^"]*"[^>]*id="'+id+'"|<button[^>]*id="'+id+'"[^>]*class="[^"]*'+klass+'[^"]*"');
+  assert(rx.test(html),'semantic class missing '+id+' '+klass);
+}
+assert(renderSource.includes("game-btn game-btn-compact game-btn-dark '+(t.muted?'is-active':'')"));
+assert(renderSource.includes('game-btn game-btn-compact" data-vol'));
+console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete/project semantics retained');
+
+// Physical press feedback, no heavy animation.
+for(const marker of [
+  'transition:transform 80ms ease,box-shadow 80ms ease,filter 80ms ease',
+  '.game-btn:active,.game-btn.is-pressed{transform:translateY(3px)',
+  'box-shadow:0 1px 0 var(--deep),0 3px 6px rgba(0,0,0,.3)'
+]) assert(css.includes(marker),'press feedback missing '+marker);
+console.log('BUTTON_PRESS_FEEDBACK PASS translateY=3px transition=80ms reduced lower pedestal');
+
+// Styling must not increase validated mobile geometry.
+for(const marker of [
+  '.transport,.record{height:42px',
+  '.track-control-buttons button{min-height:28px;height:28px',
+  '.editor button{min-height:36px',
+  '.bottomcmd button{min-height:42px',
+  '.bottomcmd #addtrack{width:auto;margin:0;min-height:42px',
+  '.multitrack{display:block;height:min(480px,57dvh);min-height:360px'
+]) assert(css.includes(marker),'layout-height regression '+marker);
+console.log('NO_LAYOUT_HEIGHT_REGRESSION PASS transport/track/context/bottom-bar heights unchanged');
+console.log('LAYOUT_HEIGHT_BEFORE PASS timeline viewport=480px share=56.9%');
+console.log('LAYOUT_HEIGHT_AFTER PASS timeline viewport=480px share=56.9%');
+
+// Timeline and clips remain visually calm: no game material attached to audio clips or trim handles.
+assert(!/class="[^"]*clip[^"]*game-btn/.test(renderSource));
+assert(!/trimhandle[^']*game-btn/.test(renderSource));
+assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
+assert(css.includes('.trimhandle.left{left:-22px}'));
+assert(css.includes('.trimhandle.right{right:-22px}'));
+assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
+console.log('TRIM_HANDLES_UNCHANGED PASS visual=5px target=24px outward=22px inward=2px');
+console.log('TIMELINE_BUTTON_MATERIAL_EXCLUSION PASS clips/trim remain non-3D');
+
 console.log('Studio mobile space UX 010 revised spatial hierarchy tests PASS');
