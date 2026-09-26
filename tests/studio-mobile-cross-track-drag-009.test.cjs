@@ -12,7 +12,8 @@ const playheadSource=section("$('#timeline').onpointerdown","async function reco
 
 function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x)}}
 function makeLane(id,top,bottom){return{dataset:{trackId:id},rect:{top,bottom},classList:classList(),children:[],getBoundingClientRect(){return this.rect},appendChild(el){this.children.push(el);el.parentElement=this;return el}}}
-function event(x,y,id=1){return{clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true}}}\nfunction near(actual,expected,eps=1e-6){assert(Math.abs(actual-expected)<=eps,`expected ${actual} ≈ ${expected}`)}
+function event(x,y,id=1){return{clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true}}}
+function near(actual,expected,eps=1e-6){assert(Math.abs(actual-expected)<=eps,`expected ${actual} ≈ ${expected}`)}
 function makeHarness({start=12.4,track='A',extraClips=[]}={}){
   const lanes=[makeLane('A',0,100),makeLane('B',120,220),makeLane('C',240,360)];
   const clip={id:'birds',track,name:'OISEAUX',sourceId:'src-birds',start,trim:.25,len:2.5,gain:.7,muted:false};
