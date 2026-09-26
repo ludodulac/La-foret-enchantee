@@ -30,6 +30,8 @@ jobs:
         run: node tests/studio-autosave.test.cjs
       - name: Run Studio local source model tests
         run: node tests/studio-local-source-model.test.cjs
+      - name: Run Studio waveform cache tests
+        run: node tests/studio-waveform-cache.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
