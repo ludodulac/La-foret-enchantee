@@ -13,7 +13,7 @@ function section(startToken,endToken){
 }
 
 const stopPlay=section('function stopPlay(keep=true)','function updateLiveRecordingVisual');
-assert(stopPlay.includes('playing=false;clearInterval(tick);tick=null;'),'transport stop must clear and normalize tick');
+assert(stopPlay.includes('playPreparing=false;playing=false;clearInterval(tick);tick=null;'),'transport stop must clear preparation, playing, and normalize tick');
 assert(stopPlay.includes('stopMetro()'),'transport stop must stop metronome');
 assert(stopPlay.includes('sources.forEach'),'transport stop must stop active BufferSources');
 
@@ -48,11 +48,12 @@ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].ma
 assert.doesNotThrow(()=>new vm.Script(scripts.at(-1),{filename:'studio-inline.js'}),'inline Studio syntax must remain valid');
 
 const state={
-  recording:true,playing:true,recorderState:'recording',trackReadyState:'live',
+  recording:true,playing:true,playPreparing:true,recorderState:'recording',trackReadyState:'live',
   tickActive:true,liveAnimActive:true,liveMicActive:true,liveAnalyserActive:true,liveRecActive:true
 };
 state.recorderState='inactive';
 state.trackReadyState='ended';
+state.playPreparing=false;
 state.playing=false;
 state.tickActive=false;
 state.liveAnimActive=false;
@@ -62,10 +63,10 @@ state.liveRecActive=false;
 state.recording=false;
 
 assert.deepEqual(state,{
-  recording:false,playing:false,recorderState:'inactive',trackReadyState:'ended',
+  recording:false,playing:false,playPreparing:false,recorderState:'inactive',trackReadyState:'ended',
   tickActive:false,liveAnimActive:false,liveMicActive:false,liveAnalyserActive:false,liveRecActive:false
 });
 
-console.log('POST_STOP_INVARIANTS recording=false playing=false recorder=inactive track=ended tick=false liveRAF=false liveMic=false liveAnalyser=false liveRec=false');
+console.log('POST_STOP_INVARIANTS recording=false playing=false playPreparing=false recorder=inactive track=ended tick=false liveRAF=false liveMic=false liveAnalyser=false liveRec=false');
 console.log('HEAVY_DIAGNOSTICS_ABSENT PASS: no StudioDiag, lag timer, watchdog snapshots, global pointer diagnostics, diagnostic UI, or persistent diagnostic journal');
 console.log('Studio production post-stop minimal test PASS');
