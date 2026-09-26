@@ -32,7 +32,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .quick.primary button{min-height:40px;height:40px;font-size:9px;padding:0 2px}
   .projectbar{display:none;margin:0;padding:7px;position:fixed;top:48px;left:7px;right:7px;z-index:45;grid-template-columns:1fr 1fr;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black)}
   .projectbar.menu-open{display:grid}
-  .projectbar button{min-height:42px}
+  .projectbar button{min-height:42px}.projectbar .projectpanel{grid-column:1/-1;margin:0}
   .secondarytools{display:none;position:fixed;top:48px;left:7px;right:7px;z-index:45;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black)}
   .secondarytools.menu-open{display:block}
   .secondarytools .quick{margin-bottom:6px;padding:0}
@@ -78,8 +78,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button id="new-local-project">✨ NOUVEAU</button>
   <button id="clear-local-save">🗑 SAUVEGARDE LOCALE</button>
   <button id="download-project">📱 COPIE TÉLÉPHONE</button>
+  <div class="projectpanel" id="project-panel"></div>
 </div>
-<div class="projectpanel" id="project-panel"></div>
 <input id="project-file" type="file" accept=".foreststudio,application/json" style="display:none">
 <div class="autosave-compact" id="autosave-status">Sauvegarde locale : initialisation…</div>
 <div class="time" id="clock">00:00.0</div>
