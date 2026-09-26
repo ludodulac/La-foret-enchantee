@@ -141,7 +141,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
       const gains=[],starts=[];
       const c={id:'birds',track:'B',sourceId:'src-birds',start:4,trim:0,len:2,gain:.7,muted:false};
       const context={console,Map,Math,clips:[c],tracks:[{id:'A',gain:1,muted:false},{id:'B',gain:.5,muted:trackMuted}],sources:[],playing:false,metroOn:false,t0:0,tick:null,recording:false,
-        sourceIdFor:x=>x.sourceId,ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(){return this},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(){gains.push(g.gain.value);return this}};return g}},
+        sourceIdFor:x=>x.sourceId,ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
         startMetro:()=>{},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual:()=>{},setCursor:()=>{},projectDuration:()=>30,$:()=>({textContent:''})};
       vm.createContext(context);vm.runInContext(playbackSource,context);
       context.startPreparedPlayback(0,false,new Map([['src-birds',{duration:10}]]));
