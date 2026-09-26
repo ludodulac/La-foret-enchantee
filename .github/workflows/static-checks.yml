@@ -32,6 +32,8 @@ jobs:
         run: node tests/studio-local-source-model.test.cjs
       - name: Run Studio waveform cache tests
         run: node tests/studio-waveform-cache.test.cjs
+      - name: Run Studio lazy audio decode tests
+        run: node tests/studio-lazy-audio-decode.test.cjs
       - name: Run Studio production post-stop test
         run: node tests/studio-post-stop-production.test.cjs
       - name: Check Studio heavy diagnostics are absent
