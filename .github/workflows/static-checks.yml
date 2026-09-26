@@ -38,6 +38,8 @@ jobs:
         run: node tests/studio-lazy-playback-race-gate-006b.test.cjs
       - name: Run Studio mobile cross-track drag 009
         run: node tests/studio-mobile-cross-track-drag-009.test.cjs
+      - name: Run Studio mobile space UX 010
+        run: node tests/studio-mobile-space-ux-010.test.cjs
       - name: Run Studio production post-stop test
         run: node tests/studio-post-stop-production.test.cjs
       - name: Check Studio heavy diagnostics are absent
