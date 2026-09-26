@@ -32,6 +32,19 @@ jobs:
         run: node tests/studio-local-source-model.test.cjs
       - name: Run Studio waveform cache tests
         run: node tests/studio-waveform-cache.test.cjs
+      - name: Run Studio production post-stop test
+        run: node tests/studio-post-stop-production.test.cjs
+      - name: Check Studio heavy diagnostics are absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -f js/studio-diagnostic.js
+          ! grep -q 'StudioDiag' studio.html
+          ! grep -q 'EVENT_LOOP_LAG' studio.html
+          ! grep -q 'POST_STOP_T+' studio.html
+          ! grep -q 'copy-diagnostic' studio.html
+          ! grep -q 'export-diagnostic' studio.html
+          ! grep -q 'PerformanceObserver' studio.html
       - name: Check required surfaces
         shell: bash
         run: |
