@@ -32,6 +32,8 @@ jobs:
         run: node tests/studio-local-source-model.test.cjs
       - name: Run Studio waveform cache tests
         run: node tests/studio-waveform-cache.test.cjs
+      - name: Run Studio Android post-stop root-cause tests
+        run: node tests/studio-android-post-stop-root-cause.test.cjs
       - name: Check required surfaces
         shell: bash
         run: |
