@@ -83,7 +83,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
   assert.equal(d3calls,1,'generation 2 must share inflight decode');
   d3.resolve(fakeBuffer('A'));
   assert.equal(await gen1,false);assert.equal(await gen2,true);h3.sync();
-  assert.equal(h3.state.starts,1);assert.equal(h3.state.playing,true);assert.equal(h3.state.cursorWrites,2,'only stop calls may touch cursor; stale generation must not');
+  assert.equal(h3.state.starts,1);assert.equal(h3.state.playing,true);assert.equal(h3.state.cursorWrites,3,'only the three explicit stopPlay calls may touch cursor; stale generation must not');
   console.log('PLAY_CANCEL_PLAY PASS stale generation starts=0; generation2 starts exactly once; decode=1');
 
   // CASE 4A: real UI policy is second command while preparing => stopPlay, not second play.
