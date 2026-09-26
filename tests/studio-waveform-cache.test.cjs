@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
+const vm=require('node:vm');
 const W=require('../js/studio-waveform-core.js');
 const A=require('../js/studio-autosave.js');
 
@@ -100,7 +101,7 @@ function snapshot(sourceId){
   assert(!html.includes('if(newD!==oldD)render()'),'ancien render général pendant REC doit avoir disparu');
 
   const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);
-  assert.doesNotThrow(()=>new Function(scripts.at(-1)),'script inline Studio doit rester syntaxiquement valide');
+  assert.doesNotThrow(()=>new vm.Script(scripts.at(-1),{filename:'studio-inline.js'}),'script inline Studio doit rester syntaxiquement valide');
 
   console.log('WAVEFORM_SCAN_METRIC INITIAL_SOURCE=1; MOVE+TRIM+SPLIT+DUPLICATE+GAIN+MUTE+ZOOM+25_RENDERS=0 ADDITIONAL PCM SCANS');
   console.log('WAVEFORM_SCAN_METRIC REOPEN_WITH_CACHE=0 PCM SCANS; LEGACY_FIRST_OPEN=1; LEGACY_SECOND_OPEN=0');
