@@ -109,7 +109,7 @@ const copy=x=>JSON.parse(JSON.stringify(x));
   assert(html.includes("registerSourceBlob(f,b,{origin:'phone-import'"),'import téléphone doit enregistrer le File original');
   assert(html.includes("registerSourceBlob(blob,b,{origin:'micro-recording'"),'micro doit enregistrer le Blob MediaRecorder original');
   assert(html.includes("registerSourceBlob(data,b,{origin:'cloud-library'"),'sonothèque téléchargée doit devenir source locale');
-  assert(html.includes("registerSourceBlob(r.data,b,{origin:'cloud-project'"),'projet cloud chargé doit avoir une source locale');
+  assert(html.includes("registerSourceBlob(blob,null,{origin:'cloud-project'"),'projet cloud chargé doit avoir une source locale sans imposer de decode eager');
   const autosave=html.slice(html.indexOf('async function runAutosave()'),html.indexOf('function markProjectDirty()'));
   assert(autosave.includes('localSources.get(id)'),'autosave doit lire la source persistante originale');
   assert(!autosave.includes('wav('),'autosave ne doit plus réencoder AudioBuffer en WAV');
