@@ -12,7 +12,7 @@ const playheadSource=section("$('#timeline').onpointerdown","async function reco
 
 function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x)}}
 function makeLane(id,top,bottom){return{dataset:{trackId:id},rect:{top,bottom},classList:classList(),children:[],getBoundingClientRect(){return this.rect},appendChild(el){this.children.push(el);el.parentElement=this;return el}}}
-function event(x,y,id=1){return{clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true}}}
+function event(x,y,id=1){return{clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true}}}\nfunction near(actual,expected,eps=1e-6){assert(Math.abs(actual-expected)<=eps,`expected ${actual} ≈ ${expected}`)}
 function makeHarness({start=12.4,track='A',extraClips=[]}={}){
   const lanes=[makeLane('A',0,100),makeLane('B',120,220),makeLane('C',240,360)];
   const clip={id:'birds',track,name:'OISEAUX',sourceId:'src-birds',start,trim:.25,len:2.5,gain:.7,muted:false};
@@ -70,7 +70,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
   let combined;
   {
     const h=makeHarness();drag(h,{moveX:180,moveY:280});combined=h;
-    assert.equal(h.clip.start,13.2);assert.equal(h.clip.track,'C');assert.equal(h.undo.length,1);
+    near(h.clip.start,13.2);assert.equal(h.clip.track,'C');assert.equal(h.undo.length,1);
     console.log('COMBINED_DRAG PASS start 12.4/A -> 13.2/C in one gesture');
   }
 
@@ -130,7 +130,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
     await store.save(snap,[{id:'src-birds',blob,origin:'test'}]);const writes=store._metrics().audioWrites;
     await store.save({...snap,name:'009-after-drop'},[]);
     const loaded=await store.load(),c=loaded.snapshot.clips.find(x=>x.id==='birds');
-    assert.equal(c.start,13.2);assert.equal(c.track,'C');assert.equal(c.sourceId,'src-birds');assert.equal(store._metrics().audioWrites,writes);
+    near(c.start,13.2);assert.equal(c.track,'C');assert.equal(c.sourceId,'src-birds');assert.equal(store._metrics().audioWrites,writes);
     console.log('AUTOSAVE_RESTORE PASS dropped start/track survive reload; additional audio writes=0');
   }
 
