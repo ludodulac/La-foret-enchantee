@@ -63,18 +63,18 @@ console.log('TOUCH_SCROLL_CONTRACT PASS background pan-x/pan-y; clip touch-actio
 
 // Trim geometry remains the 010 human requirement.
 assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
-assert(css.includes('.trimhandle.left{left:-20px}'));
-assert(css.includes('.trimhandle.right{right:-20px}'));
+assert(css.includes('.trimhandle.left{left:-22px}'));
+assert(css.includes('.trimhandle.right{right:-22px}'));
 assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
 assert(css.includes('.clip.sel{overflow:visible}'));
 console.log('TRIM_VISUAL_WIDTH PASS visual=5px');
-console.log('TRIM_TOUCH_TARGET PASS touchTarget=24px; outward=20px; inward=4px/side');
+console.log('TRIM_TOUCH_TARGET PASS touchTarget=24px; outward=22px; inward=2px/side');
 
 const timelineClientWidth=VIEWPORT_W-14-92-4;
 const pps=timelineClientWidth/15;
 const oneSecond=pps,halfSecond=pps*.5;
-const oneSecondFree=Math.max(0,oneSecond-8),halfSecondFree=Math.max(0,halfSecond-8);
-assert(oneSecondFree>10);assert(halfSecondFree>=0);
+const oneSecondFree=Math.max(0,oneSecond-4),halfSecondFree=Math.max(0,halfSecond-4);
+assert(oneSecondFree>14);assert(halfSecondFree>5);
 console.log('SMALL_CLIP_MOVE_AREA PASS right-area zoom1 1s='+oneSecond.toFixed(1)+'px center='+oneSecondFree.toFixed(1)+'px; 0.5s center='+halfSecondFree.toFixed(1)+'px');
 
 // Exercise actual production trim handlers.
