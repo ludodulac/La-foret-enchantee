@@ -44,6 +44,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 .game-btn-standard{font-weight:900}
 .game-btn-compact{font-weight:850;border-radius:10px!important}
 @media(max-width:520px){
+  body{background:linear-gradient(180deg,#07111D 0%,#101B29 100%)}
   .app{position:relative;padding:env(safe-area-inset-top) 7px calc(10px + env(safe-area-inset-bottom))}
   header{height:44px;margin:0 0 4px;display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center}
   header .studio-back{min-height:36px;height:36px;padding:0 7px;font-size:10px}
@@ -67,7 +68,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .transport,.record{height:42px;min-width:0;padding:0 2px;font-size:10px}
   .record{font-size:8px}
   .record b{display:inline;font-size:11px;margin-right:2px}
-  #stop{border-color:var(--px-red)!important;color:#ff9aa8!important}
+  #stop{border-color:var(--border)!important;color:#fff!important}
 
   .multitrack{display:block;height:min(480px,57dvh);min-height:360px;overflow-y:auto;overscroll-behavior:contain;border:2px solid var(--px-blue);background:#050d1d;box-shadow:4px 4px 0 var(--px-black);scrollbar-width:thin}
   .multitrack-body{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:start;min-height:100%}
