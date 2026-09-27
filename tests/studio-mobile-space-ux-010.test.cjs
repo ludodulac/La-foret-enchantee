@@ -385,10 +385,10 @@ function fakeButton(){
   return{classList:fakeClassList(),attrs:{},onclick:null,onpointerup:null,setAttribute(k,v){this.attrs[k]=v}};
 }
 function fakeTrackControl(id){
-  const arm=fakeButton(),mute=fakeButton(),vol=fakeButton();
+  const arm=fakeButton(),mute=fakeButton(),vol=fakeButton(),del=fakeButton();
   return{
-    dataset:{trackId:id},classList:fakeClassList(),arm,mute,vol,
-    querySelector(sel){if(sel==='[data-arm]')return arm;if(sel==='[data-mute]')return mute;if(sel==='[data-vol]')return vol;return null}
+    dataset:{trackId:id},classList:fakeClassList(),arm,mute,vol,del,
+    querySelector(sel){if(sel==='[data-arm]')return arm;if(sel==='[data-mute]')return mute;if(sel==='[data-vol]')return vol;if(sel==='[data-delete-track]')return del;return null}
   };
 }
 function pointerTap(){
