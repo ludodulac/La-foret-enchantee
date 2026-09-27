@@ -282,9 +282,9 @@ console.log('TRACK_CONTROLS_COMPACT PASS 92px column; mute+volume side-by-side a
 
 // Waveform alignment contract using an asymmetric, identifiable source.
 // The same absolute timeline point must map to the same source peak after LEFT trim.
-const asymmetric={version:W.WAVEFORM_VERSION,peakRate:10,duration:4,peaks:Uint8Array.from({length:40},(_,i)=>(i*17+23)%256)};
+const asymmetric={version:W.WAVEFORM_VERSION,peakRate:W.PEAK_RATE,duration:4,peaks:Uint8Array.from({length:4*W.PEAK_RATE},(_,i)=>(i*17+23)%256)};
 function planFor(c,pps,scrollLeft,viewportWidth){
-  return W.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft,viewportWidth,sourceDuration:4,peakRate:10,dpr:1,overscanPx:0});
+  return W.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft,viewportWidth,sourceDuration:4,peakRate:W.PEAK_RATE,dpr:1,overscanPx:0});
 }
 const beforeTrim={start:1,trim:.5,len:2};
 const leftTrimmed={start:1.4,trim:.9,len:1.6};
