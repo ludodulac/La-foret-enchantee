@@ -26,13 +26,14 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
 // Phone import: execute the real chooseFile + onchange path.
 (async()=>{
   const input={dataset:{},files:[],value:'',clicked:0,click(){this.clicked++}};
+  const phoneTracks=[{id:'voice',type:'voice'},{id:'sound2',type:'sound'}];
   const phoneCtx={
     console,Math,ArrayBuffer,
     cursor:18,
     selectedRecordTrackId:'sound2',
-    tracks:[{id:'voice',type:'voice'},{id:'sound2',type:'sound'}],
+    tracks:phoneTracks,
     clips:[],
-    recordTrackIdFor(id){const q=id??this.selectedRecordTrackId;return this.tracks.some(t=>t.id===q)?q:(this.tracks[0]?.id||null)},
+    recordTrackIdFor(id){const q=id??phoneCtx.selectedRecordTrackId;return phoneTracks.some(t=>t.id===q)?q:(phoneTracks[0]?.id||null)},
     $:sel=>sel==='#file'?input:{},
     ctx:{decodeAudioData:async()=>({duration:2.5})},
     registerSourceBlob:async()=> 'src-phone',
@@ -56,13 +57,14 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
   console.log('IMPORT_PHONE_DIRECT_TO_TIMELINE PASS');
 
   // Library sound: execute real async path and ensure no implicit "last sound track" routing.
+  const libTracks=[{id:'voice',name:'VOIX',type:'voice'},{id:'sound2',name:'SON 2',type:'sound'}];
   const libCtx={
     console,Math,Blob,
     cursor:18,
     selectedRecordTrackId:'sound2',
-    tracks:[{id:'voice',name:'VOIX',type:'voice'},{id:'sound2',name:'SON 2',type:'sound'}],
+    tracks:libTracks,
     clips:[],
-    recordTrackIdFor(id){const q=id??this.selectedRecordTrackId;return this.tracks.some(t=>t.id===q)?q:(this.tracks[0]?.id||null)},
+    recordTrackIdFor(id){const q=id??libCtx.selectedRecordTrackId;return libTracks.some(t=>t.id===q)?q:(libTracks[0]?.id||null)},
     dbClient:{storage:{from:()=>({download:async()=>({data:new Blob(['x'],{type:'audio/wav'}),error:null})})}},
     ctx:{decodeAudioData:async()=>({duration:3})},
     registerSourceBlob:async()=> 'src-library',
