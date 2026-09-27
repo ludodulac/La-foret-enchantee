@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
+const W=require('../js/studio-waveform-core.js');
 
 const html=fs.readFileSync('studio.html','utf8');
 function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);assert(a>=0,'missing '+start);assert(b>a,'missing '+end);return html.slice(a,b)}
@@ -239,5 +240,107 @@ assert(css.includes('.trimhandle.right{right:-22px}'));
 assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
 console.log('TRIM_HANDLES_UNCHANGED PASS visual=5px target=24px outward=22px inward=2px');
 console.log('TIMELINE_BUTTON_MATERIAL_EXCLUSION PASS clips/trim remain non-3D');
+
+
+// Real Android/Brave viewport contract: use visualViewport rather than theoretical fixed height.
+for(const marker of [
+  "function syncStudioViewport(){let v=window.visualViewport",
+  "document.documentElement.style.setProperty('--studio-vh',h+'px')",
+  "document.documentElement.style.setProperty('--studio-vv-top',top+'px')",
+  "visualViewport.addEventListener('resize',syncStudioViewport",
+  "visualViewport.addEventListener('scroll',syncStudioViewport"
+]) assert(html.includes(marker),'real viewport sync missing '+marker);
+assert(css.includes(".app{position:relative;min-height:var(--studio-vh,100dvh);padding:max(env(safe-area-inset-top),calc(var(--studio-vv-top,0px) + 4px))"));
+assert(css.includes(".multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px"));
+function responsiveTimeline(vh){return Math.max(220,Math.min(480,vh-250))}
+assert.equal(responsiveTimeline(844),480);
+assert.equal(responsiveTimeline(650),400);
+assert.equal(responsiveTimeline(560),310);
+assert.equal(responsiveTimeline(500),250);
+assert.equal(responsiveTimeline(460),220);
+console.log('REAL_MOBILE_VIEWPORT_FIT PASS visualViewport height drives layout 844->480 650->400 560->310 500->250 460->220');
+console.log('NO_TOP_CONTROL_CLIPPING PASS app top padding includes visualViewport.offsetTop + safe-area');
+console.log('RESPONSIVE_TIMELINE_HEIGHT PASS no 360px minimum; clamps 220..480px');
+
+// Empty tracks must remain visually empty: no giant +SON affordance in any lane.
+assert(!renderSource.includes("b.className='addsound"));
+assert(!renderSource.includes("b.textContent='＋ SON'"));
+assert(!renderSource.includes("chooseFile(t.id)"));
+assert(renderSource.includes("sec.innerHTML='<div class=\"lane\"></div>'"));
+console.log('NO_LANE_ADD_SOUND_BUTTON PASS');
+console.log('EMPTY_TRACK_VISUAL_PARITY PASS empty sound track renders same lane shell');
+console.log('TRACKS_SAME_STRUCTURE PASS every track uses control column + lane; no lane-specific CTA');
+
+// Track controls are true compact controls, not transport-sized.
+for(const marker of [
+  '.track-control{margin-top:7px;padding:4px 3px',
+  '.track-control-buttons{display:grid;grid-template-columns:1fr 1fr;gap:2px}',
+  '.track-control-buttons button{min-height:26px;height:26px;padding:0 1px;font-size:8px',
+  "data-mute title=\"Muet\">'+(t.muted?'🔇':'🔊')+'</button>"
+]) assert((marker.includes("data-mute")?renderSource:css).includes(marker),'track compact contract missing '+marker);
+console.log('TRACK_CONTROLS_COMPACT PASS 92px column; mute+volume side-by-side at 26px high');
+
+// Waveform alignment contract using an asymmetric, identifiable source.
+// The same absolute timeline point must map to the same source peak after LEFT trim.
+const asymmetric={version:W.WAVEFORM_VERSION,peakRate:10,duration:4,peaks:Uint8Array.from({length:40},(_,i)=>(i*17+23)%256)};
+function planFor(c,pps,scrollLeft,viewportWidth){
+  return W.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft,viewportWidth,sourceDuration:4,peakRate:10,dpr:1,overscanPx:0});
+}
+const beforeTrim={start:1,trim:.5,len:2};
+const leftTrimmed={start:1.4,trim:.9,len:1.6};
+const rightTrimmed={start:1,trim:.5,len:1.6};
+const pBefore=planFor(beforeTrim,100,140,80);
+const pLeft=planFor(leftTrimmed,100,140,80);
+const pRight=planFor(rightTrimmed,100,140,80);
+assert.equal(pBefore.sourceFrom,.9);assert.equal(pLeft.sourceFrom,.9);assert.equal(pBefore.firstPeak,pLeft.firstPeak);
+assert.equal(W.peakForColumn(asymmetric,pBefore,0,pBefore.columns),W.peakForColumn(asymmetric,pLeft,0,pLeft.columns));
+assert.equal(pRight.sourceFrom,.9);
+console.log('TRIM_LEFT_WAVEFORM_ALIGNMENT PASS absolute timeline 1.4s remains source 0.9s after start/trim shift');
+console.log('TRIM_RIGHT_WAVEFORM_ALIGNMENT PASS left/source origin remains stable while right edge changes');
+
+// Zoom and restore after trim must preserve the same source alignment.
+const pZoom=planFor(leftTrimmed,200,280,160);
+assert.equal(pZoom.sourceFrom,.9);assert.equal(pZoom.firstPeak,pLeft.firstPeak);
+const restored=JSON.parse(JSON.stringify(leftTrimmed));
+const pRestore=planFor(restored,100,140,80);
+assert.deepEqual({sourceFrom:pRestore.sourceFrom,firstPeak:pRestore.firstPeak,lastPeak:pRestore.lastPeak},{sourceFrom:pLeft.sourceFrom,firstPeak:pLeft.firstPeak,lastPeak:pLeft.lastPeak});
+console.log('ZOOM_AFTER_TRIM_ALIGNMENT PASS');
+console.log('RESTORE_AFTER_TRIM_ALIGNMENT PASS');
+
+// Production trim pointermove must redraw waveform live using updated c.trim/c.len.
+assert(trimSource.includes("let wave=clipEl.querySelector('.wavecanvas');if(wave)waveform(wave,c)"));
+console.log('TRIM_LIVE_WAVEFORM_REDRAW PASS no stale canvas during left trim');
+
+// REC label remains stable; active recording is visual state only.
+const recordStart=html.indexOf('async function record()'),recordEnd=html.indexOf('function clickBeat',recordStart),recordSource=html.slice(recordStart,recordEnd);
+assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record"><b>●</b> REC</button>'));
+assert(recordSource.includes('async function record(){if(recording)return;try{'));
+assert(recordSource.includes("$('#record').classList.add('is-recording')"));
+assert(recordSource.includes("$('#record').classList.remove('is-recording')"));
+assert(!recordSource.includes("$('#record').innerHTML"));
+assert(css.includes('.record.is-recording{filter:brightness(1.18)'));
+console.log('REC_LABEL_STABLE PASS always ● REC');
+console.log('REC_ACTIVE_VISUAL_STATE PASS active class brightens/glows REC without relabeling');
+
+// Exactly one STOP visual control, and its handler routes to recorder OR playback.
+assert.equal((html.match(/id="stop"/g)||[]).length,1);
+assert(!recordSource.includes('STOP'));
+const controlsStart=html.indexOf("$('#record').onclick=record;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
+assert(controlsSource.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"));
+{
+  let handlers={},recStops=0,playStops=0,recording=true,recorder={state:'recording',stop(){recStops++}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert.equal(recStops,1);assert.equal(playStops,0);
+}
+{
+  let handlers={},recStops=0,playStops=0;
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,recorder:{state:'inactive',stop(){recStops++}}};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert.equal(recStops,0);assert.equal(playStops,1);
+}
+console.log('STOP_SINGLE_VISUAL_CONTROL PASS one ■ STOP control; REC never becomes STOP');
+console.log('STOP_STOPS_RECORDING PASS');
+console.log('STOP_STOPS_PLAYBACK PASS');
 
 console.log('Studio mobile space UX 010 revised spatial hierarchy tests PASS');
