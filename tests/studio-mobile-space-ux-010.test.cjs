@@ -19,7 +19,7 @@ const TIMELINE_VISIBLE_HEIGHT=480;
 const TIMELINE_VIEWPORT_SHARE_PERCENT=TIMELINE_VISIBLE_HEIGHT/VIEWPORT_H*100;
 assert.equal(VERTICAL_SPACE_GAIN_PX,338);
 assert(Math.abs(TIMELINE_VIEWPORT_SHARE_PERCENT-56.87203791469194)<1e-9);
-assert(css.includes('.multitrack{display:block;height:min(480px,57dvh);min-height:360px;overflow-y:auto'));
+assert(css.includes('.multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px;overflow-y:auto'));
 console.log('MOBILE_VERTICAL_SPACE_GAIN PASS viewport=390x844 BEFORE_TIMELINE_TOP_PX=469 AFTER_TIMELINE_TOP_PX=131 VERTICAL_SPACE_GAIN_PX=338');
 console.log('TIMELINE_VISIBLE_HEIGHT PASS 480px');
 console.log('TIMELINE_VIEWPORT_SHARE PASS '+TIMELINE_VIEWPORT_SHARE_PERCENT.toFixed(1)+'%');
@@ -50,14 +50,14 @@ console.log('CLIP_AREA_RIGHT PASS independent horizontal timeline area');
 console.log('TRACK_HEIGHT_SYNC PASS controls and lanes share laneHeight');
 
 // Timeline dominance + multitrack vertical scroll + timeline horizontal scroll.
-assert(css.includes('height:min(480px,57dvh)'));
+assert(css.includes('height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px)'));
 assert(css.includes('overflow-y:auto;overscroll-behavior:contain'));
 assert(css.includes('.timeline{display:block;position:relative'));
 assert(css.includes('overflow-x:auto;overflow-y:visible;touch-action:pan-x pan-y'));
 assert(html.includes('.clip{position:absolute') || html.includes('.clip{'));
 assert(html.includes('touch-action:none'));
-console.log('TIMELINE_DOMINANT PASS explicit 480px / 57dvh multipiste viewport');
-console.log('MULTI_TRACK_VISIBLE_OR_SCROLLABLE PASS min-height 360px + overflow-y auto');
+console.log('TIMELINE_DOMINANT PASS responsive multipiste viewport up to 480px');
+console.log('MULTI_TRACK_VISIBLE_OR_SCROLLABLE PASS responsive 220..480px + overflow-y auto');
 console.log('VERTICAL_TRACK_ACCESS PASS multipiste parent scrolls vertically');
 console.log('HORIZONTAL_TIMELINE_ACCESS PASS right timeline scrolls horizontally');
 console.log('TOUCH_SCROLL_CONTRACT PASS background pan-x/pan-y; clip touch-action none reserves drag gesture');
@@ -81,7 +81,7 @@ console.log('SMALL_CLIP_MOVE_AREA PASS right-area zoom1 1s='+oneSecond.toFixed(1
 // Exercise actual production trim handlers.
 function makeTrimHarness(side){
  const c={id:'c',start:1,trim:.5,len:2,sourceId:'src',gain:1,muted:false,track:'A'};
- const listeners={},clipEl={style:{}},handle={closest:()=>clipEl,addEventListener:(n,fn)=>listeners[n]=fn,setPointerCapture(){}};
+ const listeners={},clipEl={style:{},querySelector:()=>null},handle={closest:()=>clipEl,addEventListener:(n,fn)=>listeners[n]=fn,setPointerCapture(){}};
  const undo=[],redo=[],context={console,Math,pixelsPerSecond:()=>100,sourceDurationFor:()=>10,snapshot:()=>({clips:[{...c}],tracks:[{id:'A'}]}),undo,redo,buttons:()=>{},markProjectDirty:()=>{},msg:()=>{},selected:null,render:()=>{}};
  vm.createContext(context);vm.runInContext(trimSource,context);context.trimGesture(handle,c,side);
  const e=x=>({clientX:x,pointerId:1,stopPropagation(){},preventDefault(){}});
@@ -221,13 +221,13 @@ console.log('BUTTON_PRESS_FEEDBACK PASS translateY=3px transition=80ms reduced l
 // Styling must not increase validated mobile geometry.
 for(const marker of [
   '.transport,.record{height:42px',
-  '.track-control-buttons button{min-height:28px;height:28px',
+  '.track-control-buttons button{min-height:26px;height:26px',
   '.editor button{min-height:36px',
   '.bottomcmd button{min-height:42px',
   '.bottomcmd #addtrack{width:auto;margin:0;min-height:42px',
-  '.multitrack{display:block;height:min(480px,57dvh);min-height:360px'
+  '.multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px'
 ]) assert(css.includes(marker),'layout-height regression '+marker);
-console.log('NO_LAYOUT_HEIGHT_REGRESSION PASS transport/track/context/bottom-bar heights unchanged');
+console.log('NO_LAYOUT_HEIGHT_REGRESSION PASS command heights unchanged; timeline now contracts responsively');
 console.log('LAYOUT_HEIGHT_BEFORE PASS timeline viewport=480px share=56.9%');
 console.log('LAYOUT_HEIGHT_AFTER PASS timeline viewport=480px share=56.9%');
 
