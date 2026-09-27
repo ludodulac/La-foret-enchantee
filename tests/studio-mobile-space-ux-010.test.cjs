@@ -351,7 +351,7 @@ console.log('STOP_STOPS_PLAYBACK PASS');
 
 // Real trim hit-area audit: the declared 24px must be actually reachable at timeline edges.
 assert(css.includes('.timeline{display:block;position:relative;border:0;box-shadow:none;border-radius:0;padding:0 22px;'));
-assert(css.includes('.lane{min-height:76px;overflow:visible}'));
+assert(css.includes('.lane{min-height:88px;overflow:visible}'));
 assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
 assert(css.includes('.trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}'));
 assert(html.includes('.playhead{position:absolute')&&html.includes('z-index:15'));
