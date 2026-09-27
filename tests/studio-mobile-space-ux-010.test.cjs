@@ -277,12 +277,12 @@ console.log('TRACKS_SAME_STRUCTURE PASS every track uses control column + lane; 
 // Track controls are true compact controls, not transport-sized.
 for(const marker of [
   '.track-control{margin-top:7px;padding:4px 3px',
-  '.track-control-buttons{display:grid;grid-template-columns:1fr 1fr;gap:2px}',
+  '.track-control-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}',
   '.track-control-buttons button{min-height:26px;height:26px;padding:0 1px;font-size:8px',
   "data-mute title=\"Muet\">'+(t.muted?'🔇':'🔊')+'</button>"
 ]) assert((marker.includes("data-mute")?renderSource:css).includes(marker),'track compact contract missing '+marker);
 assert(css.includes('.track-arm{width:100%;height:34px;min-height:34px'));
-console.log('TRACK_CONTROLS_COMPACT PASS 92px column; 34px arm header + mute/volume side-by-side at 26px');
+console.log('TRACK_CONTROLS_COMPACT PASS 92px column; 34px arm header + mute/volume/delete at 26px');
 
 // Waveform alignment contract using an asymmetric, identifiable source.
 // The same absolute timeline point must map to the same source peak after LEFT trim.
