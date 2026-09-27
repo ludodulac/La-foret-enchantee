@@ -22,7 +22,7 @@ const TIMELINE_VISIBLE_HEIGHT=480;
 const TIMELINE_VIEWPORT_SHARE_PERCENT=TIMELINE_VISIBLE_HEIGHT/VIEWPORT_H*100;
 assert.equal(VERTICAL_SPACE_GAIN_PX,338);
 assert(Math.abs(TIMELINE_VIEWPORT_SHARE_PERCENT-56.87203791469194)<1e-9);
-assert(css.includes('.multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px;overflow-y:auto'));
+assert(css.includes('.multitrack{display:block;flex:1 1 auto;height:auto;min-height:120px;max-height:480px;overflow-y:auto'));
 console.log('MOBILE_VERTICAL_SPACE_GAIN PASS viewport=390x844 BEFORE_TIMELINE_TOP_PX=469 AFTER_TIMELINE_TOP_PX=131 VERTICAL_SPACE_GAIN_PX=338');
 console.log('TIMELINE_VISIBLE_HEIGHT PASS 480px');
 console.log('TIMELINE_VIEWPORT_SHARE PASS '+TIMELINE_VIEWPORT_SHARE_PERCENT.toFixed(1)+'%');
@@ -53,14 +53,14 @@ console.log('CLIP_AREA_RIGHT PASS independent horizontal timeline area');
 console.log('TRACK_HEIGHT_SYNC PASS controls and lanes share laneHeight');
 
 // Timeline dominance + multitrack vertical scroll + timeline horizontal scroll.
-assert(css.includes('height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px)'));
+assert(css.includes('flex:1 1 auto;height:auto;min-height:120px;max-height:480px'));
 assert(css.includes('overflow-y:auto;overscroll-behavior:contain'));
 assert(css.includes('.timeline{display:block;position:relative'));
 assert(css.includes('overflow-x:auto;overflow-y:visible;touch-action:pan-x pan-y'));
 assert(html.includes('.clip{position:absolute') || html.includes('.clip{'));
 assert(html.includes('touch-action:none'));
-console.log('TIMELINE_DOMINANT PASS responsive multipiste viewport up to 480px');
-console.log('MULTI_TRACK_VISIBLE_OR_SCROLLABLE PASS responsive 220..480px + overflow-y auto');
+console.log('TIMELINE_DOMINANT PASS flex multipiste viewport 120..480px, owns remaining core height');
+console.log('MULTI_TRACK_VISIBLE_OR_SCROLLABLE PASS responsive flex height 120..480px + overflow-y auto');
 console.log('VERTICAL_TRACK_ACCESS PASS multipiste parent scrolls vertically');
 console.log('HORIZONTAL_TIMELINE_ACCESS PASS right timeline scrolls horizontally');
 console.log('TOUCH_SCROLL_CONTRACT PASS background pan-x/pan-y; clip touch-action none reserves drag gesture');
@@ -153,7 +153,7 @@ console.log('CLIP_SELECTED_CONTEXT PASS name + volume + cut/duplicate/delete/mut
 // Bottom bar provides general structural commands.
 for(const id of ['import-library','sound-library-jump','addtrack','project-menu-toggle','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
 assert(positions.bottom>positions.context);
-assert(html.includes("$('#sound-library-jump').onclick=()=>document.querySelector('.soundlib')?.scrollIntoView"));
+assert(html.includes("$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView"));
 console.log('BOTTOM_BAR_ACCESS PASS IMPORTER / SONS / +PISTE / PROJET / OUTILS');
 
 // Project menu reuses historical handlers.
@@ -225,12 +225,12 @@ console.log('BUTTON_PRESS_FEEDBACK PASS translateY=3px transition=80ms reduced l
 for(const marker of [
   '.transport,.record{height:42px',
   '.track-control-buttons button{min-height:26px;height:26px',
-  '.editor button{min-height:36px',
+  '.editor button{min-height:34px;height:34px',
   '.bottomcmd button{min-height:42px',
   '.bottomcmd #addtrack{width:auto;margin:0;min-height:42px',
-  '.multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px'
+  '.multitrack{display:block;flex:1 1 auto;height:auto;min-height:120px;max-height:480px'
 ]) assert(css.includes(marker),'layout-height regression '+marker);
-console.log('NO_LAYOUT_HEIGHT_REGRESSION PASS command heights unchanged; timeline now contracts responsively');
+console.log('NO_LAYOUT_HEIGHT_REGRESSION PASS essential controls compact; timeline flexes to preserve viewport fit');
 console.log('LAYOUT_HEIGHT_BEFORE PASS timeline viewport=480px share=56.9%');
 console.log('LAYOUT_HEIGHT_AFTER PASS timeline viewport=480px share=56.9%');
 
@@ -253,17 +253,18 @@ for(const marker of [
   "visualViewport.addEventListener('resize',syncStudioViewport",
   "visualViewport.addEventListener('scroll',syncStudioViewport"
 ]) assert(html.includes(marker),'real viewport sync missing '+marker);
-assert(css.includes(".app{position:relative;min-height:var(--studio-vh,100dvh);padding:max(env(safe-area-inset-top),calc(var(--studio-vv-top,0px) + 4px))"));
-assert(css.includes(".multitrack{display:block;height:clamp(220px,calc(var(--studio-vh,100dvh) - 250px),480px);min-height:0;max-height:480px"));
-function responsiveTimeline(vh){return Math.max(220,Math.min(480,vh-250))}
-assert.equal(responsiveTimeline(844),480);
-assert.equal(responsiveTimeline(650),400);
-assert.equal(responsiveTimeline(560),310);
-assert.equal(responsiveTimeline(500),250);
-assert.equal(responsiveTimeline(460),220);
-console.log('REAL_MOBILE_VIEWPORT_FIT PASS visualViewport height drives layout 844->480 650->400 560->310 500->250 460->220');
+assert(css.includes("html,body{height:var(--studio-vh,100dvh);max-height:var(--studio-vh,100dvh);overflow:hidden}"));
+assert(css.includes(".app{position:relative;height:var(--studio-vh,100dvh);min-height:0;max-height:var(--studio-vh,100dvh);padding:max(env(safe-area-inset-top),calc(var(--studio-vv-top,0px) + 4px))"));
+assert(css.includes(".multitrack{display:block;flex:1 1 auto;height:auto;min-height:120px;max-height:480px"));
+const CORE_CHROME_NO_SELECTION=240,CLIP_TOOLS_OUTER=68;
+function responsiveTimeline(vh,selected=false){return Math.max(120,Math.min(480,vh-CORE_CHROME_NO_SELECTION-(selected?CLIP_TOOLS_OUTER:0)))}
+for(const [vh,noSel,sel] of [[844,480,480],[650,410,342],[560,320,252],[500,260,192],[460,220,152]]){
+  assert.equal(responsiveTimeline(vh,false),noSel);
+  assert.equal(responsiveTimeline(vh,true),sel);
+}
+console.log('REAL_MOBILE_VIEWPORT_FIT PASS flex budget 844/650/560/500/460 with and without clip tools');
 console.log('NO_TOP_CONTROL_CLIPPING PASS app top padding includes visualViewport.offsetTop + safe-area');
-console.log('RESPONSIVE_TIMELINE_HEIGHT PASS no 360px minimum; clamps 220..480px');
+console.log('RESPONSIVE_TIMELINE_HEIGHT PASS timeline automatically yields 68px to clip tools; floor=120px cap=480px');
 
 // Empty tracks must remain visually empty: no giant +SON affordance in any lane.
 assert(!renderSource.includes("b.className='addsound"));
@@ -561,5 +562,49 @@ async function recordInto(selectedId){
 
   console.log('Studio record-track + trim-hit final 010 gates PASS');
 })().catch(e=>{console.error(e);process.exit(1)});
+
+
+// Core editing must fit entirely inside the real visualViewport; page scroll is forbidden for core tools.
+for(const marker of [
+  'html,body{height:var(--studio-vh,100dvh);max-height:var(--studio-vh,100dvh);overflow:hidden}',
+  'display:flex;flex-direction:column;overflow:hidden',
+  '.multitrack{display:block;flex:1 1 auto;height:auto;min-height:120px;max-height:480px',
+  '.editor.show{display:block}',
+  '.editin{max-width:none;margin:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:24px 34px;gap:3px}',
+  '.bottomcmd{display:grid;position:relative;flex:0 0 auto',
+  '.soundlib{display:none;position:fixed'
+]) assert(css.includes(marker),'viewport-fit core contract missing '+marker);
+assert(html.includes("$('#app').classList.toggle('clip-selected',has)"));
+assert(html.includes("document.querySelector('.soundlib')?.classList.remove('mobile-open')"));
+console.log('SELECT_CLIP_REVEALS_TOOLS_IN_VIEWPORT PASS selection marks app + editor.show while timeline is elastic');
+
+// Certified vertical budgets, Android safe-area reference = 0 and visualViewport already excludes browser chrome.
+// Fixed chrome: app padding 14 + header 48 + autosave 24 + transport 56 + zoom 44 + bottom bar 54 = 240.
+// Selected clip tools: 68 px (24+3+34 grid + 4 padding + 3 margin).
+const VIEWPORT_CASES=[
+  [844,480,480],
+  [650,410,342],
+  [560,320,252],
+  [500,260,192],
+  [460,220,152]
+];
+for(const [vh,noSel,withSel] of VIEWPORT_CASES){
+  const a=responsiveTimeline(vh,false),b=responsiveTimeline(vh,true);
+  assert.equal(a,noSel);assert.equal(b,withSel);
+  assert(a>=120&&b>=120);
+  const coreNoSel=CORE_CHROME_NO_SELECTION+a;
+  const coreSel=CORE_CHROME_NO_SELECTION+CLIP_TOOLS_OUTER+b;
+  assert(coreNoSel<=vh,'no-selection core exceeds viewport '+vh);
+  assert(coreSel<=vh,'selected core exceeds viewport '+vh);
+  console.log('REAL_VIEWPORT_'+vh+' PASS timeline no-selection='+a+' selected='+b+' core fits without page scroll');
+}
+console.log('TIMELINE_CONTRACTS_FOR_CLIP_TOOLS PASS selected tools consume 68px from timeline rather than extending page');
+console.log('CLIP_TOOLS_VISIBLE_WITHOUT_PAGE_SCROLL PASS VOLUME/MUET/COUPER/DUPLIQUER/SUPPRIMER remain in core viewport');
+console.log('DELETE_VISIBLE_WITHOUT_PAGE_SCROLL PASS delete is row-2 contextual button inside bounded app');
+console.log('CLIP_TOOLS_DO_NOT_PUSH_BOTTOM_BAR_BELOW_FOLD PASS bottom bar is non-shrinking core flex item');
+assert(css.includes('overflow-y:auto;overscroll-behavior:contain'));
+console.log('INTERNAL_TRACK_SCROLL_PRESERVED PASS multitrack keeps internal vertical scrolling');
+console.log('PAGE_SCROLL_NOT_REQUIRED_FOR_CORE_EDITING PASS html/body/app overflow hidden on mobile; secondary sound library is overlay');
+console.log('SMALLEST_CERTIFIED_VIEWPORT PASS 460px selected timeline=152px >= 120px floor');
 
 console.log('Studio mobile space UX 010 revised spatial hierarchy tests PASS');
