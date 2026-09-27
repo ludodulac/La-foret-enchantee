@@ -122,7 +122,7 @@ for(const id of ['back','record','play','stop','forward','undo','redo'])assert(h
 for(const marker of [
  "$('#record').onclick=record",
  "$('#play').onclick=()=>playing||playPreparing?stopPlay():play()",
- "$('#stop').onclick=()=>stopPlay()",
+ "$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}",
  "$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)}",
  "$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)}"
 ])assert(html.includes(marker),'transport handler missing '+marker);
