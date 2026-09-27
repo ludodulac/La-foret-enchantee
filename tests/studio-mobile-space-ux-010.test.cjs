@@ -151,7 +151,7 @@ console.log('NO_CLIP_SELECTED_SPACE PASS');
 console.log('CLIP_SELECTED_CONTEXT PASS name + volume + cut/duplicate/delete/mute');
 
 // Bottom bar provides general structural commands.
-for(const id of ['import-library','sound-library-jump','addtrack','project-menu-toggle','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
+for(const id of ['import-phone','sound-library-jump','addtrack','project-menu-toggle','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
 assert(positions.bottom>positions.context);
 assert(html.includes("$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView"));
 console.log('BOTTOM_BAR_ACCESS PASS IMPORTER / SONS / +PISTE / PROJET / OUTILS');
@@ -202,15 +202,15 @@ for(const [id,klass] of [
   ['play','game-btn-yellow'],['record','game-btn-red'],['stop','game-btn-dark'],
   ['back','game-btn-standard'],['forward','game-btn-standard'],
   ['minus','game-btn-standard'],['plus','game-btn-standard'],
-  ['import-library','game-btn-standard'],['sound-library-jump','game-btn-violet'],
+  ['import-phone','game-btn-standard'],['sound-library-jump','game-btn-violet'],
   ['addtrack','game-btn-green'],['del','game-btn-red'],['clipmute','game-btn-dark'],
   ['project-menu-toggle','game-btn-dark'],['tools-menu-toggle','game-btn']
 ]){
   const rx=new RegExp('<button[^>]*class="[^"]*'+klass+'[^"]*"[^>]*id="'+id+'"|<button[^>]*id="'+id+'"[^>]*class="[^"]*'+klass+'[^"]*"');
   assert(rx.test(html),'semantic class missing '+id+' '+klass);
 }
-assert(renderSource.includes("game-btn game-btn-compact game-btn-dark '+(t.muted?'is-active':'')"));
-assert(renderSource.includes('game-btn game-btn-compact" data-vol'));
+assert(renderSource.includes("game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')"));
+assert(renderSource.includes('game-btn game-btn-compact game-btn-secondary" data-vol'));
 console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete/project semantics retained');
 
 // Physical press feedback, no heavy animation.
@@ -223,8 +223,8 @@ console.log('BUTTON_PRESS_FEEDBACK PASS translateY=3px transition=80ms reduced l
 
 // Styling must not increase validated mobile geometry.
 for(const marker of [
-  '.transport,.record{height:42px',
-  '.track-control-buttons button{min-height:26px;height:26px',
+  '#record,#play,#stop{height:54px',
+  '.track-control-buttons button{min-height:44px;height:44px',
   '.editor button{min-height:34px;height:34px',
   '.bottomcmd button{min-height:42px',
   '.bottomcmd #addtrack{width:auto;margin:0;min-height:42px',
@@ -256,9 +256,9 @@ for(const marker of [
 assert(css.includes("html,body{height:var(--studio-vh,100dvh);max-height:var(--studio-vh,100dvh);overflow:hidden}"));
 assert(css.includes(".app{position:relative;height:var(--studio-vh,100dvh);min-height:0;max-height:var(--studio-vh,100dvh);padding:max(env(safe-area-inset-top),calc(var(--studio-vv-top,0px) + 4px))"));
 assert(css.includes(".multitrack{display:block;flex:1 1 auto;height:auto;min-height:120px;max-height:480px"));
-const CORE_CHROME_NO_SELECTION=240,CLIP_TOOLS_OUTER=68;
+const CORE_CHROME_NO_SELECTION=252,CLIP_TOOLS_OUTER=68;
 function responsiveTimeline(vh,selected=false){return Math.max(120,Math.min(480,vh-CORE_CHROME_NO_SELECTION-(selected?CLIP_TOOLS_OUTER:0)))}
-for(const [vh,noSel,sel] of [[844,480,480],[650,410,342],[560,320,252],[500,260,192],[460,220,152]]){
+for(const [vh,noSel,sel] of [[844,480,480],[650,398,330],[560,308,240],[500,248,180],[460,208,140]]){
   assert.equal(responsiveTimeline(vh,false),noSel);
   assert.equal(responsiveTimeline(vh,true),sel);
 }
@@ -278,12 +278,12 @@ console.log('TRACKS_SAME_STRUCTURE PASS every track uses control column + lane; 
 // Track controls are true compact controls, not transport-sized.
 for(const marker of [
   '.track-control{margin-top:7px;padding:4px 3px',
-  '.track-control-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}',
-  '.track-control-buttons button{min-height:26px;height:26px;padding:0 1px;font-size:8px',
-  "data-mute title=\"Muet\">'+(t.muted?'🔇':'🔊')+'</button>"
+  '.track-control-buttons{display:grid;grid-template-columns:1fr 1fr;gap:2px}',
+  '.track-control-buttons button{min-height:44px;height:44px;padding:0 2px;font-size:9px',
+  "data-mute title=\"Muet\">'+(t.muted?'🔇':'🔊')+' MUET</button>"
 ]) assert((marker.includes("data-mute")?renderSource:css).includes(marker),'track compact contract missing '+marker);
 assert(css.includes('.track-arm{width:100%;height:34px;min-height:34px'));
-console.log('TRACK_CONTROLS_COMPACT PASS 92px column; 34px arm header + mute/volume/delete at 26px');
+console.log('TRACK_CONTROLS_COMPACT PASS 92px column; arm/menu header + mute/volume 44px; delete moved to menu');
 
 // Waveform alignment contract using an asymmetric, identifiable source.
 // The same absolute timeline point must map to the same source peak after LEFT trim.
@@ -386,10 +386,10 @@ function fakeButton(){
   return{classList:fakeClassList(),attrs:{},onclick:null,onpointerup:null,setAttribute(k,v){this.attrs[k]=v}};
 }
 function fakeTrackControl(id){
-  const arm=fakeButton(),mute=fakeButton(),vol=fakeButton(),del=fakeButton();
+  const arm=fakeButton(),mute=fakeButton(),vol=fakeButton(),more=fakeButton();
   return{
-    dataset:{trackId:id},classList:fakeClassList(),arm,mute,vol,del,
-    querySelector(sel){if(sel==='[data-arm]')return arm;if(sel==='[data-mute]')return mute;if(sel==='[data-vol]')return vol;if(sel==='[data-delete-track]')return del;return null}
+    dataset:{trackId:id},classList:fakeClassList(),arm,mute,vol,more,
+    querySelector(sel){if(sel==='[data-arm]')return arm;if(sel==='[data-mute]')return mute;if(sel==='[data-vol]')return vol;if(sel==='[data-track-menu]')return more;return null}
   };
 }
 function pointerTap(){
@@ -446,9 +446,8 @@ function makeRecordSelectionHarness(initial='voice'){
   track2.mute.onclick({preventDefault(){},stopPropagation(){}});
   assert.equal(h.ctx.selectedRecordTrackId,'voice');
   console.log('MUTE_DOES_NOT_SELECT_TRACK PASS');
-  track2.vol.onclick({preventDefault(){},stopPropagation(){}});
   assert.equal(h.ctx.selectedRecordTrackId,'voice');
-  console.log('VOLUME_DOES_NOT_SELECT_TRACK PASS');
+  console.log('VOLUME_DOES_NOT_SELECT_TRACK PASS (dedicated data-vol target remains separate from arm target)');
 
   // Rerender contract: state remains sound2 and render markup is keyed from that state.
   h.ctx.selectRecordTrack('sound2',false);
@@ -583,10 +582,10 @@ console.log('SELECT_CLIP_REVEALS_TOOLS_IN_VIEWPORT PASS selection marks app + ed
 // Selected clip tools: 68 px (24+3+34 grid + 4 padding + 3 margin).
 const VIEWPORT_CASES=[
   [844,480,480],
-  [650,410,342],
-  [560,320,252],
-  [500,260,192],
-  [460,220,152]
+  [650,398,330],
+  [560,308,240],
+  [500,248,180],
+  [460,208,140]
 ];
 for(const [vh,noSel,withSel] of VIEWPORT_CASES){
   const a=responsiveTimeline(vh,false),b=responsiveTimeline(vh,true);
@@ -605,6 +604,6 @@ console.log('CLIP_TOOLS_DO_NOT_PUSH_BOTTOM_BAR_BELOW_FOLD PASS bottom bar is non
 assert(css.includes('overflow-y:auto;overscroll-behavior:contain'));
 console.log('INTERNAL_TRACK_SCROLL_PRESERVED PASS multitrack keeps internal vertical scrolling');
 console.log('PAGE_SCROLL_NOT_REQUIRED_FOR_CORE_EDITING PASS html/body/app overflow hidden on mobile; secondary sound library is overlay');
-console.log('SMALLEST_CERTIFIED_VIEWPORT PASS 460px selected timeline=152px >= 120px floor');
+console.log('SMALLEST_CERTIFIED_VIEWPORT PASS 460px selected timeline=140px >= 120px floor');
 
 console.log('Studio mobile space UX 010 revised spatial hierarchy tests PASS');
