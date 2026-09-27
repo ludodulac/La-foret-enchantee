@@ -11,7 +11,7 @@ const dragSource=section('function dragLaneAt','function trimGesture');
 const trimSource=section('function trimGesture','function chooseFile');
 const renderSource=section('function render(){','function dragLaneAt');
 const playbackSource010=section('function startPreparedPlayback','async function play(');
-const recordTrackSelectionSource=section('function recordTrackIdFor','function syncStudioViewport');
+const recordTrackSelectionSource=section('function recordTrackIdFor',"$('#track-volume-slider').oninput");
 
 // Reference viewport required by mission.
 const VIEWPORT_W=390,VIEWPORT_H=844;
