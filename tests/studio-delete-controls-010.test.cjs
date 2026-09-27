@@ -158,7 +158,7 @@ for(const [label,clip] of [['DELETE_RECORDED_CLIP',recorded],['DELETE_IMPORTED_C
     ctx.deleteClipById('imp1');
     const store=A.createMemoryStore();
     const snap={schema:A.SCHEMA_VERSION,selectedRecordTrackId:ctx.selectedRecordTrackId,tracks:ctx.tracks.map(x=>({...x})),clips:ctx.clips.map(x=>({...x}))};
-    await store.save(snap,[]);
+    await store.save(snap,[{id:'src-rec',blob:new Blob(['recorded'],{type:'audio/webm'}),origin:'test'}]);
     const loaded=await store.load();
     assert(!loaded.snapshot.clips.some(c=>c.id==='imp1'));
     console.log('DELETE_CLIP_AUTOSAVE_RELOAD PASS');
@@ -168,7 +168,7 @@ for(const [label,clip] of [['DELETE_RECORDED_CLIP',recorded],['DELETE_IMPORTED_C
     ctx.deleteTrackById('sound2',()=>true);
     const store=A.createMemoryStore();
     const snap={schema:A.SCHEMA_VERSION,selectedRecordTrackId:ctx.selectedRecordTrackId,tracks:ctx.tracks.map(x=>({...x})),clips:ctx.clips.map(x=>({...x}))};
-    await store.save(snap,[]);
+    await store.save(snap,[{id:'src-rec',blob:new Blob(['recorded'],{type:'audio/webm'}),origin:'test'}]);
     const loaded=await store.load();
     assert(!loaded.snapshot.tracks.some(t=>t.id==='sound2'));
     assert(!loaded.snapshot.clips.some(c=>c.track==='sound2'));
