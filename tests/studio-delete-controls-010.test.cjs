@@ -15,7 +15,7 @@ console.log('CLIP_DELETE_UI_ACCESS PASS selected clip context exposes SUPPRIMER'
 
 function makeClassList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),toggle(x,on){on?s.add(x):s.delete(x)},contains:x=>s.has(x)}}
 function makeHarness({tracks,clips,armed,selectedId=null,confirmResult=true,sources=[]}){
-  const undo=[],redo=[];
+  const undo=[],redo=[],msgs=[];
   const editor={classList:makeClassList()};
   const controls=[];
   const localSources=new Map(sources.map(x=>[x.id,x]));
@@ -29,12 +29,12 @@ function makeHarness({tracks,clips,armed,selectedId=null,confirmResult=true,sour
     undo,redo,
     liveDuration:0,
     localSources,
-    renderCount:0,dirtyCount:0,msgs:[],
+    renderCount:0,dirtyCount:0,msgs,
     document:{querySelectorAll:sel=>sel==='.track-control'?controls:[]},
     $:sel=>sel==='#editor'?editor:sel==='#undo'||sel==='#redo'||sel==='#cut'||sel==='#duplicate'||sel==='#clipmute'||sel==='#del'||sel==='#clipvol'?{disabled:false}:sel==='#clip-context-name'?{textContent:''}:editor,
     render(){this.renderCount++},
     markProjectDirty(){this.dirtyCount++},
-    msg(x){this.msgs.push(x)}
+    msg:x=>msgs.push(x)
   };
   vm.createContext(ctx);
   vm.runInContext(stateFns,ctx);
