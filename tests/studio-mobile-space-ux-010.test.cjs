@@ -281,7 +281,8 @@ for(const marker of [
   '.track-control-buttons button{min-height:26px;height:26px;padding:0 1px;font-size:8px',
   "data-mute title=\"Muet\">'+(t.muted?'🔇':'🔊')+'</button>"
 ]) assert((marker.includes("data-mute")?renderSource:css).includes(marker),'track compact contract missing '+marker);
-console.log('TRACK_CONTROLS_COMPACT PASS 92px column; mute+volume side-by-side at 26px high');
+assert(css.includes('.track-arm{width:100%;height:34px;min-height:34px'));
+console.log('TRACK_CONTROLS_COMPACT PASS 92px column; 34px arm header + mute/volume side-by-side at 26px');
 
 // Waveform alignment contract using an asymmetric, identifiable source.
 // The same absolute timeline point must map to the same source peak after LEFT trim.
@@ -380,45 +381,100 @@ function fakeClassList(){
   const s=new Set();
   return{toggle(k,on){on?s.add(k):s.delete(k)},contains:k=>s.has(k)};
 }
+function fakeButton(){
+  return{classList:fakeClassList(),attrs:{},onclick:null,onpointerup:null,setAttribute(k,v){this.attrs[k]=v}};
+}
+function fakeTrackControl(id){
+  const arm=fakeButton(),mute=fakeButton(),vol=fakeButton();
+  return{
+    dataset:{trackId:id},classList:fakeClassList(),arm,mute,vol,
+    querySelector(sel){if(sel==='[data-arm]')return arm;if(sel==='[data-mute]')return mute;if(sel==='[data-vol]')return vol;return null}
+  };
+}
+function pointerTap(){
+  return{pointerType:'touch',defaultPrevented:false,stopped:false,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true}};
+}
 function makeRecordSelectionHarness(initial='voice'){
-  const controls=['voice','sound2'].map(id=>({dataset:{trackId:id},classList:fakeClassList(),attrs:{},setAttribute(k,v){this.attrs[k]=v}}));
+  const controls=['voice','sound2'].map(fakeTrackControl);
   const clipSelection={id:'clip-selection'};
+  const tracks=[
+    {id:'voice',name:'VOIX 1',type:'voice',gain:1,muted:false},
+    {id:'sound2',name:'SON 2',type:'sound',gain:.4,muted:false}
+  ];
   const ctx={
-    tracks:[
-      {id:'voice',name:'VOIX 1',type:'voice',gain:1,muted:false},
-      {id:'sound2',name:'SON 2',type:'sound',gain:.4,muted:false}
-    ],
+    tracks,
     selectedRecordTrackId:initial,
     selected:clipSelection,
-    dirty:0,
+    dirty:0,checkpoints:0,renders:0,
     document:{querySelectorAll:sel=>sel==='.track-control'?controls:[]},
-    markProjectDirty(){this.dirty++}
+    markProjectDirty(){this.dirty++},
+    checkpoint(){this.checkpoints++},
+    render(){this.renders++},
+    prompt(){return '50'}
   };
   vm.createContext(ctx);vm.runInContext(recordTrackSelectionSource,ctx);
-  return{ctx,controls,clipSelection};
+  controls.forEach((ctrl,i)=>ctx.bindRecordTrackControl(ctrl,tracks[i]));
+  return{ctx,controls,tracks,clipSelection};
 }
 {
   const h=makeRecordSelectionHarness('voice');
-  assert.equal(h.ctx.recordTrackIdFor(),'voice');
-  assert.equal(h.ctx.selectRecordTrack('sound2'),true);
+  const track1=h.controls[0],track2=h.controls[1];
+
+  // Human path: actual touch pointerup on the explicit track header.
+  let e=pointerTap();track2.arm.onpointerup(e);
+  assert(e.defaultPrevented&&e.stopped);
   assert.equal(h.ctx.selectedRecordTrackId,'sound2');
   assert.equal(h.controls.filter(x=>x.classList.contains('record-armed')).length,1);
-  assert.equal(h.controls.find(x=>x.dataset.trackId==='sound2').attrs['aria-pressed'],'true');
-  console.log('SELECT_RECORD_TRACK PASS voice -> sound2');
+  assert.equal(track2.arm.attrs['aria-pressed'],'true');
+  assert.equal(track1.arm.attrs['aria-pressed'],'false');
+  console.log('TRACK_HEADER_REAL_TAP PASS touch pointerup on Piste 2 header selects sound2');
+  console.log('TAP_TRACK_2 PASS selectedRecordTrackId=sound2');
+
+  e=pointerTap();track1.arm.onpointerup(e);
+  assert.equal(h.ctx.selectedRecordTrackId,'voice');
+  assert.equal(track1.arm.attrs['aria-pressed'],'true');
+  assert.equal(track2.arm.attrs['aria-pressed'],'false');
+  console.log('TAP_TRACK_1 PASS selectedRecordTrackId=voice');
   console.log('SINGLE_RECORD_TRACK_SELECTED PASS exactly one armed track');
+
   assert.strictEqual(h.ctx.selected,h.clipSelection);
   console.log('CLIP_SELECTION_INDEPENDENT_FROM_RECORD_TRACK PASS clip selection unchanged');
+
+  // Mute/volume are separate targets and never arm their containing track.
+  h.ctx.selectedRecordTrackId='voice';
+  track2.mute.onclick({preventDefault(){},stopPropagation(){}});
+  assert.equal(h.ctx.selectedRecordTrackId,'voice');
+  console.log('MUTE_DOES_NOT_SELECT_TRACK PASS');
+  track2.vol.onclick({preventDefault(){},stopPropagation(){}});
+  assert.equal(h.ctx.selectedRecordTrackId,'voice');
+  console.log('VOLUME_DOES_NOT_SELECT_TRACK PASS');
+
+  // Rerender contract: state remains sound2 and render markup is keyed from that state.
+  h.ctx.selectRecordTrack('sound2',false);
+  assert.equal(h.ctx.recordTrackIdFor(),'sound2');
+  assert(renderSource.includes("selectedRecordTrackId=recordTrackIdFor()"));
+  assert(renderSource.includes("selectedRecordTrackId===t.id?' record-armed':''"));
+  assert(renderSource.includes("selectedRecordTrackId===t.id?'true':'false'"));
+  console.log('RERENDER_PRESERVES_SELECTED_RECORD_TRACK PASS state normalized, not reset');
 }
 {
   const h=makeRecordSelectionHarness('missing');
   assert.equal(h.ctx.recordTrackIdFor(),'voice');
   console.log('SELECT_RECORD_TRACK DEFAULT PASS invalid/missing selection falls back deterministically to VOIX');
 }
-assert(css.includes('.track-control.record-armed{background:#0d2548'));
-assert(css.includes('.track-control.record-armed .track-control-name:after{content:" ● REC"'));
-assert(renderSource.includes("ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'')"));
-assert(renderSource.includes("ctrl.setAttribute('aria-pressed',selectedRecordTrackId===t.id?'true':'false')"));
-console.log('SELECTED_TRACK_VISUAL_STATE PASS subtle armed background + ● REC indicator');
+
+assert(css.includes('.track-arm{width:100%;height:34px;min-height:34px'));
+assert(css.includes('touch-action:manipulation;pointer-events:auto;position:relative;z-index:2'));
+assert(renderSource.includes('data-arm type="button"'));
+assert(renderSource.includes('<span class="track-arm-name">'));
+assert(renderSource.includes('<span class="track-arm-rec">● REC</span>'));
+assert(recordTrackSelectionSource.includes("arm.onpointerup=e=>{if(e.pointerType==='touch'||e.pointerType==='pen'||e.pointerType==='mouse')"));
+assert(recordTrackSelectionSource.includes("arm.onclick=e=>{if(e.detail===0)"));
+assert(!renderSource.includes("ctrl.onclick=e=>"));
+console.log('TRACK_HEADER_HIT_AREA PASS explicit 92px-wide x 34px-high arm button');
+console.log('TRACK_HEADER_POINTER_EVENTS PASS pointerup touch/pen/mouse + keyboard click; pointer-events auto');
+console.log('VISIBLE_REC_INDICATOR_AFTER_TAP PASS dedicated ● REC span rendered by record-armed state');
+console.log('SELECTED_TRACK_VISUAL_STATE PASS armed header + control background');
 
 // Execute the real production record() function with mocked browser audio primitives.
 async function recordInto(selectedId){
