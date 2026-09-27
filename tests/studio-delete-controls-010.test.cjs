@@ -182,11 +182,15 @@ for(const [label,clip] of [['DELETE_RECORDED_CLIP',recorded],['DELETE_IMPORTED_C
   }
   console.log('ZERO_AUDIO_REENCODE_ON_DELETE PASS no audio write/decode/PCM scan/WAV/source deletion in delete paths');
 
-  // UI is compact: track delete is a third 26px control, not a large lane CTA.
-  assert(renderSource.includes('data-delete-track title="Supprimer la piste"'));
-  assert(html.includes('.track-control-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}'));
-  assert(html.includes('.track-control-buttons button{min-height:26px;height:26px'));
-  console.log('TRACK_DELETE_UI_COMPACT PASS 26px compact red trash in track control row');
+  // Delete is discoverable but separated from always-visible MUTE/VOLUME.
+  assert(renderSource.includes('data-track-menu type="button"'));
+  assert(html.includes('id="track-delete-action"'));
+  assert(html.includes('🗑 SUPPRIMER LA PISTE'));
+  assert(html.includes('.track-control-buttons{display:grid;grid-template-columns:1fr 1fr;gap:2px}'));
+  assert(html.includes('.track-control-buttons button{min-height:44px;height:44px'));
+  assert(!renderSource.includes('data-delete-track'));
+  console.log('TRACK_DELETE_NOT_ADJACENT_DESTRUCTIVE_TINY_BUTTON PASS');
+  console.log('TRACK_DELETE_DISCOVERABLE PASS via visible ⋯ track menu -> SUPPRIMER LA PISTE');
 
   console.log('Studio delete controls 010 tests PASS');
 })().catch(e=>{console.error(e);process.exit(1)});
