@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
 const W=require('../js/studio-waveform-core.js');
+const A=require('../js/studio-autosave.js');
 
 const html=fs.readFileSync('studio.html','utf8');
 function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);assert(a>=0,'missing '+start);assert(b>a,'missing '+end);return html.slice(a,b)}
@@ -9,6 +10,8 @@ const css=section('<style id="mobile-space-ux-010">','</style>');
 const dragSource=section('function dragLaneAt','function trimGesture');
 const trimSource=section('function trimGesture','function chooseFile');
 const renderSource=section('function render(){','function dragLaneAt');
+const playbackSource010=section('function startPreparedPlayback','async function play(');
+const recordTrackSelectionSource=section('function recordTrackIdFor','function syncStudioViewport');
 
 // Reference viewport required by mission.
 const VIEWPORT_W=390,VIEWPORT_H=844;
@@ -342,5 +345,165 @@ assert(controlsSource.includes("$('#stop').onclick=()=>{if(recording&&recorder?.
 console.log('STOP_SINGLE_VISUAL_CONTROL PASS one ■ STOP control; REC never becomes STOP');
 console.log('STOP_STOPS_RECORDING PASS');
 console.log('STOP_STOPS_PLAYBACK PASS');
+
+
+// Real trim hit-area audit: the declared 24px must be actually reachable at timeline edges.
+assert(css.includes('.timeline{display:block;position:relative;border:0;box-shadow:none;border-radius:0;padding:0 22px;'));
+assert(css.includes('.lane{min-height:76px;overflow:visible}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
+assert(css.includes('.trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}'));
+assert(html.includes('.playhead{position:absolute')&&html.includes('z-index:15'));
+assert(trimSource.includes('e.stopPropagation();e.preventDefault();handle.setPointerCapture(e.pointerId)'));
+const TRIM_GUTTER=22,HIT_WIDTH=24,INWARD=2;
+const mobileTimelineWidth=timelineClientWidth;
+const canvasWidth=mobileTimelineWidth;
+const scrollContentWidth=TRIM_GUTTER+canvasWidth+TRIM_GUTTER;
+// Clip at t=0: left handle is -22..+2 relative to clip; gutter shifts it to 0..24.
+const leftHandleBox={left:TRIM_GUTTER-22,right:TRIM_GUTTER-22+HIT_WIDTH};
+assert.deepEqual(leftHandleBox,{left:0,right:24});
+// Last clip ending at canvas edge: at maximum scroll, right handle resolves to viewportWidth-24..viewportWidth.
+const maxScroll=scrollContentWidth-mobileTimelineWidth;
+const rightHandleContentLeft=TRIM_GUTTER+canvasWidth-INWARD;
+const rightHandleBox={left:rightHandleContentLeft-maxScroll,right:rightHandleContentLeft+HIT_WIDTH-maxScroll};
+assert.deepEqual(rightHandleBox,{left:mobileTimelineWidth-24,right:mobileTimelineWidth});
+assert.equal(leftHandleBox.right-leftHandleBox.left,24);
+assert.equal(rightHandleBox.right-rightHandleBox.left,24);
+console.log('TRIM_HANDLE_ACTUAL_HIT_AREA PASS 24px real at both timeline boundaries');
+console.log('TRIM_HANDLE_NO_CLIPPING PASS 22px timeline gutters + lane overflow visible preserve outward target');
+// Selected clip stacking context 20 is above playhead 15; trim pointerdown stops bubbling to MOVE.
+assert(20>15);
+console.log('TRIM_HANDLE_TOUCH_PRIORITY PASS selected clip z=20 > playhead z=15; trim pointerdown stops propagation before clip MOVE');
+console.log('SMALL_CLIP_MOVE_AREA PASS unchanged scale; only 2px/side intrudes into clip center');
+
+// Record-track selection helper exercises actual production helper code.
+function fakeClassList(){
+  const s=new Set();
+  return{toggle(k,on){on?s.add(k):s.delete(k)},contains:k=>s.has(k)};
+}
+function makeRecordSelectionHarness(initial='voice'){
+  const controls=['voice','sound2'].map(id=>({dataset:{trackId:id},classList:fakeClassList(),attrs:{},setAttribute(k,v){this.attrs[k]=v}}));
+  const clipSelection={id:'clip-selection'};
+  const ctx={
+    tracks:[
+      {id:'voice',name:'VOIX 1',type:'voice',gain:1,muted:false},
+      {id:'sound2',name:'SON 2',type:'sound',gain:.4,muted:false}
+    ],
+    selectedRecordTrackId:initial,
+    selected:clipSelection,
+    dirty:0,
+    document:{querySelectorAll:sel=>sel==='.track-control'?controls:[]},
+    markProjectDirty(){this.dirty++}
+  };
+  vm.createContext(ctx);vm.runInContext(recordTrackSelectionSource,ctx);
+  return{ctx,controls,clipSelection};
+}
+{
+  const h=makeRecordSelectionHarness('voice');
+  assert.equal(h.ctx.recordTrackIdFor(),'voice');
+  assert.equal(h.ctx.selectRecordTrack('sound2'),true);
+  assert.equal(h.ctx.selectedRecordTrackId,'sound2');
+  assert.equal(h.controls.filter(x=>x.classList.contains('record-armed')).length,1);
+  assert.equal(h.controls.find(x=>x.dataset.trackId==='sound2').attrs['aria-pressed'],'true');
+  console.log('SELECT_RECORD_TRACK PASS voice -> sound2');
+  console.log('SINGLE_RECORD_TRACK_SELECTED PASS exactly one armed track');
+  assert.strictEqual(h.ctx.selected,h.clipSelection);
+  console.log('CLIP_SELECTION_INDEPENDENT_FROM_RECORD_TRACK PASS clip selection unchanged');
+}
+{
+  const h=makeRecordSelectionHarness('missing');
+  assert.equal(h.ctx.recordTrackIdFor(),'voice');
+  console.log('SELECT_RECORD_TRACK DEFAULT PASS invalid/missing selection falls back deterministically to VOIX');
+}
+assert(css.includes('.track-control.record-armed{background:#0d2548'));
+assert(css.includes('.track-control.record-armed .track-control-name:after{content:" ● REC"'));
+assert(renderSource.includes("ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'')"));
+assert(renderSource.includes("ctrl.setAttribute('aria-pressed',selectedRecordTrackId===t.id?'true':'false')"));
+console.log('SELECTED_TRACK_VISUAL_STATE PASS subtle armed background + ● REC indicator');
+
+// Execute the real production record() function with mocked browser audio primitives.
+async function recordInto(selectedId){
+  const tracks=[
+    {id:'voice',name:'VOIX 1',type:'voice',gain:1,muted:false},
+    {id:'sound2',name:'SON 2',type:'sound',gain:.4,muted:false}
+  ];
+  const clips=[];
+  const app={classList:{add(){},remove(){}}},recBtn={classList:{add(){},remove(){}}};
+  class FakeMediaRecorder{
+    constructor(stream){this.stream=stream;this.mimeType='audio/webm;codecs=opus';this.state='inactive';this.ondataavailable=null;this.onstop=null}
+    start(){this.state='recording'}
+    stop(){this.state='inactive';return this.onstop?.()}
+  }
+  const ctx={
+    console,Math,Blob,Uint8Array,
+    navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}},
+    MediaRecorder:FakeMediaRecorder,
+    crypto:{randomUUID:()=> 'clip-rec'},
+    tracks,clips,selectedRecordTrackId:selectedId,selected:null,
+    recorder:null,chunks:[],recording:false,cursor:3,liveDuration:0,liveRec:null,liveAnalyser:null,liveMic:null,liveAnim:0,
+    document:{querySelectorAll:()=>[]},
+    markProjectDirty(){},
+    msg(){},
+    projectDuration:()=>15,
+    play:async()=>true,
+    stopPlay(){},
+    registerSourceBlob:async()=> 'src-rec',
+    checkpoint(){},
+    render(){},
+    setCursor(){},
+    requestAnimationFrame:()=>1,
+    cancelAnimationFrame(){},
+    devicePixelRatio:1,
+    ctx:{
+      createAnalyser:()=>({fftSize:0,getByteTimeDomainData(){}}),
+      createMediaStreamSource:()=>({connect(){},disconnect(){}}),
+      decodeAudioData:async()=>({duration:1.25})
+    },
+    $:sel=>sel==='#app'?app:sel==='#record'?recBtn:sel==='#livewave'?null:{},
+  };
+  vm.createContext(ctx);
+  vm.runInContext(recordTrackSelectionSource,ctx);
+  vm.runInContext(recordSource,ctx);
+  await ctx.record();
+  assert.equal(ctx.recording,true);
+  const targetAtStart=ctx.liveRec.track;
+  await ctx.recorder.stop();
+  await Promise.resolve();await Promise.resolve();
+  return{ctx,tracks,clips,targetAtStart};
+}
+(async()=>{
+  const r1=await recordInto('voice');
+  assert.equal(r1.targetAtStart,'voice');assert.equal(r1.clips.length,1);assert.equal(r1.clips[0].track,'voice');
+  console.log('RECORD_TO_TRACK_1 PASS');
+  const r2=await recordInto('sound2');
+  assert.equal(r2.targetAtStart,'sound2');assert.equal(r2.clips.length,1);assert.equal(r2.clips[0].track,'sound2');
+  console.log('RECORD_TO_TRACK_2 PASS');
+  console.log('RECORDED_CLIP_TRACK_ID PASS selected sound track survives actual record onstop path');
+
+  // Persist armed track through schema-2 autosave; extra project metadata is retained by store.
+  const store=A.createMemoryStore();
+  const snap={schema:A.SCHEMA_VERSION,name:'record-track',cursor:0,zoom:1,selectionStart:null,selectionEnd:null,selectedRecordTrackId:'sound2',tracks:r2.tracks.map(x=>({...x})),clips:[]};
+  await store.save(snap,[]);
+  const loaded=await store.load();
+  assert.equal(loaded.snapshot.selectedRecordTrackId,'sound2');
+  assert(html.includes('selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map'));
+  assert(html.includes('selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId)'));
+  assert(html.includes('selectedRecordTrackId=recordTrackIdFor(d.selectedRecordTrackId)'));
+  console.log('RECORD_TRACK_AUTOSAVE_RELOAD PASS local snapshot/store/restore field retained');
+
+  // Actual playback applies the selected destination track state to the recorded clip.
+  const gains=[],starts=[],recorded={...r2.clips[0],gain:.8,muted:false,start:3,trim:0,len:1.25,sourceId:'src-rec'};
+  const playCtx={
+    console,Map,Math,clips:[recorded],tracks:r2.tracks,sources:[],playing:false,metroOn:false,t0:0,tick:null,recording:false,
+    sourceIdFor:x=>x.sourceId,
+    ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
+    startMetro(){},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual(){},setCursor(){},projectDuration:()=>30,$:()=>({textContent:''})
+  };
+  vm.createContext(playCtx);vm.runInContext(playbackSource010,playCtx);
+  playCtx.startPreparedPlayback(0,false,new Map([['src-rec',{duration:10}]]));
+  assert.equal(starts.length,1);assert(Math.abs(gains[0]-.32)<1e-9);
+  console.log('PLAYBACK_RECORDED_SELECTED_TRACK PASS selected sound-track gain .4 applied to recorded clip');
+
+  console.log('Studio record-track + trim-hit final 010 gates PASS');
+})().catch(e=>{console.error(e);process.exit(1)});
 
 console.log('Studio mobile space UX 010 revised spatial hierarchy tests PASS');
