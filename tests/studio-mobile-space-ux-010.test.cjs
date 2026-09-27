@@ -70,7 +70,7 @@ assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
 assert(css.includes('.trimhandle.left{left:-22px}'));
 assert(css.includes('.trimhandle.right{right:-22px}'));
 assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
-assert(css.includes('.clip.sel{overflow:visible}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
 console.log('TRIM_VISUAL_WIDTH PASS visual=5px');
 console.log('TRIM_TOUCH_TARGET PASS touchTarget=24px; outward=22px; inward=2px/side');
 
