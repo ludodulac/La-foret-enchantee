@@ -543,7 +543,7 @@ async function recordInto(selectedId){
   assert.equal(loaded.snapshot.selectedRecordTrackId,'sound2');
   assert(html.includes('selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map'));
   assert(html.includes('selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId)'));
-  assert(html.includes('selectedRecordTrackId=recordTrackIdFor(d.selectedRecordTrackId)'));
+  assert(html.includes('selectedRecordTrackId=recordTrackIdFor(snap.selectedRecordTrackId)'));
   console.log('RECORD_TRACK_AUTOSAVE_RELOAD PASS local snapshot/store/restore field retained');
 
   // Actual playback applies the selected destination track state to the recorded clip.
