@@ -89,7 +89,7 @@ function snapshot(name,sourceId='src-shared',clipId='clip'){
   // Shared source is never deleted/mutated; project B remains exactly reopenable.
   const reopenedB=await store.openProject('project-b');
   assert.equal(reopenedB.snapshot.clips[0].sourceId,'src-shared');
-  assert.strictEqual(reopenedB.audio.get('src-shared'),sourceBefore);
+  assert.strictEqual(reopenedB.audio.get('src-shared'),sourceBefore.blob);
   assert.strictEqual(afterDelete.sources.get('src-shared'),sourceBefore);
   console.log('SHARED_SOURCE_PROJECT_A_B = PASS');
 
