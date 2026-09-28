@@ -114,13 +114,14 @@ function snapshot(name,sourceId='src-shared',clipId='clip'){
     "await renderLocalProjectLibrary()"
   ])assert(commitSrc.includes(marker),'missing current-delete safety '+marker);
 
-  // Delete transaction intentionally excludes source/audio stores.
-  const deleteStart=lib.indexOf('async deleteProject(projectId)'),deleteEnd=lib.indexOf('async saveWaveform',deleteStart),deleteSrc=lib.slice(deleteStart,deleteEnd);
-  assert(deleteSrc.includes("['meta','projects',LIBRARY_STORE]"));
-  assert(!/sources|waveforms|blob|audio|sourceId|decodeAudioData|wav\(|AudioBuffer|arrayBuffer/.test(deleteSrc));
+  // 011D supersedes the temporary "never delete Blob" rule with reference-safe orphan GC.
+  const deleteStart=lib.indexOf('async deleteProject(projectId)'),deleteEnd=lib.indexOf('async getLocalStorageStats',deleteStart),deleteSrc=lib.slice(deleteStart,deleteEnd);
+  assert(deleteSrc.includes("['meta','projects','sources','waveforms',LIBRARY_STORE]"));
+  assert(deleteSrc.includes('latestGeneration'));
+  assert(deleteSrc.includes('if(!referenced.has(id)){src.delete(id);w.delete(id)}'));
+  assert(!/decodeAudioData|wav\(|AudioBuffer|arrayBuffer\(|registerSourceBlob/.test(deleteSrc));
   assert.equal(store._metrics().audioWrites,audioWritesBefore);
-  assert.strictEqual(store._state().sources.get('src-shared'),sourceBefore);
-  console.log('DELETE_PROJECT_AUDIO_BLOB_DELETES = 0');
+  console.log('DELETE_PROJECT_SHARED_AUDIO_PRESERVED = PASS');
   console.log('DELETE_PROJECT_AUDIO_REENCODES = 0');
   console.log('DELETE_PROJECT_SOURCE_ID_MUTATIONS = 0');
 
