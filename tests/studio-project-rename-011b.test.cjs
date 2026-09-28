@@ -91,9 +91,11 @@ const clone=x=>JSON.parse(JSON.stringify(x));
   assert(html.includes("currentProjectName=next.name;syncCurrentProjectName()"));
   console.log('RENAME_VISIBLE_EDITOR = PASS');
 
-  // Card UX: visible ⋯ button, explicit rename dialog, no card-open collision.
+  // Card UX: visible ⋯ menu then explicit RENOMMER action; no card-open collision.
   assert(html.includes("more.textContent='⋯'"));
-  assert(html.includes("more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectRename(p)}"));
+  assert(html.includes("more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectOptions(p)}"));
+  assert(html.includes('id="project-option-rename"'));
+  assert(html.includes("$('#project-option-rename').onclick=()=>{let p=projectOptionsTarget;if(p)openProjectRename(p)}"));
   assert(html.includes('RENOMMER LE PROJET'));
   assert(html.includes('id="project-rename-save"'));
   assert(html.includes("$('#project-rename-save').onclick=commitProjectRename"));
