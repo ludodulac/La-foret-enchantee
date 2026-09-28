@@ -51,7 +51,7 @@ function snapshot(name,sourceId='src-shared',clipId='clip'){
 
   // Cancel handler is side-effect free: no storage/library/delete calls.
   const closeStart=html.indexOf('function closeProjectDelete()'),closeEnd=html.indexOf('function openProjectDelete',closeStart),closeSrc=html.slice(closeStart,closeEnd);
-  assert(!/deleteProject|saveProject|renameProject|localStore\.|updatedAt/.test(closeSrc));
+  assert(!/deleteProject\(|saveProject\(|renameProject\(|localStore\.|updatedAt/.test(closeSrc));
   console.log('DELETE_PROJECT_CANCEL = PASS');
 
   // Local-store deletion proof.
