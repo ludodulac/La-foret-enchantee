@@ -69,6 +69,7 @@ function snap(name,trackId='voice',clip=null){
   await store.saveProject('project-a',aEdit,[]);
   assert.equal(store._metrics().audioWrites,writesBeforeA);
   assert.equal(store._metrics().waveformWrites,wavesBeforeA);
+  assert.equal((await store.listProjects())[0].id,'project-a','edited A must become most recently modified');
   console.log('EDIT_PROJECT_A PASS');
   console.log('AUTOSAVE_PROJECT_A PASS');
 
@@ -78,7 +79,9 @@ function snap(name,trackId='voice',clip=null){
   assert.equal(b.snapshot.tracks[0].gain,1);
   console.log('OPEN_PROJECT_B PASS');
   let bEdit=copy(b.snapshot);bEdit.cursor=23;bEdit.clips[0].start=17.2;bEdit.clips[0].muted=false;
+  await new Promise(r=>setTimeout(r,2));
   await store.saveProject('project-b',bEdit,[]);
+  assert.equal((await store.listProjects())[0].id,'project-b','edited B must become most recently modified');
   console.log('EDIT_PROJECT_B PASS');
   console.log('AUTOSAVE_PROJECT_B PASS');
 
@@ -97,10 +100,9 @@ function snap(name,trackId='voice',clip=null){
   console.log('REOPEN_PROJECT_B_EXACT_STATE PASS');
   console.log('PROJECT_A_B_ISOLATION PASS');
 
-  // Editing A makes it the most recently modified project without changing B.
-  const listAfter=await store.listProjects();
-  assert.equal(listAfter[0].id,'project-b'===listAfter[0].id?'project-b':listAfter[0].id); // ordering is timestamp-based and both saves are current-clock.
+  // B remains independent after A/B edits and is still exactly recoverable.
   assert.equal((await store.openProject('project-b')).snapshot.clips[0].start,17.2);
+  console.log('PROJECTS_SORT_UPDATED_DESC PASS edited project rises to top');
 
   // Return flow flushes local metadata, closes current project and never asks "Enregistrer ?".
   const returnStart=html.indexOf('async function returnToProjectLibrary()'),returnEnd=html.indexOf('async function initializeProjectLibraryEntry()',returnStart),returnSource=html.slice(returnStart,returnEnd);
