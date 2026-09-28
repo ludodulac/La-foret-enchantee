@@ -156,17 +156,17 @@ assert(positions.bottom>positions.context);
 assert(html.includes("$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView"));
 console.log('BOTTOM_BAR_ACCESS PASS IMPORTER / SONS / +PISTE / PROJET / OUTILS');
 
-// Project menu reuses historical handlers.
+// Project menu keeps editor navigation without reintroducing manual save.
 for(const marker of [
- "$('#save-project').onclick=saveProject",
- "$('#projects').onclick=showProjects",
- "$('#download-project').onclick=downloadProjectCopy",
- "$('#new-local-project').onclick=()=>clearLocalWork(true)",
- "$('#clear-local-save').onclick=()=>clearLocalWork(false)"
+ "$('#editor-projects').onclick=returnToProjectLibrary",
+ "$('#editor-new-project').onclick=createLocalProject",
+ "$('#download-project').onclick=downloadProjectCopy"
 ])assert(html.includes(marker),'project handler changed '+marker);
+assert(!html.includes('id="save-project"'));
+assert(!html.includes('id="projects"'));
 assert(css.includes('.projectbar.menu-open{display:grid}'));
 console.log('PROJECT_MENU PASS');
-console.log('PROJECT_ACTION_HANDLERS_RETAINED PASS');
+console.log('PROJECT_ACTION_HANDLERS_RETAINED PASS local project navigation + advanced copy; no manual save');
 
 // Tools menu retains selection + metronome.
 for(const marker of ["$('#sel-start').onclick","$('#sel-end').onclick","$('#sel-clear').onclick","$('#export-selection').onclick","$('#metro').onclick","$('#bpm-minus').onclick","$('#bpm-plus').onclick"])assert(html.includes(marker),'tools handler changed '+marker);
