@@ -99,8 +99,10 @@ async function inspect(blob){
   assert(studio.includes("a.download=x.filename"));
   assert(studio.includes("$('#export-download-ready').onclick=downloadPreparedExport"));
   assert(studio.includes("openExportDestination({blob,wavInfo,filename,diagnostic,requestedStart,requestedEnd})"));
-  assert.equal((studio.match(/StudioExportCore\.encodeWavCooperative\(/g)||[]).length,1);
+  assert.equal((studio.match(/StudioExportCore\.streamWavCooperative\(/g)||[]).length,1);
+  assert.equal((studio.match(/StudioExportCore\.encodeWavCooperative\(/g)||[]).length,0);
   console.log('DOWNLOAD_EXPORT_STILL_WORKS = PASS');
+  console.log('FOREST_EXPORT_PIPELINE_STILL_WORKS = PASS');
 
   // One publication at a time; repeated taps return before any second call.
   assert(studio.includes('if(forestPublishBusy||!pendingExport)return'));
