@@ -150,13 +150,18 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 .local-project-card b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .local-project-card small{font-size:10px;opacity:.8}
 .local-project-more{width:46px;min-height:82px;padding:0!important;font-size:20px!important}
-.project-rename-panel{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;padding:12px;background:rgba(1,5,12,.55)}
-.project-rename-panel[hidden]{display:none!important}
-.project-rename-box{width:min(100%,520px);padding:12px;background:#07111df8;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);border-radius:14px}
-.project-rename-box h2{margin:0 0 8px;font-size:13px}
+.project-dialog-panel{position:fixed;left:0;right:0;top:var(--studio-vv-top,0px);height:var(--studio-vh,100dvh);z-index:80;display:flex;align-items:center;justify-content:center;padding:12px;background:rgba(1,5,12,.55);overflow:auto;overscroll-behavior:contain}
+.project-dialog-panel[hidden]{display:none!important}
+.project-dialog-box{width:min(100%,520px);max-height:calc(var(--studio-vh,100dvh) - 24px);overflow:auto;padding:12px;background:#07111df8;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);border-radius:14px}
+.project-dialog-box h2{margin:0 0 8px;font-size:13px}
 .project-rename-box input{width:100%;height:46px;padding:0 10px;border:2px solid #426b98;border-radius:10px;background:#0c1a2b;color:#fff;font-weight:800}
 .project-rename-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
 .project-rename-actions button{min-height:44px}
+.project-options-actions{display:grid;gap:7px}
+.project-options-actions button{min-height:44px}
+.project-delete-copy{margin:2px 0 10px;font-size:12px;line-height:1.35;color:#e6eef8}
+.project-delete-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.project-delete-actions button{min-height:44px}
 .project-library-empty{padding:18px 8px;text-align:center;color:#9eb0c6;font-size:11px}
 .project-library-status{min-height:20px;padding:4px 2px;color:#9eb0c6;font-size:10px}
 @media(max-width:520px){
@@ -166,6 +171,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   header .brand{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
   .brand-main{font-size:11px;white-space:nowrap}
   .current-project-name{display:block;max-width:min(42vw,190px);font-size:8px;font-weight:750;letter-spacing:0;color:#9fb4cb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .project-dialog-panel{align-items:flex-start;padding:clamp(12px,calc(var(--studio-vh,100dvh) * .08),48px) 12px 12px}
+  .project-dialog-box{max-height:calc(var(--studio-vh,100dvh) - clamp(36px,calc(var(--studio-vh,100dvh) * .16),96px))}
 }
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
@@ -179,13 +186,33 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <div id="local-project-list"></div>
     <div class="project-library-status" id="project-library-status">Chargement des projets…</div>
   </div>
-  <div class="project-rename-panel" id="project-rename-panel" hidden>
-    <div class="project-rename-box" role="dialog" aria-modal="true" aria-labelledby="project-rename-title">
+  <div class="project-dialog-panel" id="project-options-panel" hidden>
+    <div class="project-dialog-box" role="dialog" aria-modal="true" aria-labelledby="project-options-title">
+      <h2 id="project-options-title">PROJET</h2>
+      <div class="project-options-actions">
+        <button class="game-btn game-btn-standard" id="project-option-rename" type="button">✎ RENOMMER</button>
+        <button class="game-btn game-btn-standard game-btn-red" id="project-option-delete" type="button">🗑 SUPPRIMER</button>
+        <button class="game-btn game-btn-compact game-btn-secondary" id="project-options-close" type="button">ANNULER</button>
+      </div>
+    </div>
+  </div>
+  <div class="project-dialog-panel" id="project-rename-panel" hidden>
+    <div class="project-dialog-box project-rename-box" role="dialog" aria-modal="true" aria-labelledby="project-rename-title">
       <h2 id="project-rename-title">RENOMMER LE PROJET</h2>
       <input id="project-rename-input" type="text" maxlength="80" autocomplete="off">
       <div class="project-rename-actions">
         <button class="game-btn game-btn-compact game-btn-secondary" id="project-rename-cancel" type="button">ANNULER</button>
         <button class="game-btn game-btn-standard game-btn-green" id="project-rename-save" type="button">VALIDER</button>
+      </div>
+    </div>
+  </div>
+  <div class="project-dialog-panel" id="project-delete-panel" hidden>
+    <div class="project-dialog-box" role="dialog" aria-modal="true" aria-labelledby="project-delete-title">
+      <h2 id="project-delete-title">SUPPRIMER LE PROJET</h2>
+      <div class="project-delete-copy" id="project-delete-copy"></div>
+      <div class="project-delete-actions">
+        <button class="game-btn game-btn-compact game-btn-secondary" id="project-delete-cancel" type="button">ANNULER</button>
+        <button class="game-btn game-btn-standard game-btn-red" id="project-delete-confirm" type="button">SUPPRIMER</button>
       </div>
     </div>
   </div>
@@ -320,9 +347,15 @@ $('#back-projects').onclick=returnToProjectLibrary;
 $('#editor-projects').onclick=returnToProjectLibrary;
 $('#editor-new-project').onclick=createLocalProject;
 $('#create-local-project').onclick=createLocalProject;
+$('#project-options-close').onclick=closeProjectOptions;
+$('#project-option-rename').onclick=()=>{let p=projectOptionsTarget;if(p)openProjectRename(p)};
+$('#project-option-delete').onclick=()=>{let p=projectOptionsTarget;if(p)openProjectDelete(p)};
 $('#project-rename-cancel').onclick=closeProjectRename;
 $('#project-rename-save').onclick=commitProjectRename;
 $('#project-rename-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();commitProjectRename()}else if(e.key==='Escape'){e.preventDefault();closeProjectRename()}};
+$('#project-delete-cancel').onclick=closeProjectDelete;
+$('#project-delete-confirm').onclick=commitProjectDelete;
+if(window.visualViewport){visualViewport.addEventListener('resize',keepProjectRenameVisible,{passive:true});visualViewport.addEventListener('scroll',keepProjectRenameVisible,{passive:true})}
 $('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel','#project-menu-panel');$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
 function xToTime(clientX){let r=$('#canvas').getBoundingClientRect();return Math.max(0,Math.min(projectDuration(),(clientX-r.left)/pixelsPerSecond()))}function setCursor(t,scroll=false){cursor=Math.max(0,Math.min(projectDuration(),t));let pps=pixelsPerSecond();$('#playhead').style.left=(cursor*pps)+'px';$('#clock').textContent=fmt(cursor);if(scroll){let x=cursor*pps+TRIM_GUTTER_PX,tl=$('#timeline'),target=x-tl.clientWidth*.72;tl.scrollLeft=Math.max(0,target)}}
 function waveform(canvas,c){let cached=waveformCache.get(c.sourceId);if(!cached){canvas.style.display='none';return}let tl=$('#timeline'),pps=pixelsPerSecond(),h=Math.max(1,canvas.parentElement?.clientHeight||66),dpr=devicePixelRatio||1,plan=StudioWaveform.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft:Math.max(0,tl.scrollLeft-TRIM_GUTTER_PX),viewportWidth:tl.clientWidth,sourceDuration:cached.duration,peakRate:cached.peakRate,dpr});if(!plan.visible){canvas.style.display='none';return}canvas.style.display='block';canvas.style.left=plan.canvasLeft+'px';canvas.style.width=plan.cssWidth+'px';canvas.style.height=h+'px';canvas.width=plan.bitmapWidth;canvas.height=Math.max(1,Math.ceil(h*dpr));let g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,plan.cssWidth,h);g.strokeStyle='rgba(255,255,255,.78)';g.lineWidth=1;g.beginPath();for(let i=0;i<plan.columns;i++){let m=StudioWaveform.peakForColumn(cached,plan,i,plan.columns),x=i*StudioWaveform.DRAW_STEP_PX,y=m*h*.46;g.moveTo(x,h/2-y);g.lineTo(x,h/2+y)}g.stroke()}
@@ -379,12 +412,19 @@ async function applyLocalProject(saved){restoringLocal=true;try{decodedSourceCac
 function showEditorScreen(){$('#project-library-screen').hidden=true;$('#app').hidden=false;requestAnimationFrame(()=>render())}
 function showProjectLibraryScreen(){$('#app').hidden=true;$('#project-library-screen').hidden=false}
 function formatProjectUpdated(at){let d=new Date(at);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d)}
-let renameProjectTargetId=null;
+let projectOptionsTarget=null,renameProjectTargetId=null,deleteProjectTarget=null;
 function syncCurrentProjectName(){let el=$('#current-project-name');if(!el)return;el.textContent=currentProjectName||'';el.title=currentProjectName||''}
-function closeProjectRename(){renameProjectTargetId=null;$('#project-rename-panel').hidden=true;$('#project-rename-input').value=''}
-function openProjectRename(p){renameProjectTargetId=p.id;$('#project-rename-input').value=p.name;$('#project-rename-panel').hidden=false;setTimeout(()=>{$('#project-rename-input').focus();$('#project-rename-input').select()},0)}
+function hideProjectDialog(id){let el=$(id);if(el)el.hidden=true}
+function closeProjectOptions(){projectOptionsTarget=null;hideProjectDialog('#project-options-panel')}
+function openProjectOptions(p){projectOptionsTarget={id:p.id,name:p.name};$('#project-options-title').textContent=p.name;$('#project-options-panel').hidden=false}
+function closeProjectRename(){renameProjectTargetId=null;hideProjectDialog('#project-rename-panel');$('#project-rename-input').value=''}
+function keepProjectRenameVisible(){syncStudioViewport();let panel=$('#project-rename-panel');if(!panel||panel.hidden)return;panel.scrollTop=0;let box=panel.querySelector('.project-dialog-box');if(box)box.scrollTop=0}
+function openProjectRename(p){closeProjectOptions();renameProjectTargetId=p.id;$('#project-rename-input').value=p.name;keepProjectRenameVisible();$('#project-rename-panel').hidden=false;keepProjectRenameVisible();setTimeout(()=>{keepProjectRenameVisible();$('#project-rename-input').focus({preventScroll:true});$('#project-rename-input').select();keepProjectRenameVisible()},0);setTimeout(keepProjectRenameVisible,180)}
 async function commitProjectRename(){let id=renameProjectTargetId;if(!id)return;let projects=await localStore.listProjects(),before=projects.find(p=>p.id===id);if(!before)return closeProjectRename();let next=await localStore.renameProject(id,$('#project-rename-input').value);if(currentProjectId===id){currentProjectName=next.name;syncCurrentProjectName()}closeProjectRename();await renderLocalProjectLibrary();return next}
-async function renderLocalProjectLibrary(){let list=$('#local-project-list'),status=$('#project-library-status'),projects=await localStore.listProjects();list.innerHTML='';for(const p of projects){let row=document.createElement('div');row.className='local-project-row';row.dataset.projectId=p.id;let card=document.createElement('button');card.type='button';card.className='local-project-card game-btn game-btn-standard game-btn-dark';card.dataset.projectId=p.id;card.innerHTML='<b></b><small></small>';card.querySelector('b').textContent=p.name;card.querySelector('small').textContent='Modifié '+formatProjectUpdated(p.updatedAt);card.onclick=()=>openLocalProject(p.id);let more=document.createElement('button');more.type='button';more.className='local-project-more game-btn game-btn-compact game-btn-secondary';more.textContent='⋯';more.setAttribute('aria-label','Options de '+p.name);more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectRename(p)};row.append(card,more);list.appendChild(row)}if(!projects.length)list.innerHTML='<div class="project-library-empty">Aucun projet pour le moment.</div>';status.textContent=projects.length?projects.length+' projet'+(projects.length>1?'s':''):'Crée ton premier projet.';return projects}
+function closeProjectDelete(){deleteProjectTarget=null;hideProjectDialog('#project-delete-panel');$('#project-delete-copy').textContent=''}
+function openProjectDelete(p){closeProjectOptions();deleteProjectTarget={id:p.id,name:p.name};$('#project-delete-copy').textContent='Supprimer « '+p.name+' » ?';$('#project-delete-panel').hidden=false}
+async function commitProjectDelete(){let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
+async function renderLocalProjectLibrary(){let list=$('#local-project-list'),status=$('#project-library-status'),projects=await localStore.listProjects();list.innerHTML='';for(const p of projects){let row=document.createElement('div');row.className='local-project-row';row.dataset.projectId=p.id;let card=document.createElement('button');card.type='button';card.className='local-project-card game-btn game-btn-standard game-btn-dark';card.dataset.projectId=p.id;card.innerHTML='<b></b><small></small>';card.querySelector('b').textContent=p.name;card.querySelector('small').textContent='Modifié '+formatProjectUpdated(p.updatedAt);card.onclick=()=>openLocalProject(p.id);let more=document.createElement('button');more.type='button';more.className='local-project-more game-btn game-btn-compact game-btn-secondary';more.textContent='⋯';more.setAttribute('aria-label','Options de '+p.name);more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectOptions(p)};row.append(card,more);list.appendChild(row)}if(!projects.length)list.innerHTML='<div class="project-library-empty">Aucun projet pour le moment.</div>';status.textContent=projects.length?projects.length+' projet'+(projects.length>1?'s':''):'Crée ton premier projet.';return projects}
 async function createLocalProject(){if(recording)return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
 async function openLocalProject(id){if(recording)return msg('Arrête l’enregistrement avant de changer de projet');await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();msg('Projet ouvert ✓');return saved.card}
 async function returnToProjectLibrary(){if(recording)return msg('Arrête l’enregistrement avant de quitter le projet');await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
