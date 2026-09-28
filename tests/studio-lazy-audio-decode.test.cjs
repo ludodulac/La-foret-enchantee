@@ -105,7 +105,7 @@ function snapshot(ids){return{schema:2,name:'Lazy',cursor:0,zoom:1,selectionStar
   assert(html.includes('async function getDecodedSource(id)'));
   assert(html.includes('decodedSourceCache.inject(id,buffer)'));
 
-  const restoreStart=html.indexOf('async function restoreLocalAutosave()'),restoreEnd=html.indexOf('async function clearLocalWork',restoreStart);
+  const restoreStart=html.indexOf('async function applyLocalProject('),restoreEnd=html.indexOf('function showEditorScreen',restoreStart);
   const restore=html.slice(restoreStart,restoreEnd);
   assert(restore.includes('registerSourceBlob(blob,null'));
   assert(!restore.includes('decodeAudioData'));
@@ -135,11 +135,11 @@ function snapshot(ids){return{schema:2,name:'Lazy',cursor:0,zoom:1,selectionStar
   assert(html.slice(exportStart,exportEnd).includes('buffer:await getDecodedSource(sourceIdFor(c))'));
   assert(html.includes("buffer=await getDecodedSource(sourceIdFor(c)),blob=wav(buffer)"));
 
-  const cloudStart=html.indexOf('async function loadProjectRow('),cloudEnd=html.indexOf('async function showProjects()',cloudStart);
-  const cloud=html.slice(cloudStart,cloudEnd);
-  assert(!cloud.includes('decodeAudioData'));
-  assert(cloud.includes('registerSourceBlob(blob,null'));
-  assert(cloud.includes('sourceByPath'));
+  const localOpenStart=html.indexOf('async function openLocalProject('),localOpenEnd=html.indexOf('async function returnToProjectLibrary()',localOpenStart);
+  const localOpen=html.slice(localOpenStart,localOpenEnd);
+  assert(!localOpen.includes('decodeAudioData'));
+  assert(localOpen.includes('localStore.openProject(id)'));
+  assert(localOpen.includes('applyLocalProject(saved)'));
 
   assert(!html.includes('buffer:b,sourceId'));
   assert(!html.includes('s.buffer=c.buffer'));
