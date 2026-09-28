@@ -94,6 +94,14 @@ function mib(n){return n/1048576}
   const decode=studio.indexOf('getDecodedSource(sourceIdFor(c))',preflight);
   assert(preflight>=0&&decode>preflight);
   console.log('EXPORT_GUARD_BEFORE_SOURCE_DECODE = PASS');
+  assert(studio.includes('function exportTooLargeDetail(start,end)'));
+  assert(studio.includes("if(/^export trop volumineux/i.test(e?.message||''))alert(exportTooLargeDetail(start,end))"));
+  assert(studio.includes("Durée calculée : "));
+  assert(studio.includes("Mémoire estimée : "));
+  assert(studio.includes("Limite : "));
+  assert(studio.includes("Dernier son : "));
+  assert(studio.includes("piste absente / invisible"));
+  console.log('EXPORT_OVERSIZE_VISIBLE_DIAGNOSTIC = PASS');
 
   const progress=[];
   await streamed([clip({duration:.55})],0,.55,(n,total)=>progress.push([n,total]));
