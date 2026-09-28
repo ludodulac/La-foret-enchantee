@@ -133,7 +133,11 @@ function snapshot(ids){return{schema:2,name:'Lazy',cursor:0,zoom:1,selectionStar
 
   const exportStart=html.indexOf('async function exportRange('),exportEnd=html.indexOf("$('#export').onclick",exportStart);
   assert(html.slice(exportStart,exportEnd).includes('buffer:await getDecodedSource(sourceIdFor(c))'));
-  assert(html.includes("buffer=await getDecodedSource(sourceIdFor(c)),blob=wav(buffer)"));
+  const persistenceStart=html.indexOf('async function runAutosave()'),persistenceEnd=html.indexOf('function markProjectDirty()',persistenceStart);
+  const persistence=html.slice(persistenceStart,persistenceEnd);
+  assert(!persistence.includes('wav('));
+  assert(!persistence.includes('getDecodedSource'));
+  assert(!html.includes("buffer=await getDecodedSource(sourceIdFor(c)),blob=wav(buffer)"));
 
   const localOpenStart=html.indexOf('async function openLocalProject('),localOpenEnd=html.indexOf('async function returnToProjectLibrary()',localOpenStart);
   const localOpen=html.slice(localOpenStart,localOpenEnd);
