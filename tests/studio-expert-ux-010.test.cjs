@@ -151,16 +151,16 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
   assert(renderSource.includes('<span class="track-arm-rec">● REC</span>'));
   console.log('ACTIVE_TRACK_FULL_LANE_VISUAL_STATE PASS');
 
-  // Human save vocabulary.
+  // Human save vocabulary: autosave + project library, no manual save decision.
   assert(html.includes('✓ SAUVEGARDE AUTOMATIQUE'));
-  assert(html.includes('ENREGISTRER DANS MES PROJETS'));
-  assert(html.includes('MES PROJETS'));
-  assert(html.includes('NOUVEAU PROJET'));
+  assert(html.includes('＋ NOUVEAU PROJET'));
+  assert(html.includes('id="project-library-screen"'));
+  assert(html.includes('← MES PROJETS'));
   assert(html.includes('TÉLÉCHARGER UNE COPIE'));
   assert(html.includes('<summary>OPTIONS AVANCÉES</summary>'));
-  assert(html.includes('EFFACER LA SAUVEGARDE AUTOMATIQUE LOCALE'));
+  assert(!html.includes('ENREGISTRER DANS MES PROJETS'));
   console.log('AUTOSAVE_LABEL_CLEAR PASS');
-  console.log('PROJECT_ACTION_LABELS_CLEAR PASS');
+  console.log('PROJECT_ACTION_LABELS_CLEAR PASS local library + autosave; manual save removed');
 
   // Real visual viewport still fits at requested heights after larger transport.
   const FIXED=252,TOOLS=68;
