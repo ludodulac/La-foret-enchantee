@@ -50,6 +50,8 @@ jobs:
         run: node tests/studio-project-rename-delete-011c.test.cjs
       - name: Run Studio local recency seek GC 011D
         run: node tests/studio-local-recency-seek-gc-011d.test.cjs
+      - name: Run Studio forest export 011E
+        run: node tests/studio-forest-export-011e.test.cjs
       - name: Run Studio delete controls 010
         run: node tests/studio-delete-controls-010.test.cjs
       - name: Run Studio production post-stop test
