@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
+const vm=require('node:vm');
 const C=require('../js/studio-export-core.js');
 
 const studio=fs.readFileSync('studio.html','utf8');
@@ -95,12 +96,54 @@ function mib(n){return n/1048576}
   assert(preflight>=0&&decode>preflight);
   console.log('EXPORT_GUARD_BEFORE_SOURCE_DECODE = PASS');
   assert(studio.includes('function exportTooLargeDetail(start,end)'));
-  assert(studio.includes("if(/^export trop volumineux/i.test(e?.message||''))alert(exportTooLargeDetail(start,end))"));
+  assert(studio.includes('function showExportTooLargeDiagnostic(start,end)'));
+  assert(studio.includes("oversize=/export trop volumineux/i.test(errorMessage)"));
+  assert(studio.includes("if(oversize)showExportTooLargeDiagnostic(start,end)"));
+  assert(studio.includes('id="export-error-panel" hidden'));
+  assert(studio.includes('id="export-error-detail"'));
   assert(studio.includes("Durée calculée : "));
   assert(studio.includes("Mémoire estimée : "));
   assert(studio.includes("Limite : "));
   assert(studio.includes("Dernier son : "));
   assert(studio.includes("piste absente / invisible"));
+
+  // Execute the exact observed UI path: main EXPORT click -> 96 MiB preflight rejection -> visible in-page detail.
+  const exportStart=studio.indexOf("let exportDiagnosticStep='repos'");
+  const exportEnd=studio.indexOf("initializeProjectLibraryEntry()",exportStart);
+  assert(exportStart>=0&&exportEnd>exportStart);
+  const exportUiCode=studio.slice(exportStart,exportEnd);
+  const els=new Map(),messages=[];
+  function elem(){return{hidden:true,textContent:'',value:'',disabled:false,style:{display:''},onclick:null,t:null}}
+  function $(sel){if(!els.has(sel))els.set(sel,elem());return els.get(sel)}
+  $('#export-error-panel').hidden=true;
+  let decoded=0;
+  const ui={
+    StudioExportCore:C,
+    clips:[{id:'long',track:'voice',name:'Dernier son réel',start:0,trim:0,len:11*60,gain:1,muted:false,sourceId:'src-long'}],
+    tracks:[{id:'voice',name:'VOIX',type:'voice',gain:1,muted:false}],
+    selectionStart:null,selectionEnd:null,currentProjectName:'Projet test',
+    $,msg:s=>messages.push(s),selectionSeconds:s=>Number(s).toFixed(2),
+    selectionDiagnostic:s=>{$('#selection-diagnostic').textContent=s},
+    getDecodedSource:async()=>{decoded++;throw Error('decode must not run before oversize guard')},
+    sourceIdFor:c=>c.sourceId,
+    ForestAudioPublish:{publishNormalAudio:async()=>{}},dbClient:{},
+    console:{error(){},log(){}},clearTimeout(){},setTimeout(){return 1},
+    URL:{createObjectURL(){return'blob:test'},revokeObjectURL(){}},
+    document:{createElement(){return{style:{},click(){},remove(){}}},body:{appendChild(){}}},
+    Blob,DataView,Uint8Array,Math,Number,String,Promise
+  };
+  vm.createContext(ui);
+  vm.runInContext(exportUiCode,ui);
+  assert.equal(typeof $('#export').onclick,'function');
+  $('#export').onclick();
+  const panel=$('#export-error-panel'),detail=$('#export-error-detail');
+  assert.equal(panel.hidden,false,'oversize diagnostic panel must be visible after the same EXPORT click');
+  for(const marker of ['Durée calculée','Mémoire estimée','Limite','Dernier son','Début','durée','Fin calculée','audible']){
+    assert(detail.textContent.includes(marker),'missing visible diagnostic marker '+marker+' in '+detail.textContent);
+  }
+  assert.equal(decoded,0,'96 MiB guard must still reject before any source decode');
+  assert(messages.some(x=>/export trop volumineux/i.test(x)));
+  console.log('TEST_EXACT_UI_PATH EXPORT -> oversize -> diagnostic detailed visible = PASS');
   console.log('EXPORT_OVERSIZE_VISIBLE_DIAGNOSTIC = PASS');
 
   const progress=[];
