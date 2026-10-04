@@ -20,6 +20,7 @@ Wikignose a été retiré de `main` : ne pas le réintroduire depuis l'historiqu
 - Données/auth → `js/supabase.js` + migrations/policies réelles.
 - Journal → pages/scripts dédiés ; préserver sanitation du contenu riche.
 - Médias → identifier DB + bucket avant mutation.
+- **Studio Audio** → `studio.html`, puis la zone **Studio Audio** de `PROJECT_MAP.md`. Sa branche canonique est `studio/integration` : elle représente le dernier état Studio **techniquement validé + humainement accepté**, pas automatiquement le développement Git le plus récent. Pour Android/Web Audio, mémoire, tactile ou OPFS, une CI verte ne suffit pas : conserver un **HUMAN GATE réel** avant de promouvoir un nouvel état dans `studio/integration`.
 
 Mutation média sûre : `upload nouveau → vérifier → mettre à jour SQL → vérifier → supprimer ancien` ; nettoyer le nouveau si l'écriture échoue lorsque sûr.
 
