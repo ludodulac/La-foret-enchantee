@@ -26,6 +26,8 @@ jobs:
           done
       - name: Run Studio export integration tests
         run: node tests/studio-export-core.test.cjs
+      - name: Run Studio streamed WAV memory 011E
+        run: node tests/studio-streamed-wav-memory-011e.test.cjs
       - name: Run Studio autosave recovery tests
         run: node tests/studio-autosave.test.cjs
       - name: Run Studio local source model tests
@@ -38,6 +40,22 @@ jobs:
         run: node tests/studio-lazy-playback-race-gate-006b.test.cjs
       - name: Run Studio mobile cross-track drag 009
         run: node tests/studio-mobile-cross-track-drag-009.test.cjs
+      - name: Run Studio mobile space UX 010
+        run: node tests/studio-mobile-space-ux-010.test.cjs
+      - name: Run Studio expert UX consolidation 010
+        run: node tests/studio-expert-ux-010.test.cjs
+      - name: Run Studio project library autosave 011A
+        run: node tests/studio-project-library-autosave-011a.test.cjs
+      - name: Run Studio project rename 011B
+        run: node tests/studio-project-rename-011b.test.cjs
+      - name: Run Studio project rename/delete 011C
+        run: node tests/studio-project-rename-delete-011c.test.cjs
+      - name: Run Studio local recency seek GC 011D
+        run: node tests/studio-local-recency-seek-gc-011d.test.cjs
+      - name: Run Studio forest export 011E
+        run: node tests/studio-forest-export-011e.test.cjs
+      - name: Run Studio delete controls 010
+        run: node tests/studio-delete-controls-010.test.cjs
       - name: Run Studio production post-stop test
         run: node tests/studio-post-stop-production.test.cjs
       - name: Check Studio heavy diagnostics are absent

@@ -18,13 +18,16 @@ assert(stopPlay.includes('stopMetro()'),'transport stop must stop metronome');
 assert(stopPlay.includes('sources.forEach'),'transport stop must stop active BufferSources');
 
 const recordFn=section('async function record()','function clickBeat');
-assert(recordFn.includes('if(recording){recorder.stop();return}'),'STOP request must call MediaRecorder.stop exactly through recording gate');
+assert(recordFn.includes('if(recording)return'),'REC must remain REC while recording; it must not act as STOP');
+const transportHandlers=section("$('#record').onclick=record;",'function zoomAt');
+assert(transportHandlers.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"),'dedicated STOP must stop MediaRecorder while recording and playback otherwise');
 assert(recordFn.includes('stream.getTracks().forEach(t=>t.stop())'),'MediaStream tracks must be stopped');
 assert(recordFn.includes('cancelAnimationFrame(liveAnim);liveAnim=0;'),'REC animation must be cancelled and normalized');
 assert(recordFn.includes('liveMic=null;liveAnalyser=null;liveRec=null;'),'live REC state must be released');
 assert(recordFn.includes('stopPlay(false);liveDuration=0;'),'REC transport must return idle');
 assert(recordFn.includes("recording=false;$('#app').classList.remove('recording')"),'recording/UI state must return idle');
-assert(recordFn.includes("$('#record').innerHTML='<b>●</b>ENREGISTRER'"),'record button must return to idle label');
+assert(recordFn.includes("$('#record').classList.remove('is-recording')"),'record button must return to idle visual state');
+assert(!recordFn.includes("$('#record').innerHTML"),'REC label must remain stable; no STOP relabeling');
 
 const forbidden=[
   'studio-diagnostic.js',
