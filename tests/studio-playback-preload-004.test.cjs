@@ -20,6 +20,7 @@ assert.equal(plan.length,8);
 assert.deepEqual(plan,['S0','S1','S2','S3','S4','S5','S6','S7']);
 assert.equal(P.DEFAULT_LIMIT,8);
 
+(async()=>{
 // Existing inflight dedup: preload and PLAY-style request share one decode.
 let resolveDecode,decodeCalls=0;
 const pending=new Promise(r=>resolveDecode=r);
@@ -74,3 +75,5 @@ assert(html.includes("async function preparePlayback(from){let ids=new Set();cli
 assert(html.includes("s.start(now+Math.max(0,c.start-from),c.trim+off,remain)"));
 
 console.log('Studio background playback preload 004 PASS');
+
+})().catch(e=>{console.error(e);process.exit(1)});
