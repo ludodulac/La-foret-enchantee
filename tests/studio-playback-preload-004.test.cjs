@@ -21,6 +21,17 @@ assert.deepEqual(plan,['S0','S1','S2','S3','S4','S5','S6','S7']);
 assert.equal(P.DEFAULT_LIMIT,8);
 
 (async()=>{
+// Sequential preload stops before launching another source once its generation is invalidated.
+let generation=1,started=[],releaseFirst;
+const firstDone=new Promise(r=>releaseFirst=r);
+const sequential=P.runSequentialPreload(['A','B','C'],async id=>{started.push(id);if(id==='A')await firstDone},()=>generation===1);
+await Promise.resolve();
+assert.deepEqual(started,['A']);
+generation=2;
+releaseFirst();
+await sequential;
+assert.deepEqual(started,['A']);
+
 // Existing inflight dedup: preload and PLAY-style request share one decode.
 let resolveDecode,decodeCalls=0;
 const pending=new Promise(r=>resolveDecode=r);
@@ -52,7 +63,7 @@ const html=fs.readFileSync('studio.html','utf8');
 assert(html.includes('js/studio-playback-preload.js'));
 assert(html.includes('const PRELOAD_LIMIT=StudioPlaybackPreload.DEFAULT_LIMIT'));
 assert(html.includes('function invalidateAudioPreload(){audioPreloadGeneration++}'));
-assert(html.includes('async function runAudioPreload(token,ids)'));
+assert(html.includes('async function runAudioPreload(token,ids)'));\nassert(html.includes('StudioPlaybackPreload.runSequentialPreload(ids,getDecodedSource,()=>token===audioPreloadGeneration)'));
 assert(html.includes('if(token!==audioPreloadGeneration)return'));
 assert(html.includes('function startAudioPreload(){'));
 assert(html.includes('StudioPlaybackPreload.buildPreloadPlan'));
@@ -60,7 +71,7 @@ assert(html.includes('showEditorScreen();startAudioPreload();msg(\'Projet ouvert
 
 const openStart=html.indexOf('async function openLocalProject('),openEnd=html.indexOf('async function returnToProjectLibrary()',openStart);
 const open=html.slice(openStart,openEnd);
-assert(!open.includes('await startAudioPreload'));
+assert(open.includes('invalidateAudioPreload()'));\nassert(!open.includes('await startAudioPreload'));
 assert(open.indexOf('showEditorScreen()')<open.indexOf('startAudioPreload()'));
 
 const resetStart=html.indexOf('function resetEditorRuntime()'),resetEnd=html.indexOf('async function applyLocalProject(',resetStart);
