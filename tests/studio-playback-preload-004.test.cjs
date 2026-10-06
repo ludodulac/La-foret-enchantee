@@ -71,7 +71,8 @@ assert(html.includes('showEditorScreen();startAudioPreload();msg(\'Projet ouvert
 
 const openStart=html.indexOf('async function openLocalProject('),openEnd=html.indexOf('async function returnToProjectLibrary()',openStart);
 const open=html.slice(openStart,openEnd);
-assert(open.includes('invalidateAudioPreload()'));\nassert(!open.includes('await startAudioPreload'));
+assert(open.includes('invalidateAudioPreload()'));
+assert(!open.includes('await startAudioPreload'));
 assert(open.indexOf('showEditorScreen()')<open.indexOf('startAudioPreload()'));
 
 const resetStart=html.indexOf('function resetEditorRuntime()'),resetEnd=html.indexOf('async function applyLocalProject(',resetStart);
