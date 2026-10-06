@@ -21,5 +21,6 @@ function buildPreloadPlan({clips=[],tracks=[],cursor=0,limit=DEFAULT_LIMIT,sourc
   const ordered=[...active.values(),...[...future.values()].sort((a,b)=>a.at-b.at)];
   return ordered.slice(0,Math.max(0,Math.floor(limit))).map(x=>x.id);
 }
-async function runSequentialPreload(ids,load,isCurrent=()=>true){for(const id of ids){if(!isCurrent())return;try{await load(id)}catch(e){if(isCurrent())throw e}if(!isCurrent())return}}\nreturn{DEFAULT_LIMIT,buildPreloadPlan,runSequentialPreload};
+async function runSequentialPreload(ids,load,isCurrent=()=>true){for(const id of ids){if(!isCurrent())return;try{await load(id)}catch(e){if(isCurrent())throw e}if(!isCurrent())return}}
+return{DEFAULT_LIMIT,buildPreloadPlan,runSequentialPreload};
 });
