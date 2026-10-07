@@ -1,0 +1,11 @@
+importScripts('studio-progressive-chunk-writer-010.js','studio-mp3-progressive-import-010.js');
+onmessage=async e=>{const {blob,sinkDelayMs=0}=e.data;let persistedBytes=0,wavCount=0,maxPendingOutputs=0,pendingOutputs=new Set(),decoder,outputs=0,error=null,frames=0,maxDemuxBuffered=0;const t0=performance.now();
+const support=typeof AudioDecoder!=='undefined'&&await AudioDecoder.isConfigSupported({codec:'mp3',sampleRate:44100,numberOfChannels:1});
+if(!support?.supported){postMessage({error:'WORKER_MP3_UNSUPPORTED',audioDecoder:typeof AudioDecoder!=='undefined'});return}
+const writer=StudioProgressiveChunks.createChunkWriter({sourceId:'LONG',sampleRate:44100,channels:1,chunkSeconds:5,writeChunk:async(id,bytes)=>{persistedBytes+=bytes.byteLength;wavCount++;if(sinkDelayMs)await new Promise(r=>setTimeout(r,sinkDelayMs));}});
+const result=await StudioMp3ProgressiveImport.demuxMp3Progressive(blob,{readSize:4096,onFrame:async f=>{frames++;if(!decoder){decoder=new AudioDecoder({output:data=>{let p=(async()=>{try{const blocks=[];for(let c=0;c<data.numberOfChannels;c++){const a=new Float32Array(data.numberOfFrames);data.copyTo(a,{planeIndex:c,format:'f32-planar'});blocks.push(a)}await writer.push(blocks);outputs++}finally{data.close()}})();pendingOutputs.add(p);maxPendingOutputs=Math.max(maxPendingOutputs,pendingOutputs.size);p.finally(()=>pendingOutputs.delete(p));},error:x=>error=String(x)});decoder.configure(f.config)}
+decoder.decode(new EncodedAudioChunk({type:'key',timestamp:Math.round(f.timestamp),duration:Math.round(f.duration),data:f.bytes}));
+if(decoder.decodeQueueSize>8){await decoder.flush();await Promise.all([...pendingOutputs])}
+}});
+maxDemuxBuffered=result.maxBuffered;if(decoder){await decoder.flush();await Promise.all([...pendingOutputs]);decoder.close()}if(error)throw Error(error);const manifest=await writer.finish(),m=writer.metrics();
+postMessage({audioDecoder:true,supported:true,frames,outputs,wavCount,persistedBytes,maxPcmSamples:m.maxBufferedSamples,pcmCapacitySamples:m.chunkCapacitySamples,maxPendingOutputs,maxDemuxBuffered,manifestDuration:manifest.chunks.reduce((s,c)=>s+c.duration,0),elapsedMs:performance.now()-t0,allPcmAccumulated:false,allWavsAccumulated:false,audioDataReleased:true,backpressure:'queue>8 flush + await pending output writes'});};
