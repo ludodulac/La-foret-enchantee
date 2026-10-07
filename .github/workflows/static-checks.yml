@@ -48,10 +48,23 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run Studio real Chromium WebCodecs MP3 pipeline 010
         run: node tests/studio-webcodecs-mp3-010.test.cjs
-      - name: Run Studio long-source Worker stress 011 desktop
+      - name: Run Studio Worker stress 011 desktop 1m
+        timeout-minutes: 5
         run: STUDIO011_DURATIONS=60 STUDIO011_CPU=1 node tests/studio-playback-long-011.test.cjs
-      - name: Run Studio long-source Worker stress 011 CPU throttled
+      - name: Run Studio Worker stress 011 desktop 5m
+        timeout-minutes: 8
+        run: STUDIO011_DURATIONS=300 STUDIO011_CPU=1 node tests/studio-playback-long-011.test.cjs
+      - name: Run Studio Worker stress 011 desktop 15m
+        timeout-minutes: 12
+        continue-on-error: true
+        run: STUDIO011_DURATIONS=900 STUDIO011_CPU=1 node tests/studio-playback-long-011.test.cjs
+      - name: Run Studio Worker stress 011 CPUx4 1m
+        timeout-minutes: 8
         run: STUDIO011_DURATIONS=60 STUDIO011_CPU=4 node tests/studio-playback-long-011.test.cjs
+      - name: Run Studio Worker stress 011 CPUx4 5m
+        timeout-minutes: 12
+        continue-on-error: true
+        run: STUDIO011_DURATIONS=300 STUDIO011_CPU=4 node tests/studio-playback-long-011.test.cjs
       - name: Run Studio mobile cross-track drag 009
         run: node tests/studio-mobile-cross-track-drag-009.test.cjs
       - name: Run Studio mobile space UX 010
