@@ -55,6 +55,7 @@
     <button class="tab-btn" data-tab="tab-blog">📖 Journal</button>
     <button class="tab-btn" data-tab="tab-cats">📂 Catégories</button>
     <button class="tab-btn" data-tab="tab-subs">🗂 Sous-catégories</button>
+    <button class="tab-btn" data-tab="tab-books">📚 Livres que l’on aime</button>
   </div>
 
   <div class="tab-panel active" id="tab-audios">
@@ -113,6 +114,21 @@
   <div class="tab-panel" id="tab-cats"><div class="admin-section"><h3>Ajouter une catégorie</h3><form id="form-add-cat" class="inline-form" novalidate><input type="text" id="new-cat-name" placeholder="Nom de la catégorie" required><button type="submit" class="btn-inline">Ajouter</button></form></div><div class="admin-section"><h3>Catégories</h3><div id="cat-list"></div></div></div>
 
   <div class="tab-panel" id="tab-subs"><div class="admin-section"><h3>Ajouter une sous-catégorie</h3><form id="form-add-sub" class="inline-form" novalidate><select id="new-sub-cat"><option value="">— Catégorie parente —</option></select><input type="text" id="new-sub-name" placeholder="Nom de la sous-catégorie" required><button type="submit" class="btn-inline">Ajouter</button></form></div><div class="admin-section"><h3>Sous-catégories</h3><div id="sub-list-admin"></div></div></div>
+  <div class="tab-panel" id="tab-books">
+    <div class="admin-section">
+      <h3>Ajouter un livre que l’on aime</h3>
+      <form id="form-add-book" novalidate>
+        <div class="add-audio-grid">
+          <div class="form-group"><label for="book-title">Titre *</label><input id="book-title" type="text" required></div>
+          <div class="form-group"><label for="book-subtitle">Auteur / petite ligne</label><input id="book-subtitle" type="text" placeholder="Ex : Tom Jackson · Little Urban"></div>
+          <div class="form-group" style="grid-column:1/-1"><label for="book-image">Image *</label><input id="book-image" type="file" accept="image/png,image/jpeg,image/webp" required><div class="upload-hint">PNG, JPG ou WebP — stocké dans Supabase Storage, jamais en Base64.</div></div>
+          <div class="form-group" style="grid-column:1/-1"><label for="book-description">Texte sous l’image</label><textarea id="book-description" placeholder="Ton texte sur ce livre…"></textarea></div>
+        </div>
+        <button type="submit" class="btn-primary" id="btn-add-book">Ajouter le livre</button>
+      </form>
+    </div>
+    <div class="admin-section"><h3>Livres existants</h3><div id="book-list-admin"></div></div>
+  </div>
 </main>
 
 <div id="notif"></div>
@@ -122,6 +138,7 @@
 <script src="js/auth.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/admin-blog.js"></script>
+<script src="js/admin-books.js"></script>
 <script>
   const _origRenderAll = renderAll;
   renderAll = function() {
