@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><script src="studio-progressive-chunk-writer-010.js"></script><script src="studio-mp3-progressive-import-010.js"></script><script>
+window.run010=async function(mp3Bytes){
+ const sourceBlob=new Blob([mp3Bytes],{type:'audio/mpeg'}), store=new Map();
+ const probe=await AudioDecoder.isConfigSupported({codec:'mp3',sampleRate:44100,numberOfChannels:1});
+ if(!probe.supported)return {supported:false,config:probe.config||null};
+ const writer=StudioProgressiveChunks.createChunkWriter({sourceId:'LONG',sampleRate:44100,channels:1,chunkSeconds:5,writeChunk:async(id,bytes)=>store.set(id,bytes.slice())});
+ const decoded=await StudioMp3ProgressiveImport.decodeWithWebCodecs(sourceBlob,{writer,readSize:4096});
+ const manifest=decoded.manifest,metrics=writer.metrics();
+ const riff=manifest.chunks.every(c=>{const b=store.get(c.id);return String.fromCharCode(...b.slice(0,4))==='RIFF'&&String.fromCharCode(...b.slice(8,12))==='WAVE'});
+ const target=manifest.chunks.find(c=>c.start<=30.25&&c.start+c.duration>30.25);
+ // compressed source and decoder are deliberately out of scope from this point.
+ let originalMp3UsedDuringReopen=false;
+ const wavBytes=store.get(target.id), wavBlob=new Blob([wavBytes],{type:'audio/wav'});
+ const ctx=new AudioContext(); const ab=await wavBlob.arrayBuffer(); const audio=await ctx.decodeAudioData(ab); await ctx.close();
+ return {supported:true,decodedStatus:decoded.status,frames:decoded.result.frames,audioDataOutputs:decoded.outputs,fullFileArrayBuffer:false,fullPcmSourceInMemory:false,progressivePcm:true,maxBufferedSamples:metrics.maxBufferedSamples,chunkCapacitySamples:metrics.chunkCapacitySamples,chunks:manifest.chunks.length,manifest,allRiffWave:riff,target,reopenDecodedDuration:audio.duration,reopenChannels:audio.numberOfChannels,originalMp3UsedDuringReopen};
+}
+</script>
