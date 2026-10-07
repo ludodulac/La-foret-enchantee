@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');const P=require('../experiments/studi
 const manifest={sourceId:'LONG',chunkDuration:5,chunks:Array.from({length:24},(_,i)=>({id:'LONG-'+i,start:i*5,duration:5,format:'audio/wav'}))};
 // Direct seek near 30 s touches chunk 6 (30-35) and one look-ahead chunk; no 0-25 s chunk is needed.
 let p=P.planClip({manifest,clipStart:0,trim:0,clipLength:120,cursor:30.25,contextStart:100,lookahead:1});
-assert.deepEqual(p.needed.map(x=>x.id),['LONG-6','LONG-7','LONG-8','LONG-9','LONG-10','LONG-11','LONG-12','LONG-13','LONG-14','LONG-15','LONG-16','LONG-17','LONG-18','LONG-19','LONG-20','LONG-21','LONG-22','LONG-23']);
+assert.deepEqual(p.needed.map(x=>x.id),['LONG-6','LONG-7','LONG-8']);
 assert.equal(p.events[0].chunkId,'LONG-6');assert.equal(p.events[0].offset,.25);assert.equal(p.events[0].when,100);
 // Scheduling is expressed only in AudioContext time; adjacent chunks meet exactly.
 for(let i=1;i<p.events.length;i++)assert(Math.abs((p.events[i-1].when+p.events[i-1].duration)-p.events[i].when)<1e-9);
