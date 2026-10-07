@@ -1,0 +1,3 @@
+<!doctype html><meta charset="utf-8"><script>
+window.run011=async function(blob,sinkDelayMs=0){const w=new Worker('studio-worker-011.js');let beats=0,maxGap=0,last=performance.now(),running=true;const timer=setInterval(()=>{const n=performance.now();maxGap=Math.max(maxGap,n-last);last=n;beats++},20);const result=await new Promise((resolve,reject)=>{w.onmessage=e=>e.data.error?reject(Error(e.data.error)):resolve(e.data);w.onerror=reject;w.postMessage({blob,sinkDelayMs})});running=false;clearInterval(timer);w.terminate();return {...result,heartbeatCount:beats,maxHeartbeatGapMs:maxGap,mp3Bytes:blob.size};}
+</script>
