@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#fbf4e9"><title>Livres que l’on aime — La Forêt Enchantée</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/livres-aimes.css"></head>
+<body><header class="books-top"><a class="back" href="index.html" aria-label="Retour à la forêt">‹</a><div><div class="eyebrow">La Forêt Enchantée</div><h1>📚 Livres que l’on aime</h1><p>Des livres qui ouvrent grand les portes de l’imaginaire.</p></div></header>
+<main class="books-grid" id="books-grid"><p>Chargement des livres…</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="js/supabase.js"></script>
+<script>
+function bookEscape(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[c]));}
+(async()=>{
+ const root=document.getElementById('books-grid');
+ const {data,error}=await dbClient.from('livres_aimes').select('*').order('created_at',{ascending:false});
+ if(error){root.innerHTML='<p>Les livres ne peuvent pas être chargés pour le moment.</p>';return;}
+ if(!data?.length){root.innerHTML='<p>Les premiers livres arrivent bientôt.</p>';return;}
+ root.innerHTML=data.map(book=>'<article class="book-card"><div class="book-cover">'+
+   (book.image_path?'<img src="'+bookEscape(getPublicUrl('images',book.image_path))+'" alt="'+bookEscape(book.title)+'">':'')+
+   '</div><div class="book-copy"><div class="book-kicker">Notre bibliothèque enchantée</div><h2>'+bookEscape(book.title)+'</h2>'+
+   (book.subtitle?'<div class="byline">'+bookEscape(book.subtitle)+'</div>':'')+
+   (book.description?'<p>'+bookEscape(book.description).replace(/\n/g,'<br>')+'</p>':'')+
+   '</div></article>').join('');
+})();
+</script></body></html>
