@@ -52,12 +52,7 @@ jobs:
       - name: Run Studio worker blockage diagnostic 012 one minute
         timeout-minutes: 3
         run: node tests/studio-playback-long-012.test.cjs
-      - name: Run Studio worker stress 013 five minutes
-        timeout-minutes: 4
-        env:
-          STUDIO013_SECONDS: 300
-        run: node tests/studio-playback-long-013.test.cjs
-      - name: Run Studio worker stress 013 fifteen minutes
+      - name: Run Studio worker backpressure 014 fifteen minutes
         timeout-minutes: 6
         env:
           STUDIO013_SECONDS: 900
