@@ -1,0 +1,1 @@
+onmessage=async()=>{const audioDecoder=typeof AudioDecoder!=='undefined';let supported=false,config=null;if(audioDecoder){const r=await AudioDecoder.isConfigSupported({codec:'mp3',sampleRate:44100,numberOfChannels:1});supported=r.supported;config=r.config}postMessage({audioDecoder,supported,config})};

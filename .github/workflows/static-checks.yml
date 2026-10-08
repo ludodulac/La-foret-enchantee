@@ -40,6 +40,28 @@ jobs:
         run: node tests/studio-lazy-playback-race-gate-006b.test.cjs
       - name: Run Studio background playback preload 004
         run: node tests/studio-playback-preload-004.test.cjs
+      - name: Install Chromium harness dependencies for Studio 010
+        timeout-minutes: 10
+        run: |
+          timeout 120s sudo apt-get update -qq
+          timeout 180s sudo apt-get install -y -qq ffmpeg
+          timeout 180s npm install --no-save playwright
+          timeout 300s npx playwright install --with-deps chromium
+      - name: Run Studio real Chromium WebCodecs MP3 pipeline 010
+        run: node tests/studio-webcodecs-mp3-010.test.cjs
+      - name: Run Studio worker blockage diagnostic 012 one minute
+        timeout-minutes: 3
+        run: node tests/studio-playback-long-012.test.cjs
+      - name: Run Studio worker stress 013 five minutes
+        timeout-minutes: 4
+        env:
+          STUDIO013_SECONDS: 300
+        run: node tests/studio-playback-long-013.test.cjs
+      - name: Run Studio worker stress 013 fifteen minutes
+        timeout-minutes: 6
+        env:
+          STUDIO013_SECONDS: 900
+        run: node tests/studio-playback-long-013.test.cjs
       - name: Run Studio mobile cross-track drag 009
         run: node tests/studio-mobile-cross-track-drag-009.test.cjs
       - name: Run Studio mobile space UX 010
