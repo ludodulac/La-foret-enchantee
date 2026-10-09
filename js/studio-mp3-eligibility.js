@@ -7,7 +7,7 @@ if(frames<2)return{valid:false,reason:'insufficient_frames',frames};return{valid
 const WINDOW_BYTES=65536,MAX_FRAME_BYTES=8192;
 async function inspectBlob(blob,opts={}){const signal=opts.signal;let cursor=0,buffer=new Uint8Array(0),base=0,peak=0,reads=0;
 const abort=()=>{if(signal?.aborted)throw Error('INSPECTION_ABORTED')};
-async function ensure(n){abort();if(n>MAX_FRAME_BYTES)throw Error('FRAME_TOO_LARGE');while(base+buffer.length<cursor+n){const offset=base+buffer.length;if(offset>=blob.size)return false;const next=new Uint8Array(await blob.slice(offset,Math.min(blob.size,offset+WINDOW_BYTES)).arrayBuffer());reads++;if(!next.length)return false;const remaining=buffer.subarray(cursor-base);const joined=new Uint8Array(remaining.length+next.length);joined.set(remaining);joined.set(next,remaining.length);buffer=joined;base=cursor;peak=Math.max(peak,buffer.length);abort()}return true}
+async function ensure(n){abort();if(n>MAX_FRAME_BYTES)throw Error('FRAME_TOO_LARGE');if(cursor>base+buffer.length){base=cursor;buffer=new Uint8Array(0)}while(base+buffer.length<cursor+n){const offset=base+buffer.length;if(offset>=blob.size)return false;const next=new Uint8Array(await blob.slice(offset,Math.min(blob.size,offset+WINDOW_BYTES)).arrayBuffer());reads++;if(!next.length)return false;const remaining=buffer.subarray(cursor-base);const joined=new Uint8Array(remaining.length+next.length);joined.set(remaining);joined.set(next,remaining.length);buffer=joined;base=cursor;peak=Math.max(peak,buffer.length);abort()}return true}
 async function advance(n){cursor+=n;if(cursor-base>WINDOW_BYTES){buffer=buffer.subarray(cursor-base);base=cursor}}
 try{
 if(!await ensure(10))return{valid:false,reason:'too_short',maxWorkingBuffer:peak,reads};
