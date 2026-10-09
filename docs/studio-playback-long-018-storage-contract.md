@@ -1,0 +1,10 @@
+# STUDIO-PLAYBACK-LONG-018 — stockage dérivé expérimental
+Le module `experiments/studio-chunk-storage-018.js` n'est importé par aucun écran de production. IndexedDB indépendant `studio-derived-chunks-018` (manifest par `sourceId__engineVersion`) et répertoire OPFS indépendant `studio-derived-chunks-018/sourceId__engineVersion/`. Les identifiants sont strictement validés pour empêcher la traversée de chemin. Le stockage original `foret-studio-autosave` et les snapshots sont intacts.
+
+Manifest: `sourceId, engineVersion, sourceFingerprint, sampleRate, channels, chunks:[{index,start,duration,sampleCount,path,size,sha256}], status`. Le statut `WRITING` est écrit d'abord, puis les chunks et leurs SHA-256, puis une vérification de tous les chunks précède `READY`. Une transaction IndexedDB ne garantit **pas** l'atomicité OPFS. À la lecture, `READY` est revérifié contre les fichiers OPFS et leurs empreintes; un chunk absent/corrompu entraîne le rejet.
+
+La fermeture et la réouverture sont simulées via des appels séparés à l'API (la connexion IndexedDB est fermée après chaque opération); le test ne recharge pas l'onglet. Les WAV utilisés sont des octets factices et ne sont pas des WAV décodables. Aucune conversion audio.
+
+Interruption: les manifests non READY peuvent être nettoyés. Nettoyage borné au répertoire dérivé propre à la source/version; les sources originales ne sont jamais consultées ni supprimées. READY est protégé contre le nettoyage incomplet. Limite: une interruption entre écriture OPFS et publication du manifest peut laisser des fichiers orphelins, à inventorier dans une mission de récupération. Le module ne gère pas les conversions concurrentes sur une même source/version; aucune intégration production avant verrouillage/lease et stratégie d'orphelins.
+
+OPFS indisponible: `OPFS_UNAVAILABLE`, aucun READY. Quota: exception d'écriture remontée, aucun READY si échec avant publication; l'appelant doit proposer le fallback historique et le nettoyage. L'échec quota n'est pas injecté dans le test 018 et reste à certifier. Les garanties de persistance durable et la rétention par le navigateur ne sont pas certifiées.

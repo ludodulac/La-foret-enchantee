@@ -28,6 +28,23 @@ jobs:
         run: node tests/studio-export-core.test.cjs
       - name: Run Studio streamed WAV memory 011E
         run: node tests/studio-streamed-wav-memory-011e.test.cjs
+      - name: Install Chromium for experimental chunk storage 018
+        timeout-minutes: 10
+        run: |
+          timeout 180s npm install --no-save playwright
+          timeout 300s npx playwright install --with-deps chromium
+      - name: Run Studio OPFS interruption recovery 018C
+        timeout-minutes: 3
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/studio-018c-http.log 2>&1 &
+          sleep 2
+          node tests/studio-playback-long-018c.test.cjs
+      - name: Run Studio OPFS IndexedDB contract 018
+        timeout-minutes: 3
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/studio-018-http.log 2>&1 &
+          sleep 2
+          node tests/studio-playback-long-018.test.cjs
       - name: Run Studio autosave recovery tests
         run: node tests/studio-autosave.test.cjs
       - name: Run Studio local source model tests

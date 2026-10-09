@@ -1,0 +1,36 @@
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioChunkStorage018=api})(typeof globalThis!=='undefined'?globalThis:this,function(){'use strict';
+const DB='studio-derived-chunks-018',STORE='manifests',ROOT='studio-derived-chunks-018',SAFE=/^[a-zA-Z0-9_-]{1,128}$/;
+function safe(s){if(typeof s!=='string'||!SAFE.test(s))throw Error('INVALID_IDENTIFIER');return s}
+function key(s,v){return safe(s)+'__'+safe(v)}
+function request(r){return new Promise((yes,no)=>{r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error)})}
+function transactionDone(t){return new Promise((yes,no)=>{t.oncomplete=yes;t.onerror=t.onabort=()=>no(t.error||Error('TRANSACTION_ABORT'))})}
+function dbOpen(){return new Promise((yes,no)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'key'})};r.onsuccess=()=>yes(r.result);r.onerror=()=>no(r.error)})}
+async function digest(blob){const a=new Uint8Array(await blob.arrayBuffer()),hash=new Uint8Array(await crypto.subtle.digest('SHA-256',a));return Array.from(hash,b=>b.toString(16).padStart(2,'0')).join('')}
+async function rootDir(){if(!navigator.storage?.getDirectory)throw Error('OPFS_UNAVAILABLE');return(await navigator.storage.getDirectory()).getDirectoryHandle(ROOT,{create:true})}
+async function directory(sourceId,engineVersion,create=false){const root=await rootDir();return root.getDirectoryHandle(key(sourceId,engineVersion),{create})}
+async function writeManifest(row){const db=await dbOpen();try{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).put(row);await transactionDone(t)}finally{db.close()}}
+async function getManifest(sourceId,engineVersion){const db=await dbOpen();try{const t=db.transaction(STORE,'readonly');const row=await request(t.objectStore(STORE).get(key(sourceId,engineVersion)));await transactionDone(t);return row||null}finally{db.close()}}
+async function begin({sourceId,engineVersion,sourceFingerprint,sampleRate,channels}){safe(sourceId);safe(engineVersion);if(!/^[a-f0-9]{64}$/.test(sourceFingerprint)||!Number.isInteger(sampleRate)||sampleRate<1||!Number.isInteger(channels)||channels<1)throw Error('INVALID_MANIFEST');const existing=await getManifest(sourceId,engineVersion);if(existing?.status==='READY')throw Error('READY_IMMUTABLE');await directory(sourceId,engineVersion,true);const row={key:key(sourceId,engineVersion),sourceId,engineVersion,sourceFingerprint,sampleRate,channels,chunks:[],status:'WRITING'};await writeManifest(row);return row}
+async function writeChunk(sourceId,engineVersion,{index,start,duration,sampleCount,blob}){const row=await getManifest(sourceId,engineVersion);if(!row||row.status!=='WRITING')throw Error('NOT_WRITING');if(!Number.isInteger(index)||index!==row.chunks.length||!Number.isFinite(start)||start<0||!Number.isFinite(duration)||duration<=0||!Number.isInteger(sampleCount)||sampleCount<1||!(blob instanceof Blob))throw Error('INVALID_CHUNK');const name='chunk-'+String(index).padStart(6,'0')+'.wav',dir=await directory(sourceId,engineVersion),handle=await dir.getFileHandle(name,{create:true});const writable=await handle.createWritable();try{await writable.write(blob);await writable.close()}catch(e){try{await writable.abort()}catch{}throw e}const path=ROOT+'/'+key(sourceId,engineVersion)+'/'+name,sha256=await digest(blob);row.chunks.push({index,start,duration,sampleCount,path,size:blob.size,sha256});await writeManifest(row);return row.chunks.at(-1)}
+async function verify(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(!row||!row.chunks.length)return false;let dir;try{dir=await directory(sourceId,engineVersion)}catch{return false}let end=0;for(const c of row.chunks){if(c.index!==row.chunks.indexOf(c)||c.start!==end||Math.abs(c.duration-c.sampleCount/row.sampleRate)>1/row.sampleRate||c.path!==ROOT+'/'+key(sourceId,engineVersion)+'/chunk-'+String(c.index).padStart(6,'0')+'.wav')return false;let file;try{file=await(await dir.getFileHandle('chunk-'+String(c.index).padStart(6,'0')+'.wav')).getFile()}catch{return false}if(file.size!==c.size||await digest(file)!==c.sha256)return false;end=c.start+c.duration}return true}
+async function publishReady(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(!row||row.status!=='WRITING'||!await verify(sourceId,engineVersion))throw Error('CHUNKS_NOT_VERIFIED');row.status='READY';await writeManifest(row);return row}
+async function readReady(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(!row||row.status!=='READY'||!await verify(sourceId,engineVersion))throw Error('NOT_READY_OR_CORRUPT');return row}
+async function readChunk(sourceId,engineVersion,index){const row=await readReady(sourceId,engineVersion);const c=row.chunks[index];if(!c)throw Error('MISSING_CHUNK');return (await (await directory(sourceId,engineVersion)).getFileHandle('chunk-'+String(index).padStart(6,'0')+'.wav')).getFile()}
+async function cleanupIncomplete(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(row?.status==='READY')throw Error('READY_CLEANUP_FORBIDDEN');const root=await rootDir();try{await root.removeEntry(key(sourceId,engineVersion),{recursive:true})}catch(e){if(e.name!=='NotFoundError')throw e}const db=await dbOpen();try{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(key(sourceId,engineVersion));await transactionDone(t)}finally{db.close()}}
+
+// Recover only namespaced derived attempts; READY is preserved even if its files are corrupt.
+// Unknown directories are never removed. A missing manifest cannot authorize deletion
+// outside the isolated derived root.
+async function recoverIncomplete(){const root=await rootDir(),db=await dbOpen();let rows;try{const t=db.transaction(STORE,'readonly');rows=await request(t.objectStore(STORE).getAll());await transactionDone(t)}finally{db.close()}
+const ready=new Set(rows.filter(r=>r.status==='READY').map(r=>r.key));
+const incomplete=rows.filter(r=>r.status!=='READY');const removed=[],preserved=[];
+for(const row of incomplete){if(!row||typeof row.key!=='string'||row.key!==key(row.sourceId,row.engineVersion))throw Error('INVALID_DERIVED_MANIFEST');await cleanupIncomplete(row.sourceId,row.engineVersion);removed.push(row.key)}
+for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||!SAFE.test(name.replace(/__/g,'_')))continue;if(ready.has(name)){preserved.push(name);continue}
+if(rows.some(r=>r.key===name))continue;
+// Only a directory with the exact sourceId__engineVersion naming contract is an orphan.
+const split=name.indexOf('__');if(split<1||split===name.length-2||name.indexOf('__',split+2)!==-1)continue;
+const sourceId=name.slice(0,split),engineVersion=name.slice(split+2);
+if(key(sourceId,engineVersion)!==name)continue;
+await root.removeEntry(name,{recursive:true});removed.push(name)}
+return{removed,preserved}}
+return{begin,writeChunk,verify,publishReady,readReady,readChunk,getManifest,cleanupIncomplete,recoverIncomplete,ROOT,DB}});
