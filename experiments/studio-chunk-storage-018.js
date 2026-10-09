@@ -17,4 +17,20 @@ async function publishReady(sourceId,engineVersion){const row=await getManifest(
 async function readReady(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(!row||row.status!=='READY'||!await verify(sourceId,engineVersion))throw Error('NOT_READY_OR_CORRUPT');return row}
 async function readChunk(sourceId,engineVersion,index){const row=await readReady(sourceId,engineVersion);const c=row.chunks[index];if(!c)throw Error('MISSING_CHUNK');return (await (await directory(sourceId,engineVersion)).getFileHandle('chunk-'+String(index).padStart(6,'0')+'.wav')).getFile()}
 async function cleanupIncomplete(sourceId,engineVersion){const row=await getManifest(sourceId,engineVersion);if(row?.status==='READY')throw Error('READY_CLEANUP_FORBIDDEN');const root=await rootDir();try{await root.removeEntry(key(sourceId,engineVersion),{recursive:true})}catch(e){if(e.name!=='NotFoundError')throw e}const db=await dbOpen();try{const t=db.transaction(STORE,'readwrite');t.objectStore(STORE).delete(key(sourceId,engineVersion));await transactionDone(t)}finally{db.close()}}
-return{begin,writeChunk,verify,publishReady,readReady,readChunk,getManifest,cleanupIncomplete,ROOT,DB}});
+
+// Recover only namespaced derived attempts; READY is preserved even if its files are corrupt.
+// Unknown directories are never removed. A missing manifest cannot authorize deletion
+// outside the isolated derived root.
+async function recoverIncomplete(){const root=await rootDir(),db=await dbOpen();let rows;try{const t=db.transaction(STORE,'readonly');rows=await request(t.objectStore(STORE).getAll());await transactionDone(t)}finally{db.close()}
+const ready=new Set(rows.filter(r=>r.status==='READY').map(r=>r.key));
+const incomplete=rows.filter(r=>r.status!=='READY');const removed=[],preserved=[];
+for(const row of incomplete){if(!row||typeof row.key!=='string'||row.key!==key(row.sourceId,row.engineVersion))throw Error('INVALID_DERIVED_MANIFEST');await cleanupIncomplete(row.sourceId,row.engineVersion);removed.push(row.key)}
+for await(const [name,handle] of root.entries()){if(handle.kind!=='directory'||!SAFE.test(name.replace(/__/g,'_')))continue;if(ready.has(name)){preserved.push(name);continue}
+if(rows.some(r=>r.key===name))continue;
+// Only a directory with the exact sourceId__engineVersion naming contract is an orphan.
+const split=name.indexOf('__');if(split<1||split===name.length-2||name.indexOf('__',split+2)!==-1)continue;
+const sourceId=name.slice(0,split),engineVersion=name.slice(split+2);
+if(key(sourceId,engineVersion)!==name)continue;
+await root.removeEntry(name,{recursive:true});removed.push(name)}
+return{removed,preserved}}
+return{begin,writeChunk,verify,publishReady,readReady,readChunk,getManifest,cleanupIncomplete,recoverIncomplete,ROOT,DB}});
