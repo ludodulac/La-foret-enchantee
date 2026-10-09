@@ -30,6 +30,17 @@ jobs:
         run: node tests/studio-streamed-wav-memory-011e.test.cjs
       - name: Run Studio autosave recovery tests
         run: node tests/studio-autosave.test.cjs
+      - name: Install Chromium for Studio IndexedDB 016B
+        timeout-minutes: 10
+        run: |
+          timeout 180s npm install --no-save playwright
+          timeout 300s npx playwright install --with-deps chromium
+      - name: Run Studio real IndexedDB 016B
+        timeout-minutes: 3
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 >/tmp/studio-016b-http.log 2>&1 &
+          sleep 2
+          node tests/studio-playback-long-016b.test.cjs
       - name: Run Studio project compatibility contract 016
         run: node tests/studio-playback-long-016.test.cjs
       - name: Run Studio local source model tests
