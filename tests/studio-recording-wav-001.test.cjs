@@ -135,6 +135,10 @@ function memoryOpfs({failClose=false}={}){
   assert.match(html,/id="timer" role="timer"/);
   assert.match(html,/id="status" role="status" aria-live="polite"/);
   assert.match(html,/id="download-feedback" role="status" aria-live="polite" hidden/);
+  assert.equal((html.match(/id="download-feedback"/g)||[]).length,1,'single download message area');
+  assert.ok(html.indexOf('id="download-feedback"')<html.indexOf('class="controls"'),'status before controls');
+  assert.match(html,/#download-feedback\{position:fixed;/);
+  assert.match(html,/bottom:max\(12px,env\(safe-area-inset-bottom\)\)/);
   assert.match(html,/class="controls"/);
   assert.match(html,/<details><summary>Journal technique \(facultatif\)<\/summary><pre id="log"/);
   assert.ok(html.indexOf('id="timer"')<html.indexOf('id="start"'),'counter must be visible above the record button');
@@ -164,8 +168,11 @@ function memoryOpfs({failClose=false}={}){
   assert.match(inline[1],/setClock\(r.seconds,'Durée retrouvée'\)/);
   assert.match(inline[1],/\$\('#download'\)\.onclick=/);
   assert.match(inline[1],/Téléchargement demandé à Brave/);
+  assert.match(inline[1],/TÉLÉCHARGER À NOUVEAU/);
+  assert.match(inline[1],/Télécharger une deuxième fois/);
+  assert.match(inline[1],/link\.textContent='⬇ TÉLÉCHARGER MON WAV'/);
   assert.match(inline[1],/la page ne peut pas confirmer la fin du téléchargement/);
-  assert.match(inline[1],/downloadFeedback\('Fichier WAV prêt/);
+  assert.match(inline[1],/downloadFeedback\('✅ WAV prêt à télécharger/);
 
   assert.doesNotMatch(inline[1],/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|indexedDB|supabase)\b/i);
   console.log('STUDIO-WAV-REC-001: header, stockage OPFS, reprise, trou, corruption, quota, export borne et Worklet, HTML preview sûr PASS');
