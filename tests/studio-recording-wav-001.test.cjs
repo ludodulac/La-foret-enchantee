@@ -83,6 +83,12 @@ function memoryOpfs({failClose=false}={}){
   const html=fs.readFileSync('experiments/studio-recording-wav-001.html','utf8');
   assert.match(html,/id="storage-status"/);
   assert.match(html,/id="storage-warning"/);
+  // The key recovery result must be visible before the tall control area on narrow phones.
+  assert.ok(html.indexOf('id="status"')<html.indexOf('class="controls"'));
+  assert.match(html,/id="status"[^>]*aria-live="polite"/);
+  assert.match(html,/class="controls"/);
+  assert.match(html,/<details><summary>Journal technique \(facultatif\)<\/summary><pre id="log"/);
+  assert.match(html,/max-width:700px/);
   assert.match(html,/VÉRIFIER L’ESPACE/);
   const inline=html.match(/<script>([\s\S]*?)<\/script>/);
   assert.ok(inline,'inline browser script exists');
