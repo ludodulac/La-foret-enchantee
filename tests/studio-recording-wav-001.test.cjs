@@ -36,6 +36,20 @@ function memoryOpfs({failClose=false}={}){
   assert.equal((await C.recoverTake(fs1.root,'take_A')).seconds,2);
   assert(fs1.writes.includes('part-000000.wav'));
   const r=await C.recoverTake(fs1.root,'take_A');
+  const whole=await C.previewWav(r);
+  assert.equal(whole.seconds,2);
+  assert.equal(whole.partial,false);
+  assert.equal(whole.blob.size,192044);
+  const wavHeader=new Uint8Array(await whole.blob.slice(0,44).arrayBuffer());
+  assert.deepEqual(C.parseHeader(wavHeader),{sampleRate:48000,frames:96000,bytes:192044});
+  const firstPcm=new Uint8Array(await whole.blob.slice(44,46).arrayBuffer());
+  assert.deepEqual(firstPcm,samples.slice(0,2));
+  const short=await C.previewWav(r,{maxSeconds:1});
+  assert.equal(short.seconds,1);
+  assert.equal(short.partial,true);
+  assert.equal(short.blob.size,96044);
+  await assert.rejects(()=>C.previewWav(r,{maxSeconds:31}),/Limite extrait/);
+
   const result=[];const sink={async write(x){result.push(x)},async close(){this.closed=true}};
   await C.exportToWritable(r,sink);
   assert.equal(sink.closed,true);
@@ -47,6 +61,7 @@ function memoryOpfs({failClose=false}={}){
   await C.appendChunk(testOther,2,new Uint8Array(200));
   const gap=await C.recoverTake(fs1.root,'gapped');
   assert.equal(gap.interrupted,true);assert.equal(gap.segments,1);assert.match(gap.problem,/manquant/);
+  await assert.rejects(()=>C.previewWav(gap),/non lisible/);
   await assert.rejects(()=>C.exportToWritable(gap,sink),/incomplete/);
   const broken=await C.createTake(fs1.root,{id:'truncated',sampleRate:44100});
   await C.appendChunk(broken,0,new Uint8Array(100));
@@ -83,6 +98,9 @@ function memoryOpfs({failClose=false}={}){
   const html=fs.readFileSync('experiments/studio-recording-wav-001.html','utf8');
   assert.match(html,/id="storage-status"/);
   assert.match(html,/id="storage-warning"/);
+  assert.match(html,/id="listen" disabled/);
+  assert.match(html,/<audio id="player" controls/);
+  assert.match(html,/C\.previewWav\(recovered\)/);
   assert.match(html,/VÉRIFIER L’ESPACE/);
   const inline=html.match(/<script>([\s\S]*?)<\/script>/);
   assert.ok(inline,'inline browser script exists');

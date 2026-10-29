@@ -20,6 +20,28 @@ async function listTakes(root){const top=await rootDirectory(root);const takes=[
 function nameFor(seq){if(!Number.isSafeInteger(seq)||seq<0||seq>999999)throw Error('Sequence invalide');return 'part-'+String(seq).padStart(6,'0')+'.wav'}
 async function appendChunk(take,seq,pcm){checkPcm(pcm);const name=nameFor(seq);try{await take.dir.getFileHandle(name);throw Error('Segment deja present : '+name)}catch(e){if(e?.name!=='NotFoundError')throw e}const wav=new Blob([header(pcm.byteLength/2,take.meta.sampleRate),pcm],{type:'audio/wav'});const f=await writeAtomic(take.dir,name,wav);const h=parseHeader(new Uint8Array(await f.slice(0,44).arrayBuffer()));if(h.bytes>MAX_CHUNK_BYTES+44||h.sampleRate!==take.meta.sampleRate||h.bytes!==f.size)throw Error('WAV non valide apres ecriture');return{seq,frames:h.frames,bytes:f.size}}
 async function recoverTake(root,id){const take=await openTake(root,id);const names=[];for await(const [name] of take.dir.entries())if(/^part-\d{6}\.wav$/.test(name))names.push(name);names.sort();let frames=0,bytes=0,corrupt=null,seq=0;for(const name of names){if(name!==nameFor(seq)){corrupt='segment manquant a '+seq;break}try{const f=await(await take.dir.getFileHandle(name)).getFile();const h=parseHeader(new Uint8Array(await f.slice(0,44).arrayBuffer()));if(h.bytes>MAX_CHUNK_BYTES+44||h.sampleRate!==take.meta.sampleRate||h.bytes!==f.size)throw Error('taille ou frequence');frames+=h.frames;bytes+=f.size;seq++}catch(e){corrupt='segment '+name+' illisible : '+e.message;break}}return{take,segments:seq,frames,seconds:frames/take.meta.sampleRate,bytes,interrupted:!!corrupt,problem:corrupt,totalFiles:names.length}}
+// Lecture locale d'un extrait <= 30 secondes, sans decodeAudioData ni upload.
+async function previewWav(recovered,{maxSeconds=30}={}){
+  if(!recovered||recovered.interrupted||!recovered.take||!Number.isSafeInteger(recovered.segments)||recovered.segments<1)throw Error('Prise non lisible');
+  const {take,segments,frames}=recovered,rate=take.meta.sampleRate;
+  checkRate(rate);
+  if(!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>30)throw Error('Limite extrait invalide');
+  if(!Number.isSafeInteger(frames)||frames<1)throw Error('Duree prise invalide');
+  const desired=Math.min(frames,rate*maxSeconds),parts=[header(desired,rate)];
+  let remaining=desired;
+  for(let i=0;i<segments&&remaining>0;i++){
+    const file=await(await take.dir.getFileHandle(nameFor(i))).getFile();
+    const info=parseHeader(new Uint8Array(await file.slice(0,44).arrayBuffer()));
+    if(info.sampleRate!==rate||info.bytes!==file.size||file.size>MAX_CHUNK_BYTES+44)throw Error('Fragment audio modifie');
+    const copied=Math.min(info.frames,remaining);
+    parts.push(file.slice(44,44+copied*2));
+    remaining-=copied;
+  }
+  if(remaining!==0)throw Error('Fragments audio manquants');
+  const blob=new Blob(parts,{type:'audio/wav'});
+  if(blob.size!==44+desired*2)throw Error('Taille extrait invalide');
+  return{blob,seconds:desired/rate,partial:frames>desired};
+}
 async function exportToWritable(recovered,writable){if(!recovered||!writable||typeof writable.write!=='function')throw Error('Export WAV invalide');const {take,segments,frames,interrupted}=recovered;if(interrupted||segments<1)throw Error('Prise incomplete : verifier avant export');if(frames*2+44>0xffffffff)throw Error('WAV superieur a 4 Go');await writable.write(header(frames,take.meta.sampleRate));for(let i=0;i<segments;i++){const f=await(await take.dir.getFileHandle(nameFor(i))).getFile();await writable.write(f.slice(44))}await writable.close();return{frames,seconds:frames/take.meta.sampleRate}}
-return{DIRECTORY,MAX_CHUNK_BYTES,header,parseHeader,createTake,openTake,appendChunk,recoverTake,listTakes,exportToWritable,nameFor};
+return{DIRECTORY,MAX_CHUNK_BYTES,header,parseHeader,createTake,openTake,appendChunk,recoverTake,listTakes,previewWav,exportToWritable,nameFor};
 });
