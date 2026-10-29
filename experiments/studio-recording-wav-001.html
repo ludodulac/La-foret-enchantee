@@ -1,15 +1,44 @@
 <!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Studio — essai WAV durable (non intégré)</title>
-<style>body{font:17px system-ui,sans-serif;max-width:700px;margin:2em auto;padding:0 1em;background:#151d35;color:#fff}button,input{font:inherit;padding:.65em;margin:.3em}button{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#273455;padding:1em}.alert{color:#ffdb8a}#download{display:inline-block;background:#d3f5d9;color:#10251e;font-weight:bold;border-radius:6px;padding:.75em 1em;overflow-wrap:anywhere}#download[hidden]{display:none}</style>
-<h1>Test isolé : enregistrer une prise WAV</h1>
-<p class="alert">Prototype NON intégré à Studio. Une prise est composée de petits WAV locaux, conservés même si la page se ferme. Ne remplace pas encore ton enregistreur. Teste uniquement avec une prise sans valeur.</p>
-<p><button id="start">● ENREGISTRER</button><button id="stop" disabled>■ ARRÊTER</button> <button id="recover">RETROUVER LA PRISE</button> <button id="export" disabled>EXPORTER UN WAV</button> <button id="listen" disabled>▶ ÉCOUTER (30 s max)</button></p>
+<style>
+*{box-sizing:border-box}body{font:16px/1.4 system-ui,sans-serif;max-width:700px;margin:0 auto;padding:12px 14px 28px;background:#151d35;color:#fff}
+h1{font-size:clamp(1.35rem,5vw,1.8rem);line-height:1.2;margin:.2rem 0 .65rem}
+p{margin:.65rem 0}.alert{color:#ffdb8a;font-size:.9rem}
+button,input,select{font:inherit;max-width:100%;min-width:0}
+button{cursor:pointer;padding:.7em .4em;border:0;border-radius:7px;min-height:44px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.controls button{font-size:.88rem;font-weight:600;overflow-wrap:anywhere}
+.inline-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.inline-controls button{font-size:.88rem}
+#saved{flex:1;min-width:140px;padding:.6em}
+#takeid{width:100%;font-size:.85rem;padding:.55em}
+#timer{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums;background:#273455;border-radius:8px;padding:.5em .7em;margin:.6em 0}
+#status{position:sticky;top:0;z-index:3;background:#243652;border:1px solid #5878a7;border-radius:8px;padding:.65em;font-weight:600;overflow-wrap:anywhere}
+#download-feedback{background:#234b3d;border:1px solid #7ac69a;border-radius:8px;padding:.65em;font-weight:600}
+#storage-status{display:block;font-size:.85rem;overflow-wrap:anywhere}
+#download{display:inline-block;background:#d3f5d9;color:#10251e;font-weight:bold;border-radius:6px;padding:.75em 1em;overflow-wrap:anywhere}
+[hidden],#download[hidden],#download-feedback[hidden]{display:none!important}
+details{margin-top:12px}summary{cursor:pointer}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#273455;padding:10px;max-height:220px;overflow:auto;font-size:.8rem}
+</style>
+<h1>Essai WAV sur téléphone</h1>
+<p class="alert">Prototype isolé du Studio principal. Teste avec une prise sans valeur.</p>
+<p id="timer" role="timer">⏱ Durée : 00:00</p>
+<p id="status" role="status" aria-live="polite">Prêt.</p>
+<div class="controls">
+<button id="start">● ENREGISTRER</button><button id="stop" disabled>■ ARRÊTER</button>
+<button id="recover">RETROUVER LA PRISE</button><button id="listen" disabled>▶ ÉCOUTER (30 s max)</button>
+<button id="export" disabled>EXPORTER UN WAV</button><button id="find">MES PRISES</button>
+</div>
 <p><audio id="player" controls preload="metadata" hidden style="width:100%;max-width:100%"></audio></p>
 <p><a id="download" hidden>⬇ TÉLÉCHARGER MON WAV</a></p>
-<p class="alert" id="download-note">Sur Android : après « EXPORTER UN WAV », touche « TÉLÉCHARGER MON WAV » si le lien apparaît. Sans sélecteur de fichiers, l'essai accepte une prise complète de 2 minutes maximum (24 Mio de WAV). Une longue prise ne sera jamais tronquée.</p>
-<p><button id="find">AFFICHER MES PRISES</button> <select id="saved" aria-label="Prises sauvegardées"><option value="">Aucune prise sélectionnée</option></select></p>
+<p id="download-feedback" role="status" aria-live="polite" hidden></p>
+<p class="alert" id="download-note">Sur Android : appuie sur « EXPORTER UN WAV », puis sur « TÉLÉCHARGER MON WAV » si le lien apparaît. L'essai accepte une prise complète de 2 minutes maximum (24 Mio). Aucune troncature silencieuse.</p>
+<p class="inline-controls"><label for="saved">Prise :</label><select id="saved" aria-label="Prises sauvegardées"><option value="">Aucune prise sélectionnée</option></select></p>
 <p class="alert" id="storage-warning">Les prises restent dans le navigateur : n’efface pas les données du site avant d’avoir exporté tes WAV.</p>
 <p><button id="space">VÉRIFIER L’ESPACE</button> <span id="storage-status" role="status">Espace local non vérifié.</span></p>
-<p>ID de la prise : <input id="takeid" placeholder="automatique" aria-label="ID de la prise" autocomplete="off"></p><p id="status" role="status">Prêt.</p><pre id="log"></pre>
+<p>ID technique de la prise : <input id="takeid" placeholder="automatique" aria-label="ID de la prise" autocomplete="off"></p>
+<details><summary>Journal technique (facultatif)</summary><pre id="log"></pre></details>
 <script src="../js/studio-recording-wav-core.js"></script><script>
 (async()=>{
 'use strict';const $=s=>document.querySelector(s),C=window.StudioRecordingWavCore;let ctx=null,stream=null,node=null,gain=null,lock=null,take=null,recovered=null,writeChain=Promise.resolve(),pending=0,seq=0,stopping=false,failed=null,stoppedResolve=null,previewUrl=null,downloadUrl=null;
