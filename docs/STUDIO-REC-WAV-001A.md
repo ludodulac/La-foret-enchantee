@@ -32,6 +32,22 @@ Le fichier studio.html et son ancien record() ne sont pas modifiés. Aucun chang
 5. Faire une courte prise de test ; fermer l'onglet brutalement ; rouvrir et récupérer l'ID. Les fragments fermés doivent réapparaître.
 6. Tester aussi une durée plus longue et un téléphone proche de la saturation du stockage, **sans prise importante**.
 
+## HUMAN GATE Android — vérification réelle du 29 octobre 2026
+
+**PASS partiel — prototype public isolé (GitHub Pages), pas le Studio complet.**
+
+Témoignage et captures de Ludo, sur Android dans Brave :
+- Capture initiale d'une courte prise micro, puis fermeture/réouverture du navigateur.
+- Récupération confirmée : **11 fragments WAV**, **10,81 secondes**, **séquence continue**.
+- Nouveau bouton d'écoute publié sur la page expérimentale via la PR #39 : Ludo confirme ensuite **« Oui j'ai bien entendu ma voix correctement »**.
+- Cela valide l'enregistrement, la persistance locale courte et la lecture audible sur cet appareil dans ce scénario.
+
+**NON TESTÉ / NON VALIDÉ :** 35 minutes, écran verrouillé, interruptions système, espace saturé, export WAV vers le dossier du téléphone, intégration au montage multipiste, sauvegarde/restauration des projets existants et robustesse de la reprise après plantage. Il ne faut **pas** promouvoir le prototype tel quel dans `studio/integration`.
+
+**Traçabilité :** version de la page testée : `main` après fusion de la PR #39 (commit `b8243ccb36debf19195288bd6751536da685cf1c`). Le code de cette PR #36, qui repose sur une autre branche, ne doit pas être traité comme un HEAD identique au code de la page publiée.
+
+**Prochaine action ciblée :** proposer une sauvegarde WAV réelle sur Android, sans modifier `studio.html`, puis tester le téléchargement d'une courte prise avant toute intégration.
+
 ## Limites connues
 
 - Les WAV sont dans l'OPFS du navigateur, **pas automatiquement dans le dossier Fichiers du téléphone**. Un nettoyage des données du site peut les effacer. Export via showSaveFilePicker uniquement si l'appareil le propose ; l'export Android universel reste à concevoir.
