@@ -79,5 +79,14 @@ function memoryOpfs({failClose=false}={}){
   assert.equal(out[1].bytes.byteLength,384);
   assert.equal(out.at(-1).type,'stopped');
   assert.equal(new DataView(out[0].bytes).getInt16(0,true),16384);
-  console.log('STUDIO-WAV-REC-001: header, stockage OPFS, reprise, trou, corruption, quota, export borne et Worklet PASS');
+  // HTML preview safety checks: inline code must parse and never upload microphone audio.
+  const html=fs.readFileSync('experiments/studio-recording-wav-001.html','utf8');
+  assert.match(html,/id="storage-status"/);
+  assert.match(html,/id="storage-warning"/);
+  assert.match(html,/VÉRIFIER L’ESPACE/);
+  const inline=html.match(/<script>([\\s\\S]*?)<\\/script>/);
+  assert.ok(inline,'inline browser script exists');
+  assert.doesNotThrow(()=>new vm.Script(inline[1],{filename:'studio-recording-wav-001.inline.js'}));
+  assert.doesNotMatch(inline[1],/\\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|indexedDB|supabase)\\b/i);
+  console.log('STUDIO-WAV-REC-001: header, stockage OPFS, reprise, trou, corruption, quota, export borne et Worklet, HTML preview sûr PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
