@@ -21,6 +21,12 @@
 7. Ouvrir le WAV téléchargé dans Fichiers/Téléchargements ; vérifier qu'il dure environ **60 s** et contient la voix **du début à la fin**.
 8. Seulement ensuite essayer 120 s. Une validation de 60 s **ne valide pas** 120 s ou 35 minutes.
 
+## Retour humain Android — 29 octobre 2026
+
+**PASS déclaré par Ludo pour l'essai de 1 minute :** le WAV téléchargé est présent dans les fichiers du téléphone et l'utilisateur confirme qu'il peut l'ouvrir et l'écouter **du début à la fin**. La durée exacte du fichier n'a pas été relevée indépendamment sur une capture. Ne pas extrapoler à 120 secondes ni à 35 minutes.
+
+**Deux problèmes UX observés :** aucun compteur de secondes visible pendant la prise ; absence de message évident confirmant que la demande de téléchargement a été transmise au navigateur. La mission STUDIO-WAV-006 corrige seulement ces deux points et simplifie la page expérimentale. Un message « téléchargement demandé » n'est **pas** une confirmation du fichier dans Android.
+
 ## Non validé
 
 - Durée longue 35 minutes, sortie en MP3, fonctionnement écran verrouillé, interruptions.

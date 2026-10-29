@@ -132,6 +132,13 @@ function memoryOpfs({failClose=false}={}){
   assert.match(html,/<audio id="player" controls/);
   assert.match(html,/<a id="download" hidden>/);
   assert.match(html,/id="download-note"/);
+  assert.match(html,/id="timer" role="timer"/);
+  assert.match(html,/id="status" role="status" aria-live="polite"/);
+  assert.match(html,/id="download-feedback" role="status" aria-live="polite" hidden/);
+  assert.match(html,/class="controls"/);
+  assert.match(html,/<details><summary>Journal technique \(facultatif\)<\/summary><pre id="log"/);
+  assert.ok(html.indexOf('id="timer"')<html.indexOf('id="start"'),'counter must be visible above the record button');
+  assert.ok(html.indexOf('id="status"')<html.indexOf('id="export"'),'download feedback must be visible above the export button');
   assert.match(html,/2 minutes maximum/);
   assert.match(html,/C\.completeSmallWav\(recovered,\{maxSeconds:120\}\)/);
   assert.match(html,/C\.completeSmallWav\(recovered/);
@@ -142,6 +149,24 @@ function memoryOpfs({failClose=false}={}){
   const inline=html.match(/<script>([\s\S]*?)<\/script>/);
   assert.ok(inline,'inline browser script exists');
   assert.doesNotThrow(()=>new vm.Script(inline[1],{filename:'studio-recording-wav-001.inline.js'}));
+  // Timer must display minutes/seconds and must not depend on setInterval count.
+  const timerCode=inline[1].match(/^const padTime=.*\nconst clockString=.*$/m);
+  assert.ok(timerCode,'counter formatter found');
+  const counterSandbox={};
+  vm.runInNewContext(timerCode[0]+'\nglobalThis.clockString=clockString;',counterSandbox);
+  assert.equal(counterSandbox.clockString(0),'00:00');
+  assert.equal(counterSandbox.clockString(59.9),'00:59');
+  assert.equal(counterSandbox.clockString(60),'01:00');
+  assert.equal(counterSandbox.clockString(120.3),'02:00');
+  assert.match(inline[1],/startedAt=performance\.now\(\)/);
+  assert.match(inline[1],/setInterval\(\(\)=>/);
+  assert.match(inline[1],/stopTimer\(\);\$\('#stop'\)/);
+  assert.match(inline[1],/setClock\(r.seconds,'Durée retrouvée'\)/);
+  assert.match(inline[1],/\$\('#download'\)\.onclick=/);
+  assert.match(inline[1],/Téléchargement demandé à Brave/);
+  assert.match(inline[1],/la page ne peut pas confirmer la fin du téléchargement/);
+  assert.match(inline[1],/downloadFeedback\('Fichier WAV prêt/);
+
   assert.doesNotMatch(inline[1],/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|indexedDB|supabase)\b/i);
   console.log('STUDIO-WAV-REC-001: header, stockage OPFS, reprise, trou, corruption, quota, export borne et Worklet, HTML preview sûr PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
