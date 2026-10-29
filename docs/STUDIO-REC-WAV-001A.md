@@ -15,6 +15,14 @@
 
 Le fichier studio.html et son ancien record() ne sont pas modifiés. Aucun changement dans IndexedDB v3 foret-studio-autosave, Supabase, les buckets, les médias ni les pages pour les enfants. Baseline de départ : studio/integration au commit 985909dddaef734aaf65e7f165f3db67dffdea61.
 
+## Correction 001B — récupération après fermeture d'onglet
+
+- Le banc manuel recense maintenant les prises disponibles dans OPFS, sans devoir mémoriser l'identifiant de la prise.
+- La liste indique les prises dont les métadonnées sont illisibles ; elle ne les supprime ni ne les modifie.
+- Le stockage simulé du test Node représente désormais correctement les sous-répertoires OPFS indépendants.
+- Test ajouté : plusieurs prises, métadonnées endommagées, fichiers étrangers ignorés, aucune suppression.
+- Le navigateur peut malgré tout effacer OPFS si les données de site sont effacées ; ce test ne constitue **pas** une sauvegarde externe sur le téléphone.
+
 ## Tester
 
 1. En local, lancer node tests/studio-recording-wav-001.test.cjs.
