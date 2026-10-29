@@ -28,6 +28,8 @@ jobs:
         run: node tests/studio-export-core.test.cjs
       - name: Run Studio streamed WAV memory 011E
         run: node tests/studio-streamed-wav-memory-011e.test.cjs
+      - name: Run isolated Studio WAV preview recovery test
+        run: node tests/studio-recording-wav-001.test.cjs
       - name: Run Studio autosave recovery tests
         run: node tests/studio-autosave.test.cjs
       - name: Run Studio local source model tests
