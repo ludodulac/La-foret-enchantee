@@ -49,6 +49,15 @@ function memoryOpfs({failClose=false}={}){
   assert.equal(short.partial,true);
   assert.equal(short.blob.size,96044);
   await assert.rejects(()=>C.previewWav(r,{maxSeconds:31}),/Limite extrait/);
+  // Android : exporter le WAV COMPLET ou refuser explicitement, jamais tronquer.
+  const complete=await C.completeSmallWav(r);
+  assert.equal(complete.size,192044);
+  assert.equal(complete.type,'audio/wav');
+  assert.deepEqual(C.parseHeader(new Uint8Array(await complete.slice(0,44).arrayBuffer())),{sampleRate:48000,frames:96000,bytes:192044});
+  assert.deepEqual(new Uint8Array(await complete.slice(-2).arrayBuffer()),samples.slice(-2));
+  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:1}),/trop longue/);
+  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:31}),/invalide/);
+
 
   const result=[];const sink={async write(x){result.push(x)},async close(){this.closed=true}};
   await C.exportToWritable(r,sink);
@@ -62,6 +71,7 @@ function memoryOpfs({failClose=false}={}){
   const gap=await C.recoverTake(fs1.root,'gapped');
   assert.equal(gap.interrupted,true);assert.equal(gap.segments,1);assert.match(gap.problem,/manquant/);
   await assert.rejects(()=>C.previewWav(gap),/non lisible/);
+  await assert.rejects(()=>C.completeSmallWav(gap),/non lisible/);
   await assert.rejects(()=>C.exportToWritable(gap,sink),/incomplete/);
   const broken=await C.createTake(fs1.root,{id:'truncated',sampleRate:44100});
   await C.appendChunk(broken,0,new Uint8Array(100));
@@ -100,6 +110,11 @@ function memoryOpfs({failClose=false}={}){
   assert.match(html,/id="storage-warning"/);
   assert.match(html,/id="listen" disabled/);
   assert.match(html,/<audio id="player" controls/);
+  assert.match(html,/<a id="download" hidden>/);
+  assert.match(html,/id="download-note"/);
+  assert.match(html,/C\.completeSmallWav\(recovered/);
+  assert.match(html,/link\.download=name/);
+  assert.match(html,/La prise locale est conservée/);
   assert.match(html,/C\.previewWav\(recovered\)/);
   assert.match(html,/VÉRIFIER L’ESPACE/);
   const inline=html.match(/<script>([\s\S]*?)<\/script>/);
