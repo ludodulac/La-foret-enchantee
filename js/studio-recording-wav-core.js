@@ -42,6 +42,17 @@ async function previewWav(recovered,{maxSeconds=30}={}){
   if(blob.size!==44+desired*2)throw Error('Taille extrait invalide');
   return{blob,seconds:desired/rate,partial:frames>desired};
 }
+// Téléchargement mobile : uniquement une prise ENTIÈRE, bornée en mémoire.
+// Aucun tronquage silencieux : si la prise dépasse la limite, refuser et conserver OPFS.
+async function completeSmallWav(recovered,{maxSeconds=30}={}){
+  if(!recovered||!recovered.take||!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>30)throw Error('Export mobile invalide');
+  const rate=recovered.take.meta.sampleRate;
+  checkRate(rate);
+  if(!Number.isSafeInteger(recovered.frames)||recovered.frames<1||recovered.frames>maxSeconds*rate)throw Error('Prise trop longue pour le téléchargement mobile court');
+  const result=await previewWav(recovered,{maxSeconds});
+  if(result.partial||result.blob.size!==44+recovered.frames*2)throw Error('Export incomplet : aucun fichier préparé');
+  return result.blob;
+}
 async function exportToWritable(recovered,writable){if(!recovered||!writable||typeof writable.write!=='function')throw Error('Export WAV invalide');const {take,segments,frames,interrupted}=recovered;if(interrupted||segments<1)throw Error('Prise incomplete : verifier avant export');if(frames*2+44>0xffffffff)throw Error('WAV superieur a 4 Go');await writable.write(header(frames,take.meta.sampleRate));for(let i=0;i<segments;i++){const f=await(await take.dir.getFileHandle(nameFor(i))).getFile();await writable.write(f.slice(44))}await writable.close();return{frames,seconds:frames/take.meta.sampleRate}}
-return{DIRECTORY,MAX_CHUNK_BYTES,header,parseHeader,createTake,openTake,appendChunk,recoverTake,listTakes,previewWav,exportToWritable,nameFor};
+return{DIRECTORY,MAX_CHUNK_BYTES,header,parseHeader,createTake,openTake,appendChunk,recoverTake,listTakes,previewWav,completeSmallWav,exportToWritable,nameFor};
 });
