@@ -1,12 +1,36 @@
 <!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Studio — essai WAV durable (non intégré)</title>
-<style>body{font:17px system-ui,sans-serif;max-width:700px;margin:2em auto;padding:0 1em;background:#151d35;color:#fff}button,input{font:inherit;padding:.65em;margin:.3em}button{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#273455;padding:1em}.alert{color:#ffdb8a}</style>
-<h1>Test isolé : enregistrer une prise WAV</h1>
-<p class="alert">Prototype NON intégré à Studio. Une prise est composée de petits WAV locaux, conservés même si la page se ferme. Ne remplace pas encore ton enregistreur. Teste uniquement avec une prise sans valeur.</p>
-<p><button id="start">● ENREGISTRER</button><button id="stop" disabled>■ ARRÊTER</button> <button id="recover">RETROUVER LA PRISE</button> <button id="export" disabled>EXPORTER UN WAV</button></p>
-<p><button id="find">AFFICHER MES PRISES</button> <select id="saved" aria-label="Prises sauvegardées"><option value="">Aucune prise sélectionnée</option></select></p>
-<p class="alert" id="storage-warning">Les prises restent dans le navigateur : n’efface pas les données du site avant d’avoir exporté tes WAV.</p>
+<style>
+*{box-sizing:border-box}
+body{font:16px/1.4 system-ui,sans-serif;max-width:700px;margin:0 auto;padding:14px 16px 28px;background:#151d35;color:#fff}
+h1{font-size:clamp(1.35rem,5vw,1.85rem);line-height:1.2;margin:.25rem 0 .65rem}
+p{margin:.65rem 0}.alert{color:#ffdb8a;font-size:.92rem}
+button,input,select{font:inherit;max-width:100%;min-width:0}
+button{cursor:pointer;padding:.6em .45em;border:0;border-radius:7px}
+button:disabled{opacity:.44;cursor:not-allowed}
+.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.controls button{font-weight:600;font-size:.9rem}
+.inline-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.inline-controls button{font-size:.88rem}
+#saved{flex:1;min-width:145px;padding:.5em;max-width:100%}
+#takeid{width:100%;padding:.5em;margin-top:4px;font-size:.86rem}
+#status{position:sticky;top:0;z-index:2;background:#243652;border:1px solid #5775a0;border-radius:8px;padding:10px 12px;font-weight:600;overflow-wrap:anywhere}
+#storage-status{display:block;font-size:.86rem;margin-top:5px;overflow-wrap:anywhere}
+#storage-warning{font-size:.85rem}
+details{margin-top:12px}summary{cursor:pointer}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#273455;padding:10px;max-height:200px;overflow:auto;font-size:.79rem}
+</style>
+<h1>Essai WAV sur téléphone</h1>
+<p class="alert">Essai isolé, sans changement du Studio habituel. Fais une courte prise sans valeur : les WAV restent dans le navigateur.</p>
+<p id="status" role="status" aria-live="polite">Prêt.</p>
+<div class="controls">
+<button id="start">● ENREGISTRER</button><button id="stop" disabled>■ ARRÊTER</button>
+<button id="recover">RETROUVER LA PRISE</button><button id="export" disabled>EXPORTER UN WAV</button>
+</div>
+<p class="inline-controls"><button id="find">MES PRISES</button> <select id="saved" aria-label="Prises sauvegardées"><option value="">Aucune prise sélectionnée</option></select></p>
+<p>ID de la prise : <input id="takeid" placeholder="automatique" aria-label="ID de la prise" autocomplete="off"></p>
+<p class="alert" id="storage-warning">Ne supprime pas les données du site avant d'avoir exporté tes WAV : le stockage du navigateur n'est pas une sauvegarde externe.</p>
 <p><button id="space">VÉRIFIER L’ESPACE</button> <span id="storage-status" role="status">Espace local non vérifié.</span></p>
-<p>ID de la prise : <input id="takeid" placeholder="automatique" aria-label="ID de la prise" autocomplete="off"></p><p id="status" role="status">Prêt.</p><pre id="log"></pre>
+<details><summary>Journal technique (facultatif)</summary><pre id="log"></pre></details>
 <script src="../js/studio-recording-wav-core.js"></script><script>
 (async()=>{
 'use strict';const $=s=>document.querySelector(s),C=window.StudioRecordingWavCore;let ctx=null,stream=null,node=null,gain=null,lock=null,take=null,recovered=null,writeChain=Promise.resolve(),pending=0,seq=0,stopping=false,failed=null,stoppedResolve=null;
