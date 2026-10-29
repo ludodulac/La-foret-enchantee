@@ -1,0 +1,16 @@
+# Studio Audio — vérification des problèmes de code (29 octobre 2026)
+
+Baseline lue : studio/integration = 985909dddaef734aaf65e7f165f3db67dffdea61 ; main = fdfdb73decb32552e663c9fce8400fae61433e54. **Lecture du code, sans certification physique sur Android.**
+
+1. **Enregistrement : confirmé.** studio.html / record() utilise getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}), new MediaRecorder(stream), recorder.start() sans timeslice. ondataavailable conserve les blobs en RAM. onstop réalise decodeAudioData(await blob.arrayBuffer()) et crée ensuite la source. Le codec est choisi par le navigateur et n'est pas garanti WAV.
+2. **Lecture : confirmé.** studio.html / decodedSourceCache et preparePlayback() passent par ctx.decodeAudioData(await blob.arrayBuffer()). js/studio-audio-runtime.js / createDecodedSourceCache({maxEntries:8}) borne le nombre d'entrées, pas le nombre d'octets. À 44,1 kHz Float32, 35 minutes représentent environ 370 Mo mono / 741 Mo stéréo par source.
+3. **Export : confirmé avec nuance.** js/studio-export-core.js / MAX_PEAK_BYTES=96 Mio s'applique au mode mémoire ; planExport(...,{output:'opfs'}) et streamWavToOpfs() rendent possibles de longs exports WAV sans un tampon de sortie complet. Cependant studio.html / exportRange() décode toutes les sources avant de mixer ; openExportDestination() désactive la publication OPFS et publishPreparedExport() refuse ce cas.
+4. **MP3 : absent du produit.** studio.html / publishPreparedExport() -> js/audio-publish.js / publishNormalAudio() téléverse le WAV dans le bucket audios puis crée la ligne de base de données. La taille réellement disponible sur le forfait Supabase doit être lue dans le tableau de bord et non déduite du dépôt.
+5. **Mixage : confirmé.** js/studio-export-core.js / renderPcm16Chunks() et mixPcmCooperative() utilisent Math.floor(st*sampleRate) sans interpolation. pcm16() écrête brutalement. writeWavHeader() écrit toujours 2 canaux ; pas de limiteur anticipatif ou fondu dans ce moteur.
+6. **Fonctions : partiellement confirmé.** Pistes, mute et volume existent. Solo, panoramique, fondu, ducking et collage avancé demandés ne sont pas implémentés. studio.html / render() masque +PISTE dès 4 pistes : la demande « 4 ou plus » reste inachevée.
+7. **Hors ligne : confirmé.** studio.html inclut le CDN jsDelivr de Supabase et commence par requireAuth(). Aucune PWA Studio autonome avec service worker de production n'a été identifiée.
+8. **Maintenance : confirmé.** studio.html mesure environ 100 Ko avec un script embarqué dense. Les PR #25 à #35 sont expérimentales et DRAFT ; ne pas en déduire une version acceptée.
+
+Comparaison GitHub : main est 13 commits devant studio/integration, aucun commit derrière ; chemins modifiés : studio.html, .github/workflows/static-checks.yml et ajout de js/studio-playback-preload.js + son test. Les workflows de production Pages publient main, pas cette PR expérimentale.
+
+Priorités : protéger les sources locales et IndexedDB ; WAV progressif récupérable ; lecture/décodage segmentés + mixage mémoire bornée ; MP3 et publication ; qualité sonore et outils ; PWA ; Cloudflare R2 seulement si nécessaire. Chaque étape exige CI du HEAD exact puis HUMAN GATE sur le téléphone avant promotion dans studio/integration.
