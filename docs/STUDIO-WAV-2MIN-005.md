@@ -27,6 +27,14 @@
 
 **Deux problèmes UX observés :** aucun compteur de secondes visible pendant la prise ; absence de message évident confirmant que la demande de téléchargement a été transmise au navigateur. La mission STUDIO-WAV-006 corrige seulement ces deux points et simplifie la page expérimentale. Un message « téléchargement demandé » n'est **pas** une confirmation du fichier dans Android.
 
+## Retour Android — STUDIO-WAV-007 (29 octobre 2026)
+
+Ludo confirme que le **compteur de secondes fonctionne**. En revanche il n'a pas vu le message « WAV prêt » ; en retentant le téléchargement, Brave lui demande s'il souhaite télécharger le fichier **une deuxième fois**. Ce dialogue correspond à un comportement de téléchargement en double sur le navigateur, **pas à une erreur audio démontrée**. Le fichier avait déjà été téléchargé et écouté lors du test précédent.
+
+Le message avait été placé sous le bouton de téléchargement et pouvait être hors du champ de vision sur un petit écran. La mission #007 le rend **flottant et visible en bas de l'écran**, affiche distinctement l'état « WAV prêt à télécharger » et « téléchargement demandé à Brave », et renomme ensuite le lien « TÉLÉCHARGER À NOUVEAU ». Le navigateur ne donne pas à cette page de confirmation certaine de l'écriture du fichier dans Téléchargements.
+
+**HUMAN GATE à refaire :** utiliser une prise courte déjà existante, cliquer EXPORTER UN WAV et constater le bandeau « WAV prêt à télécharger ». Puis cliquer une fois TÉLÉCHARGER MON WAV, vérifier que le bandeau indique « téléchargement demandé » et que le lien devient « TÉLÉCHARGER À NOUVEAU ». Aucun nouvel enregistrement nécessaire.
+
 ## Non validé
 
 - Durée longue 35 minutes, sortie en MP3, fonctionnement écran verrouillé, interruptions.
