@@ -51,13 +51,13 @@ async function previewWav(recovered,{maxSeconds=30}={}){
   const blob=await assembleWav(recovered,desired);
   return{blob,seconds:desired/rate,partial:recovered.frames>desired};
 }
-// Essai mobile 2 minutes maximum. Le téléchargement doit être COMPLET.
-// La limite de 24 Mio évite des blobs trop grands pour les petits téléphones.
-const MAX_MOBILE_DOWNLOAD_BYTES=24*1024*1024;
-async function completeSmallWav(recovered,{maxSeconds=120}={}){
-  if(!recovered?.take||!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>120)throw Error('Export mobile invalide');
+// Essai mobile 5 minutes maximum, à taille bornée : aucun WAV tronqué.
+// Le Blob réunit les slices OPFS sans décoder tout le PCM en tableaux JS.
+const MAX_MOBILE_DOWNLOAD_BYTES=32*1024*1024;
+async function completeSmallWav(recovered,{maxSeconds=300}={}){
+  if(!recovered?.take||!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>300)throw Error('Export mobile invalide');
   const rate=recovered.take.meta.sampleRate;checkRate(rate);
-  if(!Number.isSafeInteger(recovered.frames)||recovered.frames<1||recovered.frames>maxSeconds*rate)throw Error('Prise trop longue pour le téléchargement mobile limité à 2 minutes');
+  if(!Number.isSafeInteger(recovered.frames)||recovered.frames<1||recovered.frames>maxSeconds*rate)throw Error('Prise trop longue pour le téléchargement mobile limité à 5 minutes');
   if(44+recovered.frames*2>MAX_MOBILE_DOWNLOAD_BYTES)throw Error('Fichier trop volumineux pour cet essai Android');
   return assembleWav(recovered,recovered.frames);
 }
