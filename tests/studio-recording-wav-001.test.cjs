@@ -56,7 +56,7 @@ function memoryOpfs({failClose=false}={}){
   assert.deepEqual(C.parseHeader(new Uint8Array(await complete.slice(0,44).arrayBuffer())),{sampleRate:48000,frames:96000,bytes:192044});
   assert.deepEqual(new Uint8Array(await complete.slice(-2).arrayBuffer()),samples.slice(-2));
   await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:1}),/trop longue/);
-  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:121}),/invalide/);
+  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:301}),/invalide/);
 
 
   const result=[];const sink={async write(x){result.push(x)},async close(){this.closed=true}};
@@ -108,9 +108,28 @@ function memoryOpfs({failClose=false}={}){
   await C.appendChunk(twoMinutes,120,samples);
   const tooLong=await C.recoverTake(fs1.root,'two_minutes');
   assert.equal(tooLong.seconds,121);
-  await assert.rejects(()=>C.completeSmallWav(tooLong),/trop longue/);
+  await assert.rejects(()=>C.completeSmallWav(tooLong,{maxSeconds:120}),/trop longue/);
   await assert.rejects(()=>C.completeSmallWav({...longRecovered,frames:120*192000,take:{meta:{sampleRate:192000}}}),/trop volumineux/);
-  // La limite 24 Mio est testee avant toute lecture de fragment.
+  // Test 008 : 300 fragments WAV de 1 seconde, assemblage intégral.
+  const fiveMinutes=await C.createTake(fs1.root,{id:'five_minutes',sampleRate:48000});
+  for(let i=0;i<300;i++)await C.appendChunk(fiveMinutes,i,samples);
+  const fiveRecovered=await C.recoverTake(fs1.root,'five_minutes');
+  assert.equal(fiveRecovered.segments,300);
+  assert.equal(fiveRecovered.seconds,300);
+  const fiveWav=await C.completeSmallWav(fiveRecovered);
+  assert.equal(fiveWav.size,44+300*96000);
+  assert.deepEqual(C.parseHeader(new Uint8Array(await fiveWav.slice(0,44).arrayBuffer())),
+    {sampleRate:48000,frames:300*48000,bytes:44+300*96000});
+  assert.deepEqual(new Uint8Array(await fiveWav.slice(44,46).arrayBuffer()),samples.slice(0,2));
+  assert.deepEqual(new Uint8Array(await fiveWav.slice(-2).arrayBuffer()),samples.slice(-2));
+  const fivePreview=await C.previewWav(fiveRecovered);
+  assert.equal(fivePreview.seconds,30);
+  assert.equal(fivePreview.partial,true);
+  await C.appendChunk(fiveMinutes,300,samples);
+  const moreThanFive=await C.recoverTake(fs1.root,'five_minutes');
+  assert.equal(moreThanFive.seconds,301);
+  await assert.rejects(()=>C.completeSmallWav(moreThanFive),/trop longue/);
+  // La limite 32 Mio est testee avant toute lecture de fragment.
 
   // Le Worklet produit du PCM16 mono par paquets d'une seconde puis flush final.
   let Worklet;const out=[];class Processor{constructor(){this.port={postMessage:(value)=>out.push(value),onmessage:null}}}
@@ -143,8 +162,8 @@ function memoryOpfs({failClose=false}={}){
   assert.match(html,/<details><summary>Journal technique \(facultatif\)<\/summary><pre id="log"/);
   assert.ok(html.indexOf('id="timer"')<html.indexOf('id="start"'),'counter must be visible above the record button');
   assert.ok(html.indexOf('id="status"')<html.indexOf('id="export"'),'download feedback must be visible above the export button');
-  assert.match(html,/2 minutes maximum/);
-  assert.match(html,/C\.completeSmallWav\(recovered,\{maxSeconds:120\}\)/);
+  assert.match(html,/5 minutes maximum/);
+  assert.match(html,/C\.completeSmallWav\(recovered,\{maxSeconds:300\}\)/);
   assert.match(html,/C\.completeSmallWav\(recovered/);
   assert.match(html,/link\.download=name/);
   assert.match(html,/La prise locale est conservée/);
