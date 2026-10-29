@@ -56,7 +56,7 @@ function memoryOpfs({failClose=false}={}){
   assert.deepEqual(C.parseHeader(new Uint8Array(await complete.slice(0,44).arrayBuffer())),{sampleRate:48000,frames:96000,bytes:192044});
   assert.deepEqual(new Uint8Array(await complete.slice(-2).arrayBuffer()),samples.slice(-2));
   await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:1}),/trop longue/);
-  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:31}),/invalide/);
+  await assert.rejects(()=>C.completeSmallWav(r,{maxSeconds:121}),/invalide/);
 
 
   const result=[];const sink={async write(x){result.push(x)},async close(){this.closed=true}};
@@ -92,6 +92,26 @@ function memoryOpfs({failClose=false}={}){
   assert.equal((await C.listTakes(fs1.root)).length,4); // les fichiers non-prises sont ignores
   const quota=memoryOpfs({failClose:true});
   await assert.rejects(()=>C.createTake(quota.root,{id:'quota',sampleRate:44100}),e=>e.name==='QuotaExceededError');
+  // Test 005 : 120 secondes de vrais fragments OPFS simulés, WAV entier.
+  const twoMinutes=await C.createTake(fs1.root,{id:'two_minutes',sampleRate:48000});
+  for(let i=0;i<120;i++)await C.appendChunk(twoMinutes,i,samples);
+  const longRecovered=await C.recoverTake(fs1.root,'two_minutes');
+  assert.equal(longRecovered.segments,120);
+  assert.equal(longRecovered.seconds,120);
+  const longDownload=await C.completeSmallWav(longRecovered);
+  assert.equal(longDownload.size,120*96000+44);
+  assert.deepEqual(C.parseHeader(new Uint8Array(await longDownload.slice(0,44).arrayBuffer())),{sampleRate:48000,frames:120*48000,bytes:120*96000+44});
+  assert.deepEqual(new Uint8Array(await longDownload.slice(-2).arrayBuffer()),samples.slice(-2));
+  const longPreview=await C.previewWav(longRecovered);
+  assert.equal(longPreview.seconds,30);
+  assert.equal(longPreview.partial,true);
+  await C.appendChunk(twoMinutes,120,samples);
+  const tooLong=await C.recoverTake(fs1.root,'two_minutes');
+  assert.equal(tooLong.seconds,121);
+  await assert.rejects(()=>C.completeSmallWav(tooLong),/trop longue/);
+  await assert.rejects(()=>C.completeSmallWav({...longRecovered,frames:120*192000,take:{meta:{sampleRate:192000}}}),/trop volumineux/);
+  // La limite 24 Mio est testee avant toute lecture de fragment.
+
   // Le Worklet produit du PCM16 mono par paquets d'une seconde puis flush final.
   let Worklet;const out=[];class Processor{constructor(){this.port={postMessage:(value)=>out.push(value),onmessage:null}}}
   vm.runInNewContext(fs.readFileSync('js/studio-recording-wav-worklet.js','utf8'),{AudioWorkletProcessor:Processor,sampleRate:8000,registerProcessor:(name,klass)=>{assert.equal(name,'studio-recording-wav');Worklet=klass},ArrayBuffer,DataView,Number,Math});
@@ -112,6 +132,8 @@ function memoryOpfs({failClose=false}={}){
   assert.match(html,/<audio id="player" controls/);
   assert.match(html,/<a id="download" hidden>/);
   assert.match(html,/id="download-note"/);
+  assert.match(html,/2 minutes maximum/);
+  assert.match(html,/C\.completeSmallWav\(recovered,\{maxSeconds:120\}\)/);
   assert.match(html,/C\.completeSmallWav\(recovered/);
   assert.match(html,/link\.download=name/);
   assert.match(html,/La prise locale est conservée/);

@@ -19,3 +19,11 @@
 - Les fragments sources OPFS ne sont jamais supprimés ou modifiés par cette opération ; la nouvelle sauvegarde est distincte.
 - Aucun serveur, aucun service payant, aucun transfert de voix sur le réseau.
 - La procédure de sauvegarde Android de **35 minutes sans sélecteur** reste à construire et tester séparément. Ne pas promettre une prise longue avant preuve.
+
+## Validation humaine de l'export — Android Brave (29 octobre 2026)
+
+**PASS, prise courte :** Ludo a confirmé avoir téléchargé le WAV, l'avoir retrouvé dans les fichiers du téléphone, puis avoir **entendu sa voix en ouvrant ce fichier indépendamment du Studio**. La prise expérimentale antérieure avait 11 fragments et une durée de 10,81 s.
+
+**Non conclu :** téléchargement de 2 minutes, 35 minutes, écran verrouillé, interruptions, compatibilité de tous les téléphones, comportement sous espace faible.
+
+L'extension expérimentale suivante STUDIO-WAV-005 teste progressivement 60 à 120 secondes sans modifier l'interface de montage.

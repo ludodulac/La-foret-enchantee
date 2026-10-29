@@ -20,15 +20,15 @@ async function listTakes(root){const top=await rootDirectory(root);const takes=[
 function nameFor(seq){if(!Number.isSafeInteger(seq)||seq<0||seq>999999)throw Error('Sequence invalide');return 'part-'+String(seq).padStart(6,'0')+'.wav'}
 async function appendChunk(take,seq,pcm){checkPcm(pcm);const name=nameFor(seq);try{await take.dir.getFileHandle(name);throw Error('Segment deja present : '+name)}catch(e){if(e?.name!=='NotFoundError')throw e}const wav=new Blob([header(pcm.byteLength/2,take.meta.sampleRate),pcm],{type:'audio/wav'});const f=await writeAtomic(take.dir,name,wav);const h=parseHeader(new Uint8Array(await f.slice(0,44).arrayBuffer()));if(h.bytes>MAX_CHUNK_BYTES+44||h.sampleRate!==take.meta.sampleRate||h.bytes!==f.size)throw Error('WAV non valide apres ecriture');return{seq,frames:h.frames,bytes:f.size}}
 async function recoverTake(root,id){const take=await openTake(root,id);const names=[];for await(const [name] of take.dir.entries())if(/^part-\d{6}\.wav$/.test(name))names.push(name);names.sort();let frames=0,bytes=0,corrupt=null,seq=0;for(const name of names){if(name!==nameFor(seq)){corrupt='segment manquant a '+seq;break}try{const f=await(await take.dir.getFileHandle(name)).getFile();const h=parseHeader(new Uint8Array(await f.slice(0,44).arrayBuffer()));if(h.bytes>MAX_CHUNK_BYTES+44||h.sampleRate!==take.meta.sampleRate||h.bytes!==f.size)throw Error('taille ou frequence');frames+=h.frames;bytes+=f.size;seq++}catch(e){corrupt='segment '+name+' illisible : '+e.message;break}}return{take,segments:seq,frames,seconds:frames/take.meta.sampleRate,bytes,interrupted:!!corrupt,problem:corrupt,totalFiles:names.length}}
-// Lecture locale d'un extrait <= 30 secondes, sans decodeAudioData ni upload.
-async function previewWav(recovered,{maxSeconds=30}={}){
+// Assembler un WAV local à partir de slices OPFS, sans décoder tout le son.
+// Vérifie chaque fragment; les sources OPFS ne sont jamais modifiées.
+async function assembleWav(recovered,desiredFrames){
   if(!recovered||recovered.interrupted||!recovered.take||!Number.isSafeInteger(recovered.segments)||recovered.segments<1)throw Error('Prise non lisible');
   const {take,segments,frames}=recovered,rate=take.meta.sampleRate;
   checkRate(rate);
-  if(!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>30)throw Error('Limite extrait invalide');
-  if(!Number.isSafeInteger(frames)||frames<1)throw Error('Duree prise invalide');
-  const desired=Math.min(frames,rate*maxSeconds),parts=[header(desired,rate)];
-  let remaining=desired;
+  if(!Number.isSafeInteger(frames)||frames<1||!Number.isSafeInteger(desiredFrames)||desiredFrames<1||desiredFrames>frames)throw Error('Duree prise invalide');
+  const parts=[header(desiredFrames,rate)];
+  let remaining=desiredFrames;
   for(let i=0;i<segments&&remaining>0;i++){
     const file=await(await take.dir.getFileHandle(nameFor(i))).getFile();
     const info=parseHeader(new Uint8Array(await file.slice(0,44).arrayBuffer()));
@@ -39,19 +39,27 @@ async function previewWav(recovered,{maxSeconds=30}={}){
   }
   if(remaining!==0)throw Error('Fragments audio manquants');
   const blob=new Blob(parts,{type:'audio/wav'});
-  if(blob.size!==44+desired*2)throw Error('Taille extrait invalide');
-  return{blob,seconds:desired/rate,partial:frames>desired};
+  if(blob.size!==44+desiredFrames*2)throw Error('Taille WAV invalide');
+  return blob;
 }
-// Téléchargement mobile : uniquement une prise ENTIÈRE, bornée en mémoire.
-// Aucun tronquage silencieux : si la prise dépasse la limite, refuser et conserver OPFS.
-async function completeSmallWav(recovered,{maxSeconds=30}={}){
-  if(!recovered||!recovered.take||!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>30)throw Error('Export mobile invalide');
-  const rate=recovered.take.meta.sampleRate;
-  checkRate(rate);
-  if(!Number.isSafeInteger(recovered.frames)||recovered.frames<1||recovered.frames>maxSeconds*rate)throw Error('Prise trop longue pour le téléchargement mobile court');
-  const result=await previewWav(recovered,{maxSeconds});
-  if(result.partial||result.blob.size!==44+recovered.frames*2)throw Error('Export incomplet : aucun fichier préparé');
-  return result.blob;
+// Lecture locale d'un extrait <= 30 secondes, même pour une longue prise.
+async function previewWav(recovered,{maxSeconds=30}={}){
+  if(!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>30)throw Error('Limite extrait invalide');
+  if(!recovered?.take)throw Error('Prise non lisible');
+  const rate=recovered.take.meta.sampleRate;checkRate(rate);
+  const desired=Math.min(recovered.frames,rate*maxSeconds);
+  const blob=await assembleWav(recovered,desired);
+  return{blob,seconds:desired/rate,partial:recovered.frames>desired};
+}
+// Essai mobile 2 minutes maximum. Le téléchargement doit être COMPLET.
+// La limite de 24 Mio évite des blobs trop grands pour les petits téléphones.
+const MAX_MOBILE_DOWNLOAD_BYTES=24*1024*1024;
+async function completeSmallWav(recovered,{maxSeconds=120}={}){
+  if(!recovered?.take||!Number.isInteger(maxSeconds)||maxSeconds<1||maxSeconds>120)throw Error('Export mobile invalide');
+  const rate=recovered.take.meta.sampleRate;checkRate(rate);
+  if(!Number.isSafeInteger(recovered.frames)||recovered.frames<1||recovered.frames>maxSeconds*rate)throw Error('Prise trop longue pour le téléchargement mobile limité à 2 minutes');
+  if(44+recovered.frames*2>MAX_MOBILE_DOWNLOAD_BYTES)throw Error('Fichier trop volumineux pour cet essai Android');
+  return assembleWav(recovered,recovered.frames);
 }
 async function exportToWritable(recovered,writable){if(!recovered||!writable||typeof writable.write!=='function')throw Error('Export WAV invalide');const {take,segments,frames,interrupted}=recovered;if(interrupted||segments<1)throw Error('Prise incomplete : verifier avant export');if(frames*2+44>0xffffffff)throw Error('WAV superieur a 4 Go');await writable.write(header(frames,take.meta.sampleRate));for(let i=0;i<segments;i++){const f=await(await take.dir.getFileHandle(nameFor(i))).getFile();await writable.write(f.slice(44))}await writable.close();return{frames,seconds:frames/take.meta.sampleRate}}
 return{DIRECTORY,MAX_CHUNK_BYTES,header,parseHeader,createTake,openTake,appendChunk,recoverTake,listTakes,previewWav,completeSmallWav,exportToWritable,nameFor};
