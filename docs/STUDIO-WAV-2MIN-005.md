@@ -42,3 +42,11 @@ Le message avait été placé sous le bouton de téléchargement et pouvait êtr
 - Sauvegarde permanente garantie : OPFS reste effaçable via les données du site.
 
 **Ne pas promouvoir le moteur dans `studio/integration` avant les autres gates Android et la compatibilité avec les clips existants.**
+
+## Retour humain — essai ≈1 min 45 s (29 octobre 2026)
+
+Après le scénario demandé de **1 minute 45 secondes** (enregistrement, téléchargement et réécoute), Ludo répond **« Ça fonctionne »**. Le récit est une confirmation humaine du parcours, mais aucun relevé indépendant des secondes exactes ni du fichier n'est disponible. La courte prise de 10,81 s et l'essai précédent d'environ une minute avaient également été validés.
+
+**Prochaine mission STUDIO-WAV-008 :** étendre sur la page isolée la limite du téléchargement complet Android à **5 minutes / 32 Mio**, pour tester réellement une prise de 3 puis 5 minutes et éviter de perdre du temps avec des incréments de 15 secondes. L'écoute intégrée reste volontairement plafonnée à 30 secondes ; pour vérifier la fin d'une prise de 5 minutes, ouvrir le WAV téléchargé dans Fichiers Android.
+
+Ce succès court **ne prouve pas** la fiabilité à 35 minutes, les interruptions de microphone ou une reprise pendant le verrouillage de l'écran.
