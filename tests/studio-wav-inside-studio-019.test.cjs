@@ -57,6 +57,7 @@ assert.match(panel,/Bridge\.makeShortClipSource\(recovered\)/);
 assert.match(html,/await registerSourceBlob\(item.blob,null,\{origin:'opfs-wav-short'/);
 assert.match(html,/await flushLocalAutosave\(\)/);
 assert.match(panel,/await attach\(true\)/);
+assert.match(panel,/recordingCompleted&&recovered/,'auto-import only after full stop acknowledgment');
 assert.match(panel,/getUserMedia\(\{audio:/);
 assert.match(panel,/ui\.download\.onclick=/);
 assert.doesNotMatch(panel,/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|indexedDB|supabase)\b/i,'raw mic never sent over network');
