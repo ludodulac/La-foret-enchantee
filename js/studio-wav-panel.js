@@ -10,7 +10,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
     export:$('studio-wav-export'),download:$('studio-wav-download'),player:$('studio-wav-player'),
     time:$('studio-wav-time'),status:$('studio-wav-status')};
   let ac=null,mic=null,node=null,gain=null,take=null,writeChain=Promise.resolve();
-  let pending=0,seq=0,failed=null,stopping=false,ack=null,timer=null,startAt=null;
+  let pending=0,seq=0,failed=null,starting=false,stopping=false,ack=null,timer=null,startAt=null;
   let recovered=null,previewUrl=null,downloadUrl=null;
   const report=message=>{ui.status.textContent=message};
   const clock=seconds=>{const n=Math.max(0,Math.floor(seconds));ui.time.textContent='⏱ '+String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
@@ -19,7 +19,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
   const rootDir=async()=>{if(!navigator.storage?.getDirectory)throw Error('Enregistrement local OPFS indisponible');return navigator.storage.getDirectory()};
   const clearPlayer=()=>{ui.player.pause();ui.player.removeAttribute('src');ui.player.load();ui.player.hidden=true;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null};
   const clearDownload=()=>{ui.download.hidden=true;ui.download.removeAttribute('href');ui.download.removeAttribute('download');ui.download.textContent='⬇ TÉLÉCHARGER LE WAV';if(downloadUrl)URL.revokeObjectURL(downloadUrl);downloadUrl=null};
-  const buttons=()=>{ui.start.disabled=running()||stopping;ui.stop.disabled=!running()||stopping;ui.close.disabled=running()||stopping;ui.recover.disabled=running()||stopping;ui.listen.disabled=running()||stopping||!recovered||recovered.interrupted;ui.export.disabled=running()||stopping||!recovered||recovered.interrupted};
+  const buttons=()=>{ui.start.disabled=running()||starting||stopping;ui.stop.disabled=!running()||starting||stopping;ui.close.disabled=running()||starting||stopping;ui.recover.disabled=running()||starting||stopping;ui.listen.disabled=running()||starting||stopping||!recovered||recovered.interrupted;ui.export.disabled=running()||starting||stopping||!recovered||recovered.interrupted};
   async function release(){
     stopClock();
     try{node?.disconnect()}catch{}
@@ -71,11 +71,11 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
     }
   }
   async function start(){
-    if(running()||stopping)return;
+    if(running()||starting||stopping)return;
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return}
     if(!isProjectOpen()){report('Ouvre d’abord un projet Studio.');return}
     clearPlayer();clearDownload();recovered=null;writeChain=Promise.resolve();pending=0;seq=0;failed=null;
-    buttons();report('Ouverture du microphone…');
+    starting=true;buttons();report('Ouverture du microphone…');
     try{
       const AC=root.AudioContext||root.webkitAudioContext;
       if(!AC)throw Error('Web Audio indisponible');
@@ -100,7 +100,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
       timer=setInterval(()=>{if(startAt!==null)clock((performance.now()-startAt)/1000)},250);
       report('● Enregistrement WAV en cours — fragments sauvegardés chaque seconde.');
     }catch(e){report('Impossible de démarrer : '+e.message);await release()}
-    buttons();
+    starting=false;buttons();
   }
   async function listen(){
     if(running()||!recovered)return;
