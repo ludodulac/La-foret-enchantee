@@ -27,19 +27,21 @@ assert.match(html,/id="studio-wav-saved"/);
 assert.match(html,/id="studio-wav-recover"/);
 assert.match(html,/id="studio-wav-listen"/);
 assert.match(html,/id="studio-wav-export"/);
+assert.match(html,/id="studio-wav-attach" type="button" disabled/);
 assert.match(html,/id="studio-wav-download" hidden/);
 assert.match(html,/id="studio-wav-time"/);
 assert.match(html,/id="studio-wav-player"/);
-assert.match(html,/ces prises ne sont pas encore placées sur les pistes du montage/);
+assert.match(html,/Les nouvelles prises de 30 secondes ou moins peuvent être ajoutées automatiquement/);
 assert.doesNotMatch(html,/experiments\/studio-recording-wav-001\.html/);
 
 // L'ancien REC n'a pas été remplacé avant la validation Android en vrai.
 assert.match(html,/\$\('#record'\)\.onclick=record/);
 assert.match(html,/\$\('#stop'\)\.onclick=\(\)=>\{if\(recording&&recorder\?\.state!=='inactive'\)/);
-assert.match(html,/StudioWavPanel\.mount\(\{isStudioRecording:\(\)=>recording,isProjectOpen:\(\)=>!!currentProjectId\}\)/);
+assert.match(html,/StudioWavPanel\.mount\(\{isStudioRecording:\(\)=>recording,isProjectOpen:\(\)=>!!currentProjectId,onImportTake:async item=>\{/);
 
 // Scripts OPFS insérés avant la logique principale, sans mutation d'anciens projets.
-assert.ok(html.indexOf('src="js/studio-recording-wav-core.js"')<html.indexOf('src="js/studio-wav-panel.js"'));
+assert.ok(html.indexOf('src="js/studio-recording-wav-core.js"')<html.indexOf('src="js/studio-wav-bridge.js"'));
+assert.ok(html.indexOf('src="js/studio-wav-bridge.js"')<html.indexOf('src="js/studio-wav-panel.js"'));
 assert.ok(html.indexOf('src="js/studio-wav-panel.js"')<html.indexOf("initializeProjectLibraryEntry()"));
 assert.match(panel,/root\.StudioWavPanel=\{mount\}/);
 assert.match(panel,/if\(isStudioRecording\(\)\)/);
@@ -51,6 +53,10 @@ assert.match(panel,/Core\.previewWav\(recovered\)/);
 assert.match(panel,/Core\.completeSmallWav\(recovered,\{maxSeconds:300\}\)/);
 assert.match(panel,/Core\.createTake\(await rootDir\(\),\{id,sampleRate:ac\.sampleRate\}\)/);
 assert.match(panel,/Core\.appendChunk\(take,index,pcm\)/);
+assert.match(panel,/Bridge\.makeShortClipSource\(recovered\)/);
+assert.match(html,/await registerSourceBlob\(item.blob,null,\{origin:'opfs-wav-short'/);
+assert.match(html,/await flushLocalAutosave\(\)/);
+assert.match(panel,/await attach\(true\)/);
 assert.match(panel,/getUserMedia\(\{audio:/);
 assert.match(panel,/ui\.download\.onclick=/);
 assert.doesNotMatch(panel,/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|indexedDB|supabase)\b/i,'raw mic never sent over network');
