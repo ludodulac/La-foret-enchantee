@@ -184,6 +184,20 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .project-dialog-panel{align-items:flex-start;padding:clamp(12px,calc(var(--studio-vh,100dvh) * .08),48px) 12px 12px}
   .project-dialog-box{max-height:calc(var(--studio-vh,100dvh) - clamp(36px,calc(var(--studio-vh,100dvh) * .16),96px))}
 }
+.studio-wav-overlay{position:fixed;inset:0;z-index:95;display:flex;align-items:center;justify-content:center;padding:12px;background:#030914e8;color:#fff}
+.studio-wav-overlay[hidden]{display:none!important}
+.studio-wav-box{width:min(560px,100%);max-height:calc(100dvh - 24px);overflow:auto;background:#0b1b30;border:2px solid #4f82bb;border-radius:14px;padding:14px;box-shadow:0 6px 30px #0009}
+.studio-wav-box h2{font-size:18px;margin:0 0 8px}
+.studio-wav-box p{font-size:12px;line-height:1.45;color:#d1dff2}
+.studio-wav-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.studio-wav-actions button,.studio-wav-actions a{min-height:46px;border:1px solid #609bc3;border-radius:8px;padding:10px 5px;text-align:center;color:#fff;background:#143257;font-weight:800;font-size:12px;text-decoration:none}
+.studio-wav-actions button:disabled{opacity:.5}
+#studio-wav-status{min-height:40px;background:#203e62;padding:10px;border-radius:8px;overflow-wrap:anywhere}
+#studio-wav-time{font-size:24px;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0}
+#studio-wav-saved{width:100%;height:46px;background:#152a46;color:#fff;border:1px solid #8bbbd5}
+#studio-wav-player{width:100%;margin:8px 0}
+#studio-wav-download{background:#166443;color:#fff}
+#studio-wav-download[hidden]{display:none!important}
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
   <header class="project-library-header">
@@ -293,6 +307,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 </div>
 
 <div class="secondarytools" id="tools-menu-panel">
+  <button class="game-btn game-btn-standard game-btn-green" id="studio-wav-open" type="button">🎙 PRISES WAV SÉCURISÉES</button>
   <div class="quick">
     <button class="game-btn game-btn-compact game-btn-secondary" id="undo">↶ ANNULER</button>
     <button class="game-btn game-btn-compact game-btn-secondary" id="redo">↷ RÉTABLIR</button>
@@ -331,6 +346,29 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <div class="liblist" id="library-list"><div class="libempty">Chargement de la bibliothèque…</div></div>
 </section>
 </main>
+<section class="studio-wav-overlay" id="studio-wav-panel" hidden>
+  <div class="studio-wav-box" role="dialog" aria-modal="true" aria-labelledby="studio-wav-title">
+    <h2 id="studio-wav-title">🎙 Prises WAV sécurisées — Studio Audio</h2>
+    <p>Enregistre et retrouve des prises locales sans passer par l’ancien moteur. Essai réversible : <strong>ces prises ne sont pas encore placées sur les pistes du montage</strong>.</p>
+    <div id="studio-wav-time">⏱ 00:00</div>
+    <div id="studio-wav-status" role="status" aria-live="polite">Prêt.</div>
+    <div class="studio-wav-actions">
+      <button id="studio-wav-start" type="button">● ENREGISTRER WAV</button>
+      <button id="studio-wav-stop" type="button" disabled>■ ARRÊTER</button>
+    </div>
+    <p><label for="studio-wav-saved">Prises conservées sur ce téléphone :</label></p>
+    <select id="studio-wav-saved" aria-label="Prises WAV locales"></select>
+    <div class="studio-wav-actions">
+      <button id="studio-wav-recover" type="button">RETROUVER LA PRISE</button>
+      <button id="studio-wav-listen" type="button" disabled>▶ ÉCOUTER 30 s</button>
+      <button id="studio-wav-export" type="button" disabled>PRÉPARER LE WAV</button>
+      <a id="studio-wav-download" hidden>⬇ TÉLÉCHARGER LE WAV</a>
+    </div>
+    <audio id="studio-wav-player" controls hidden></audio>
+    <p>Le téléchargement complet est limité à 5 minutes / 32 Mio pour cet essai Android. Les fragments locaux restent récupérables, mais peuvent disparaître si les données du navigateur sont effacées.</p>
+    <div class="studio-wav-actions"><button id="studio-wav-close" type="button">FERMER ET RETOURNER AU STUDIO</button></div>
+  </div>
+</section>
 <div class="project-dialog-panel" id="export-destination-panel" hidden>
   <div class="project-dialog-box export-destination-box" role="dialog" aria-modal="true" aria-labelledby="export-destination-title">
     <h2 id="export-destination-title">EXPORT AUDIO</h2>
@@ -351,7 +389,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-panel.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
@@ -503,4 +541,5 @@ window.addEventListener('pagehide',()=>exportAbortController?.abort());
 $('#export').onclick=()=>{let end=Math.max(0,...clips.map(c=>c.start+c.len));exportRange(0,end,'montage-son')};
 $('#export-selection').onclick=()=>{if(selectionStart===null||selectionEnd===null){selectionDiagnostic('SÉLECTION INVALIDE — début et fin requis');return msg('Choisis un début et une fin')}if(selectionEnd<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — DÉBUT = '+selectionSeconds(selectionStart)+' s, FIN = '+selectionSeconds(selectionEnd)+' s');return msg('La fin doit être après le début')}let start=selectionStart,end=selectionEnd;exportRange(start,end,'selection-son',true)};
 initializeProjectLibraryEntry().catch(e=>{console.error('PROJECT LIBRARY INIT',e);$('#project-library-status').textContent='Impossible de charger les projets locaux';msg('Bibliothèque projets indisponible')});
+StudioWavPanel.mount({isStudioRecording:()=>recording,isProjectOpen:()=>!!currentProjectId});
 </script></body></html>
