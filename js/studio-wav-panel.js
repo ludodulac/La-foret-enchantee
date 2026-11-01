@@ -52,7 +52,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
   async function stop(){
     if(!running()||stopping)return;
     stopping=true;buttons();stopClock();report('Arrêt et sauvegarde des fragments en cours…');
-    const savedId=take?.id;
+    const savedId=take?.meta?.id;
     try{
       if(node){
         await Promise.race([
