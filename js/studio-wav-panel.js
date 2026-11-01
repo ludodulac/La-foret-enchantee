@@ -53,6 +53,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     if(!running()||stopping)return;
     stopping=true;buttons();stopClock();report('Arrêt et sauvegarde des fragments en cours…');
     const savedId=take?.meta?.id;
+    let recordingCompleted=false;
     try{
       if(node){
         await Promise.race([
@@ -62,13 +63,14 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       }
       await writeChain;
       if(failed)throw failed;
+      recordingCompleted=true;
       report('Prise conservée sur le téléphone ('+seq+' fragments).');
     }catch(e){report('Arrêt incomplet : '+e.message+'. Fragments déjà enregistrés conservés.')}
     finally{
       await release();stopping=false;
       try{await listTakes(savedId);if(savedId){ui.select.value=savedId;await recover()}}catch(e){report('Prise conservée ; liste indisponible : '+e.message)}
       buttons();
-      if(recovered&&!recovered.interrupted&&recovered.seconds<=Bridge.MAX_ATTACH_SECONDS&&isProjectOpen()&&onImportTake)
+      if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=Bridge.MAX_ATTACH_SECONDS&&isProjectOpen()&&onImportTake)
         await attach(true);
     }
   }
