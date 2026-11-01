@@ -361,11 +361,12 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <div class="studio-wav-actions">
       <button id="studio-wav-recover" type="button">RETROUVER LA PRISE</button>
       <button id="studio-wav-listen" type="button" disabled>▶ ÉCOUTER 30 s</button>
+      <button id="studio-wav-attach" type="button" disabled>＋ AJOUTER SUR LA PISTE (30 s max)</button>
       <button id="studio-wav-export" type="button" disabled>PRÉPARER LE WAV</button>
       <a id="studio-wav-download" hidden>⬇ TÉLÉCHARGER LE WAV</a>
     </div>
     <audio id="studio-wav-player" controls hidden></audio>
-    <p>Le téléchargement complet est limité à 5 minutes / 32 Mio pour cet essai Android. Les fragments locaux restent récupérables, mais peuvent disparaître si les données du navigateur sont effacées.</p>
+    <p>Les nouvelles prises de 30 secondes ou moins peuvent être ajoutées automatiquement à la piste active après ARRÊTER. Les prises plus longues restent sauvegardées localement mais leur montage progressif n’est pas encore prêt. Export WAV complet limité à 5 minutes / 32 Mio. Les fragments peuvent disparaître si les données du navigateur sont effacées.</p>
     <div class="studio-wav-actions"><button id="studio-wav-close" type="button">FERMER ET RETOURNER AU STUDIO</button></div>
   </div>
 </section>
@@ -389,7 +390,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-panel.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-bridge.js"></script><script src="js/studio-wav-panel.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
@@ -541,5 +542,25 @@ window.addEventListener('pagehide',()=>exportAbortController?.abort());
 $('#export').onclick=()=>{let end=Math.max(0,...clips.map(c=>c.start+c.len));exportRange(0,end,'montage-son')};
 $('#export-selection').onclick=()=>{if(selectionStart===null||selectionEnd===null){selectionDiagnostic('SÉLECTION INVALIDE — début et fin requis');return msg('Choisis un début et une fin')}if(selectionEnd<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — DÉBUT = '+selectionSeconds(selectionStart)+' s, FIN = '+selectionSeconds(selectionEnd)+' s');return msg('La fin doit être après le début')}let start=selectionStart,end=selectionEnd;exportRange(start,end,'selection-son',true)};
 initializeProjectLibraryEntry().catch(e=>{console.error('PROJECT LIBRARY INIT',e);$('#project-library-status').textContent='Impossible de charger les projets locaux';msg('Bibliothèque projets indisponible')});
-StudioWavPanel.mount({isStudioRecording:()=>recording,isProjectOpen:()=>!!currentProjectId});
+StudioWavPanel.mount({isStudioRecording:()=>recording,isProjectOpen:()=>!!currentProjectId,onImportTake:async item=>{
+  if(!currentProjectId||recording)throw Error('Aucun projet actif ou enregistrement normal en cours');
+  if(item.seconds>StudioWavBridge.MAX_ATTACH_SECONDS||!item.waveform||!(item.blob instanceof Blob))throw Error('Prise non prise en charge par le montage pilote');
+  const projectAtStart=currentProjectId;
+  const original='studio-'+item.takeId+'.wav';
+  for(const c of clips){
+    const source=localSources.get(c.sourceId);
+    if(source?.origin==='opfs-wav-short'&&source.originalName===original)throw Error('Cette prise se trouve déjà sur une piste du projet');
+  }
+  // Aucun décodage massif : la forme d’onde a été calculée fragment par fragment.
+  const sourceId=await registerSourceBlob(item.blob,null,{origin:'opfs-wav-short',originalName:original,mimeType:'audio/wav',waveform:item.waveform});
+  if(currentProjectId!==projectAtStart)throw Error('Le projet a changé pendant l’ajout');
+  const target=tracks.find(t=>t.id===recordTrackIdFor());
+  if(!target)throw Error('Piste active introuvable');
+  const at=cursor;
+  checkpoint();
+  clips.push({id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:at,trim:0,len:item.seconds,gain:1,muted:false});
+  render();setCursor(at+item.seconds,true);
+  await flushLocalAutosave();
+  if(autosavePending)throw Error('Prise ajoutée mais sauvegarde automatique incomplète : garde les fragments WAV');
+}});
 </script></body></html>
