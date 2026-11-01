@@ -1,16 +1,16 @@
 (function(root){
 'use strict';
-const Core=root.StudioRecordingWavCore;
-function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
+const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge;
+function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null}={}){
   const $=id=>document.getElementById(id);
   const panel=$('studio-wav-panel'),open=$('studio-wav-open');
-  if(!panel||!open||!Core)throw Error('Panneau Studio WAV introuvable');
+  if(!panel||!open||!Core||!Bridge)throw Error('Panneau Studio WAV introuvable');
   const ui={close:$('studio-wav-close'),start:$('studio-wav-start'),stop:$('studio-wav-stop'),
     select:$('studio-wav-saved'),recover:$('studio-wav-recover'),listen:$('studio-wav-listen'),
-    export:$('studio-wav-export'),download:$('studio-wav-download'),player:$('studio-wav-player'),
+    export:$('studio-wav-export'),download:$('studio-wav-download'),attach:$('studio-wav-attach'),player:$('studio-wav-player'),
     time:$('studio-wav-time'),status:$('studio-wav-status')};
   let ac=null,mic=null,node=null,gain=null,take=null,writeChain=Promise.resolve();
-  let pending=0,seq=0,failed=null,starting=false,stopping=false,ack=null,timer=null,startAt=null;
+  let pending=0,seq=0,failed=null,starting=false,stopping=false,attaching=false,ack=null,timer=null,startAt=null;
   let recovered=null,previewUrl=null,downloadUrl=null;
   const report=message=>{ui.status.textContent=message};
   const clock=seconds=>{const n=Math.max(0,Math.floor(seconds));ui.time.textContent='⏱ '+String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
@@ -19,7 +19,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
   const rootDir=async()=>{if(!navigator.storage?.getDirectory)throw Error('Enregistrement local OPFS indisponible');return navigator.storage.getDirectory()};
   const clearPlayer=()=>{ui.player.pause();ui.player.removeAttribute('src');ui.player.load();ui.player.hidden=true;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null};
   const clearDownload=()=>{ui.download.hidden=true;ui.download.removeAttribute('href');ui.download.removeAttribute('download');ui.download.textContent='⬇ TÉLÉCHARGER LE WAV';if(downloadUrl)URL.revokeObjectURL(downloadUrl);downloadUrl=null};
-  const buttons=()=>{ui.start.disabled=running()||starting||stopping;ui.stop.disabled=!running()||starting||stopping;ui.close.disabled=running()||starting||stopping;ui.recover.disabled=running()||starting||stopping;ui.listen.disabled=running()||starting||stopping||!recovered||recovered.interrupted;ui.export.disabled=running()||starting||stopping||!recovered||recovered.interrupted};
+  const buttons=()=>{ui.start.disabled=running()||starting||stopping||attaching;ui.stop.disabled=!running()||starting||stopping;ui.close.disabled=running()||starting||stopping||attaching;ui.recover.disabled=running()||starting||stopping||attaching;ui.listen.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.export.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.attach.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted||!onImportTake||recovered.seconds>Bridge.MAX_ATTACH_SECONDS};
   async function release(){
     stopClock();
     try{node?.disconnect()}catch{}
@@ -38,7 +38,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
     return items;
   }
   async function recover(){
-    if(running()||stopping)return;
+    if(running()||stopping||attaching)return;
     clearPlayer();clearDownload();recovered=null;buttons();
     try{
       const id=ui.select.value;
@@ -46,7 +46,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
       const r=await Core.recoverTake(await rootDir(),id);
       recovered=r;clock(r.seconds);buttons();
       report(r.interrupted?'Prise partiellement récupérée : '+r.problem+' ; fragments conservés.':
-        'Prise retrouvée : '+r.seconds.toFixed(2)+' s, '+r.segments+' fragments. Elle reste hors des pistes de montage.');
+        'Prise retrouvée : '+r.seconds.toFixed(2)+' s, '+r.segments+' fragments. '+(r.seconds<=Bridge.MAX_ATTACH_SECONDS?'Ajout au montage possible.':'Prise longue conservée dans OPFS, montage long en préparation.'));
     }catch(e){report('Récupération impossible : '+e.message)}
   }
   async function stop(){
@@ -68,10 +68,12 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
       await release();stopping=false;
       try{await listTakes(savedId);if(savedId){ui.select.value=savedId;await recover()}}catch(e){report('Prise conservée ; liste indisponible : '+e.message)}
       buttons();
+      if(recovered&&!recovered.interrupted&&recovered.seconds<=Bridge.MAX_ATTACH_SECONDS&&isProjectOpen()&&onImportTake)
+        await attach(true);
     }
   }
   async function start(){
-    if(running()||starting||stopping)return;
+    if(running()||starting||stopping||attaching)return;
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return}
     if(!isProjectOpen()){report('Ouvre d’abord un projet Studio.');return}
     clearPlayer();clearDownload();recovered=null;writeChain=Promise.resolve();pending=0;seq=0;failed=null;
@@ -122,6 +124,18 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
       report('WAV complet prêt : appuie sur TÉLÉCHARGER LE WAV.');
     }catch(e){report('Export limité à 5 minutes / 32 Mio : '+e.message+'. Prise locale conservée.')}
   }
+  async function attach(automatic=false){
+    if(!onImportTake||!recovered||recovered.interrupted||recovered.seconds>Bridge.MAX_ATTACH_SECONDS||running()||stopping||attaching)return;
+    if(!isProjectOpen()){report('Ouvre un projet avant d’ajouter la prise.');return}
+    attaching=true;buttons();
+    report('Préparation de la prise courte pour le montage…');
+    try{
+      const item=await Bridge.makeShortClipSource(recovered);
+      await onImportTake(item);
+      report((automatic?'Prise enregistrée et ajoutée':'Prise ajoutée')+' à la piste active ✓ · '+item.seconds.toFixed(1)+' s. Le WAV source reste récupérable.');
+    }catch(e){report('Prise conservée mais ajout au montage impossible : '+e.message)}
+    finally{attaching=false;buttons()}
+  }
   open.onclick=async()=>{
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement en cours.');return}
     panel.hidden=false;clearPlayer();clearDownload();
@@ -129,10 +143,10 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true}={}){
     catch(e){report('Prises introuvables : '+e.message)}
     buttons();ui.close.focus();
   };
-  ui.close.onclick=()=>{if(running()||stopping)return;clearPlayer();clearDownload();panel.hidden=true;open.focus()};
+  ui.close.onclick=()=>{if(running()||starting||stopping||attaching)return;clearPlayer();clearDownload();panel.hidden=true;open.focus()};
   ui.start.onclick=start;ui.stop.onclick=stop;ui.recover.onclick=recover;
   ui.select.onchange=()=>{if(running())return;recovered=null;clearPlayer();clearDownload();buttons();report('Prise sélectionnée : appuie sur RETROUVER')};
-  ui.listen.onclick=listen;ui.export.onclick=prepareDownload;
+  ui.listen.onclick=listen;ui.export.onclick=prepareDownload;ui.attach.onclick=()=>attach(false);
   ui.download.onclick=()=>{ui.download.textContent='↻ TÉLÉCHARGER À NOUVEAU';report('Téléchargement demandé à Brave : vérifie le dossier Téléchargements.')};
   root.addEventListener('pagehide',()=>{stopClock();if(running()){try{node?.port.postMessage({type:'stop'})}catch{}mic?.getTracks().forEach(t=>t.stop())}});
   buttons();
