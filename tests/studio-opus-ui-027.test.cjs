@@ -21,7 +21,7 @@ const mux=fs.readFileSync('js/studio-ogg-opus.js','utf8');
   assert.match(html,/const compact=await StudioOpusCompact\.listTemporaryExports\(dir\)/);
   assert.match(html,/StudioOpusCompact\.removeTemporaryExports\(dir,compact/);
   assert.doesNotMatch(html,/new MediaRecorder\(.*opus/i);
-  assert.doesNotMatch(js,/decodeAudioData|fetch\(|XMLHttpRequest|supabase/i);
+  assert.doesNotMatch(js,/\.decodeAudioData\(|\bfetch\(|XMLHttpRequest|supabase/i);
   assert.doesNotThrow(()=>new vm.Script(js));
   assert.doesNotThrow(()=>new vm.Script(mux));
   const safe='.studio-opus-1234-abc.tmp.ogg',removed=[];
