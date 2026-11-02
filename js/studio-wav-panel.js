@@ -127,10 +127,10 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     }catch(e){report('Export limité à 5 minutes / 32 Mio : '+e.message+'. Prise locale conservée.')}
   }
   async function attach(automatic=false){
-    if(!onImportTake||!recovered||recovered.interrupted||recovered.seconds>Bridge.MAX_ATTACH_SECONDS||running()||stopping||attaching)return;
+    if(!onImportTake||!recovered||recovered.interrupted||recovered.seconds>300||running()||stopping||attaching)return;
     if(!isProjectOpen()){report('Ouvre un projet avant d’ajouter la prise.');return}
     attaching=true;buttons();
-    report('Préparation de la prise courte pour le montage…');
+    report('Préparation de la prise pour le montage…');
     try{
       const isLong=recovered.seconds>Bridge.MAX_ATTACH_SECONDS;
       const item=isLong?{...(await Long.prepare(recovered,{onProgress:p=>{
