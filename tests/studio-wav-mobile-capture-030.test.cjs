@@ -46,7 +46,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',route=>{
-    const u=new URL(route.request().url);
+    const u=new URL(route.request().url());
     if(u.hostname==='127.0.0.1'&&u.port===String(port))return route.continue();
     return route.abort('blockedbyclient');
   });
