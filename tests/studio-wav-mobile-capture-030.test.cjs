@@ -36,14 +36,27 @@ const close=()=>new Promise(resolve=>server.close(resolve));
  try{
   const port=await listen();
   browser=await chromium.launch({headless:true,args:[
-    '--no-sandbox','--autoplay-policy=no-user-gesture-required',
-    '--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream'
+    '--no-sandbox','--autoplay-policy=no-user-gesture-required'
   ]});
   const context=await browser.newContext({
     viewport:{width:390,height:844},deviceScaleFactor:1,
-    isMobile:true,hasTouch:true,permissions:['microphone']
+    isMobile:true,hasTouch:true
   });
   const page=await context.newPage(),errors=[];
+  // A controlled 440 Hz browser-generated MediaStream. Real WebAudio and OPFS
+  // are exercised, but no hardware microphone is requested or accessed.
+  await page.addInitScript(()=>{
+    const synthetic=[];
+    navigator.mediaDevices.getUserMedia=async()=>{
+      const ctx=new AudioContext();
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
+      const dest=ctx.createMediaStreamDestination();
+      osc.frequency.value=440;gain.gain.value=0.35;
+      osc.connect(gain).connect(dest);osc.start();await ctx.resume();
+      synthetic.push({ctx,osc});window.__syntheticStudioAudio=synthetic;
+      return dest.stream;
+    };
+  });
   page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/*',route=>{
     const u=new URL(route.request().url());
@@ -60,13 +73,21 @@ const close=()=>new Promise(resolve=>server.close(resolve));
 
   // Real browser AudioWorklet + OPFS fragment writer, but FAKE 100% synthetic mic.
   await page.waitForFunction(()=>/Enregistrement WAV en cours/.test(document.querySelector('#studio-wav-status')?.textContent||''),null,{timeout:15000});
-  // At least two full PCM fragments are emitted before stop; never time out silently.
-  await page.waitForFunction(async()=>{
-    const root=await navigator.storage.getDirectory();
-    return (await StudioRecordingWavCore.listTakes(root)).length>0
-      && (await StudioRecordingWavCore.recoverTake(root,(await StudioRecordingWavCore.listTakes(root))[0].id)).seconds>=2;
-  },null,{timeout:25000,polling:300});
-
+  // Poll outside the page context: waitForFunction treats a returned Promise
+  // as an object in some Chromium builds and would stop recording too early.
+  let ready=null;
+  for(let i=0;i<50;i++){
+    ready=await page.evaluate(async()=>{
+      const root=await navigator.storage.getDirectory();
+      const takes=await StudioRecordingWavCore.listTakes(root);
+      if(!takes.length)return {seconds:0,segments:0};
+      const rec=await StudioRecordingWavCore.recoverTake(root,takes[0].id);
+      return {seconds:rec.seconds,segments:rec.segments};
+    });
+    if(ready.seconds>=2)break;
+    await page.waitForTimeout(400);
+  }
+  assert(ready.seconds>=2,'At least 2 PCM seconds must be persisted before stop: '+JSON.stringify(ready));
   await page.locator('#studio-wav-stop').click();
   await page.waitForFunction(()=>{
     const status=document.querySelector('#studio-wav-status')?.textContent||'';
