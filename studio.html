@@ -608,11 +608,13 @@ $('#studio-wav-clean-temp').onclick=async()=>{
   try{
     const dir=await navigator.storage.getDirectory();
     const old=await StudioWavLongMix.listTemporaryExports(dir);
-    if(!old.length)return msg('Aucun WAV temporaire à effacer');
-    const size=old.reduce((n,x)=>n+x.size,0)/1048576;
-    if(!confirm('Effacer '+old.length+' fichier(s) WAV de mixage temporaire(s) ('+size.toFixed(1)+' Mio) ?\\n\\nVérifie d’abord que les téléchargements sont bien enregistrés sur le téléphone.\\nLes prises originales et les projets ne seront pas touchés.'))return;
-    const deleted=await StudioWavLongMix.removeTemporaryExports(dir,old.map(x=>x.name));
-    msg('Espace libéré : '+deleted+' export(s) temporaire(s) effacé(s)');
+    const compact=await StudioOpusCompact.listTemporaryExports(dir);
+    if(!old.length&&!compact.length)return msg('Aucun export temporaire à effacer');
+    const size=[...old,...compact].reduce((n,x)=>n+x.size,0)/1048576;
+    if(!confirm('Effacer '+(old.length+compact.length)+' export(s) WAV/Opus temporaires ('+size.toFixed(1)+' Mio) ?\\n\\nVérifie d’abord que les téléchargements sont bien enregistrés sur le téléphone.\\nLes prises originales et les projets ne seront pas touchés.'))return;
+    const a=await StudioWavLongMix.removeTemporaryExports(dir,old.map(x=>x.name));
+    const b=await StudioOpusCompact.removeTemporaryExports(dir,compact.map(x=>x.name));
+    msg('Espace libéré : '+(a+b)+' export(s) temporaire(s) effacé(s)');
   }catch(e){msg('Nettoyage impossible : '+(e?.message||String(e)))}
 };
 let exportDiagnosticStep='repos',exportBusy=false,forestPublishBusy=false,pendingExport=null,exportAbortController=null;
