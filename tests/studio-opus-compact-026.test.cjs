@@ -43,12 +43,14 @@ async function check(){
     }
     close(){closed++}
   }
+  let flushCount=0;
   class FakeEncoder{
     static async isConfigSupported(c){return{supported:c.codec==='opus'&&c.sampleRate===48000}}
     constructor({output,error}){this.output=output;this.error=error}
     configure(c){assert.equal(c.sampleRate,48000)}
     encode(a){packets++;this.output({byteLength:50,copyTo(out){out.fill(packets%233+1)}},{})}
     async flush(){
+      flushCount++;
       // A real Opus encoder emits at least one drain packet for its 312-frame lookahead.
       if(packets===50&&!this.padded){
         this.padded=true;
@@ -63,6 +65,7 @@ async function check(){
   Blob.prototype.slice=originalSlice;
   assert.equal(result.seconds,1);assert(result.bytes<1e4);
   assert.equal(result.packetCount,Math.ceil(48000/960)+1);
+  assert.equal(flushCount,1,'encoder.flush must run exactly once or each flush injects invalid padding');
   assert.equal(closed,packets);assert.equal(maxFrames,960);
   assert(largestInputSlice<6000,'only ~20ms input PCM read');
   assert.equal(progress.at(-1),1);
