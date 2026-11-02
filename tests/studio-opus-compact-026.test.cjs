@@ -14,7 +14,7 @@ async function check(){
   assert.equal(P.FRAMES_PER_PACKET,960);assert.equal(P.TARGET_RATE,48000);
   const modified=a.slice();modified[22]=1;await assert.rejects(()=>P.inspectWav(new Blob([modified])),/stéréo/);
   assert.equal((await P.encoderConfig(class{static async isConfigSupported(c){return{supported:c.codec==='opus'}}})).codec,'opus');
-  await assert.rejects(()=>P.encoderConfig(class{static async isConfigSupported(){return{supported:false}}}),/indisponible/);
+  await assert.rejects(()=>P.encoderConfig(class{static async isConfigSupported(){return{supported:false}}}),/pas disponible/);
   let largestInputSlice=0,opened=0,deleted=[],data;
   const slicedFile={
     size:wav.size,
