@@ -491,7 +491,7 @@ function startPreparedPlayback(from,monitor,prepared){
   sources=[];longPlaybackControllers=[];
   clips.forEach(c=>{
     let t=tracks.find(x=>x.id===c.track);
-    if(c.muted||t?.muted||isLongSourceId(sourceIdFor(c)))return;
+    if(c.muted||t?.muted||(typeof isLongSourceId==='function'&&isLongSourceId(sourceIdFor(c))))return;
     let off=Math.max(0,from-c.start),remain=c.len-off;
     if(remain<=0)return;
     let buffer=prepared.get(sourceIdFor(c));if(!buffer)return;
