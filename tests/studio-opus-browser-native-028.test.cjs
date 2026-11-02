@@ -72,6 +72,18 @@ const close=()=>new Promise(resolve=>server.close(resolve));
         report.rmsMiddle=rms(0,.60,.90);
         report.rmsEnd=rms(0,1.25,1.42);
         report.rmsRight=rms(1,.60,.90);
+        function phaseCorrelation(channel,hz,start,end){
+          const d=decoded.getChannelData(channel),a=Math.floor(start*decoded.sampleRate),
+            b=Math.min(d.length,Math.floor(end*decoded.sampleRate));
+          let dot=0,me=0,ref=0;
+          for(let i=a;i<b;i++){
+            const x=d[i],y=Math.sin(2*Math.PI*hz*i/decoded.sampleRate);
+            dot+=x*y;me+=x*x;ref+=y*y;
+          }
+          return dot/Math.sqrt(Math.max(1e-20,me*ref));
+        }
+        report.phaseLeft=phaseCorrelation(0,440,.2,.35);
+        report.phaseRight=phaseCorrelation(1,330,.2,.35);
         report.stage='ok';
       }catch(e){report.stage='decode';report.error=e.name+': '+e.message}
       finally{await ac.close();await encoded.cleanup()}
