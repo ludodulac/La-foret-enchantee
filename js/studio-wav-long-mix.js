@@ -116,5 +116,23 @@ async function streamToOpfs(clips,plan,{navigator:nav=typeof navigator!=='undefi
     throw e;
   }
 }
-return{MAX_MIX_SECONDS,CHUNK_FRAMES,SR,validate,wavHeader,renderChunks,streamToOpfs};
+const TEMP_PATTERN=/^\\.studio-wav-mix-[a-z0-9-]+\\.tmp\\.wav$/;
+async function listTemporaryExports(dir){
+  if(!dir||typeof dir.entries!=='function')throw Error('Stockage local inaccessible');
+  const entries=[];
+  for await(const [name,handle] of dir.entries()){
+    if(handle?.kind!=='file'||!TEMP_PATTERN.test(name))continue;
+    const file=await(await dir.getFileHandle(name)).getFile();
+    entries.push({name,size:file.size});
+  }
+  return entries.sort((a,b)=>a.name.localeCompare(b.name));
+}
+async function removeTemporaryExports(dir,names){
+  if(!Array.isArray(names)||names.some(name=>typeof name!=='string'||!TEMP_PATTERN.test(name)))
+    throw Error('Suppression refusée : seuls les exports temporaires Studio WAV sont autorisés');
+  if(new Set(names).size!==names.length)throw Error('Doublon de fichier temporaire');
+  for(const name of names)await dir.removeEntry(name);
+  return names.length;
+}
+return{MAX_MIX_SECONDS,CHUNK_FRAMES,SR,validate,wavHeader,renderChunks,streamToOpfs,listTemporaryExports,removeTemporaryExports};
 });
