@@ -64,7 +64,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   await page.waitForFunction(async()=>{
     const root=await navigator.storage.getDirectory();
     return (await StudioRecordingWavCore.listTakes(root)).length>0
-      && (await StudioRecordingWavCore.recoverTake(root,(await StudioRecordingWavCore.listTakes(root))[0].id)).segments>=2;
+      && (await StudioRecordingWavCore.recoverTake(root,(await StudioRecordingWavCore.listTakes(root))[0].id)).seconds>=2;
   },null,{timeout:25000,polling:300});
 
   await page.locator('#studio-wav-stop').click();
@@ -90,6 +90,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
       clipCount:clips.length,clipSeconds:clips[0]?.len,
       sourceOrigin:localSources.get(clips[0]?.sourceId)?.origin};
   });
+  console.log('STUDIO-030 actual captured data='+JSON.stringify(data));
   assert.equal(data.interrupted,false,'WAV segments continuous');
   assert(data.seconds>=2&&data.seconds<=15,'Synthetic short recording in expected bounds');
   assert(data.wavBytes===data.pcmBytes+44,'WAV size and header match');
