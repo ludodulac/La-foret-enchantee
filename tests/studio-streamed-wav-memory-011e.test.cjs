@@ -194,7 +194,8 @@ async function identical(name,cs,start,end){
 
   assert(studio.includes("let url=URL.createObjectURL(x.blob)"));
   assert(studio.includes("a.download=x.filename"));
-  assert(studio.includes("if(cleanup)Promise.resolve(cleanup())"));
+  assert(studio.includes("if(cleanup&&!x.opfsBacked)Promise.resolve(cleanup())"));
+  assert(studio.includes("id=\"studio-wav-clean-temp\"")); // Explicit cleanup avoids deleting a 35min OPFS export mid-download.
   console.log('DOWNLOAD_FILE_PATH = PASS File/Blob -> object URL -> anchor download');
 
   assert(studio.includes("if(x.opfsBacked)return msg('Upload long non activé dans cette mission · télécharge le WAV')"));
