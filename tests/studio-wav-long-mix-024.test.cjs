@@ -68,5 +68,21 @@ const M=require('../js/studio-wav-long-mix.js');
   assert.throws(()=>M.validate([long],unsupported),/invalide/);
   assert.throws(()=>M.validate([{...long,trim:2}],plan),/incompatible/);
   assert.equal(opened>0,true);
+  // Cleaning is opt-in, strictly scoped to temporary mix WAV; NEVER touch OPFS takes or project data.
+  const sampleTemp='.studio-wav-mix-12345-abc.tmp.wav',deleted=[];
+  const cleanupDir={async *entries(){
+    yield[sampleTemp,{kind:'file'}];
+    yield['studio-wav-takes-v1',{kind:'directory'}];
+    yield['project-archive',{kind:'file'}];
+    yield['.studio-wav-mix-12345-abc.mp3',{kind:'file'}];
+  },async getFileHandle(name){assert.equal(name,sampleTemp);return{getFile:async()=>new Blob([1,2,3])}},
+    async removeEntry(name){deleted.push(name)}};
+  const listed=await M.listTemporaryExports(cleanupDir);
+  assert.deepEqual(listed,[{name:sampleTemp,size:3}]);
+  await assert.rejects(()=>M.removeTemporaryExports(cleanupDir,['studio-wav-takes-v1']),/refusée/);
+  await assert.rejects(()=>M.removeTemporaryExports(cleanupDir,['project-archive']),/refusée/);
+  await assert.rejects(()=>M.removeTemporaryExports(cleanupDir,[sampleTemp,sampleTemp]),/Doublon/);
+  assert.equal(await M.removeTemporaryExports(cleanupDir,[sampleTemp]),1);
+  assert.deepEqual(deleted,[sampleTemp]);
   console.log('STUDIO-WAV-MIX-024: 2-track mix, 8192-frame RAM bound, verified output, 35min plan, safe cancel PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
