@@ -78,7 +78,12 @@ function createMuxer({channels=2,preSkip=312,inputRate=48000,serial=0x53545544,p
     const packets=group;group=[];if(eos)finished=true;
     return[page({packets,serial,sequence:seq++,granule,eos})];
   }
-  return{begin,packet,finish:granule=>flush(true,granule),flush:()=>flush(false),get packets(){return count},
+  function finishWithPacket(raw,granule){
+    if(!started||finished)throw Error('Mux Opus non prêt');
+    segments(raw);group.push(raw.slice());count++;
+    return flush(true,granule);
+  }
+  return{begin,packet,finish:granule=>flush(true,granule),finishWithPacket,flush:()=>flush(false),get packets(){return count},
     get pages(){return seq},get finished(){return finished}};
 }
 function readPage(data){
