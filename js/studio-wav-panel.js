@@ -1,10 +1,10 @@
 (function(root){
 'use strict';
-const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge;
+const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge,Long=root.StudioWavLongSource;
 function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null}={}){
   const $=id=>document.getElementById(id);
   const panel=$('studio-wav-panel'),open=$('studio-wav-open');
-  if(!panel||!open||!Core||!Bridge)throw Error('Panneau Studio WAV introuvable');
+  if(!panel||!open||!Core||!Bridge||!Long)throw Error('Panneau Studio WAV introuvable');
   const ui={close:$('studio-wav-close'),start:$('studio-wav-start'),stop:$('studio-wav-stop'),
     select:$('studio-wav-saved'),recover:$('studio-wav-recover'),listen:$('studio-wav-listen'),
     export:$('studio-wav-export'),download:$('studio-wav-download'),attach:$('studio-wav-attach'),player:$('studio-wav-player'),
@@ -19,7 +19,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   const rootDir=async()=>{if(!navigator.storage?.getDirectory)throw Error('Enregistrement local OPFS indisponible');return navigator.storage.getDirectory()};
   const clearPlayer=()=>{ui.player.pause();ui.player.removeAttribute('src');ui.player.load();ui.player.hidden=true;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=null};
   const clearDownload=()=>{ui.download.hidden=true;ui.download.removeAttribute('href');ui.download.removeAttribute('download');ui.download.textContent='⬇ TÉLÉCHARGER LE WAV';if(downloadUrl)URL.revokeObjectURL(downloadUrl);downloadUrl=null};
-  const buttons=()=>{ui.start.disabled=running()||starting||stopping||attaching;ui.stop.disabled=!running()||starting||stopping;ui.close.disabled=running()||starting||stopping||attaching;ui.recover.disabled=running()||starting||stopping||attaching;ui.listen.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.export.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.attach.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted||!onImportTake||recovered.seconds>Bridge.MAX_ATTACH_SECONDS};
+  const buttons=()=>{ui.start.disabled=running()||starting||stopping||attaching;ui.stop.disabled=!running()||starting||stopping;ui.close.disabled=running()||starting||stopping||attaching;ui.recover.disabled=running()||starting||stopping||attaching;ui.listen.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.export.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted;ui.attach.disabled=running()||starting||stopping||attaching||!recovered||recovered.interrupted||!onImportTake||recovered.seconds>300};
   async function release(){
     stopClock();
     try{node?.disconnect()}catch{}
@@ -46,7 +46,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       const r=await Core.recoverTake(await rootDir(),id);
       recovered=r;clock(r.seconds);buttons();
       report(r.interrupted?'Prise partiellement récupérée : '+r.problem+' ; fragments conservés.':
-        'Prise retrouvée : '+r.seconds.toFixed(2)+' s, '+r.segments+' fragments. '+(r.seconds<=Bridge.MAX_ATTACH_SECONDS?'Ajout au montage possible.':'Prise longue conservée dans OPFS, montage long en préparation.'));
+        'Prise retrouvée : '+r.seconds.toFixed(2)+' s, '+r.segments+' fragments. '+(r.seconds<=300?'Ajout au montage possible (lecture progressive au-delà de 30 s).':'Prise de plus de 5 minutes conservée dans OPFS, montage à vérifier.'));
     }catch(e){report('Récupération impossible : '+e.message)}
   }
   async function stop(){
@@ -70,7 +70,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       await release();stopping=false;
       try{await listTakes(savedId);if(savedId){ui.select.value=savedId;await recover()}}catch(e){report('Prise conservée ; liste indisponible : '+e.message)}
       buttons();
-      if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=Bridge.MAX_ATTACH_SECONDS&&isProjectOpen()&&onImportTake)
+      if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake)
         await attach(true);
     }
   }
@@ -132,9 +132,12 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     attaching=true;buttons();
     report('Préparation de la prise courte pour le montage…');
     try{
-      const item=await Bridge.makeShortClipSource(recovered);
+      const isLong=recovered.seconds>Bridge.MAX_ATTACH_SECONDS;
+      const item=isLong?{...(await Long.prepare(recovered,{onProgress:p=>{
+        report('Préparation de la forme d’onde : '+Math.round(p*100)+' %');
+      }})),kind:'opfs-long'}:await Bridge.makeShortClipSource(recovered);
       await onImportTake(item);
-      report((automatic?'Prise enregistrée et ajoutée':'Prise ajoutée')+' à la piste active ✓ · '+item.seconds.toFixed(1)+' s. Le WAV source reste récupérable.');
+      report((automatic?'Prise enregistrée et ajoutée':'Prise ajoutée')+' à la piste active ✓ · '+item.seconds.toFixed(1)+' s. '+(isLong?'Lecture progressive, export du montage long à venir.':'')+' Le WAV source reste récupérable.');
     }catch(e){report('Prise conservée mais ajout au montage impossible : '+e.message)}
     finally{attaching=false;buttons()}
   }
