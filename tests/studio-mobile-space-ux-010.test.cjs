@@ -123,15 +123,17 @@ console.log('REDO PASS');
 // Transport above timeline, with explicit STOP.
 for(const id of ['back','record','play','stop','forward','undo','redo'])assert(html.includes('id="'+id+'"'),'transport missing '+id);
 for(const marker of [
- "$('#record').onclick=record",
+ "$('#record').onclick=recordSecurelyFromStudio",
  "$('#play').onclick=()=>playing||playPreparing?stopPlay():play()",
- "$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}",
+ "$('#stop').onclick=()=>{",
  "$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)}",
  "$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)}"
 ])assert(html.includes(marker),'transport handler missing '+marker);
 console.log('TRANSPORT_NEAR_TIMELINE PASS immediately above multipiste');
 console.log('PLAY_ACCESSIBLE PASS');
-console.log('STOP_ACCESSIBLE PASS dedicated STOP + PLAY toggle retained');
+assert(html.includes("if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}"),'STOP must end the secure WAV capture');
+assert(html.includes("if(recording&&recorder?.state!=='inactive'){recorder.stop();return}"),'legacy STOP retained as safety fallback');
+console.log('STOP_ACCESSIBLE PASS dedicated STOP ends WAV; legacy STOP and PLAY retained');
 console.log('RECORD_ACCESSIBLE PASS');
 console.log('SEEK_MINUS_5 PASS');
 console.log('SEEK_PLUS_5 PASS');
