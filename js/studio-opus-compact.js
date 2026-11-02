@@ -135,5 +135,23 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
     throw e;
   }finally{try{encoder?.close()}catch{}}
 }
-return{SOURCE_RATE,TARGET_RATE,PRE_SKIP,FRAMES_PER_PACKET,inspectWav,encoderConfig,verifyOpusDescription,encodeWav};
+const TEMP_PATTERN=/^\\.studio-opus-[a-z0-9-]+\\.tmp\\.ogg$/;
+async function listTemporaryExports(dir){
+  if(!dir||typeof dir.entries!=='function')invalid('Stockage local inaccessible');
+  const items=[];
+  for await(const [name,handle] of dir.entries()){
+    if(handle.kind!=='file'||!TEMP_PATTERN.test(name))continue;
+    const file=await(await dir.getFileHandle(name)).getFile();
+    items.push({name,size:file.size});
+  }
+  return items.sort((a,b)=>a.name.localeCompare(b.name));
+}
+async function removeTemporaryExports(dir,names){
+  if(!Array.isArray(names)||new Set(names).size!==names.length||
+     names.some(name=>typeof name!=='string'||!TEMP_PATTERN.test(name)))
+    invalid('Suppression refusée : seuls les exports Opus temporaires sont autorisés');
+  for(const name of names)await dir.removeEntry(name);
+  return names.length;
+}
+return{SOURCE_RATE,TARGET_RATE,PRE_SKIP,FRAMES_PER_PACKET,inspectWav,encoderConfig,verifyOpusDescription,encodeWav,listTemporaryExports,removeTemporaryExports};
 });
