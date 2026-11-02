@@ -56,7 +56,7 @@ async function check(){
     directory:dir,yieldFn:async()=>{},onProgress:x=>progress.push(x)});
   Blob.prototype.slice=originalSlice;
   assert.equal(result.seconds,1);assert(result.bytes<1e4);
-  assert.equal(result.packetCount,Math.ceil((48000+P.PRE_SKIP)/960));
+  assert.equal(result.packetCount,Math.ceil(48000/960));
   assert.equal(closed,packets);assert.equal(maxFrames,960);
   assert(largestInputSlice<6000,'only ~20ms input PCM read');
   assert.equal(progress.at(-1),1);
@@ -73,7 +73,7 @@ async function check(){
   for(let i=0;i<24;i++)m.packet(new Uint8Array([1]));
   const final=m.finishWithPacket(new Uint8Array([2]),25*960);
   assert.equal(final.length,1);assert(O.readPage(final[0]).eos);
-  // PRE_SKIP pre-roll is silent; normal input follows rather than deleting the first samples.
+  // AudioEncoder applies its own priming delay; do not insert a second silent pre-roll.
   assert.equal(P.PRE_SKIP,312);
   assert.equal(opened,1);
   console.log('STUDIO-OPUS-COMPACT-026: bounded 20ms WAV reads, WebCodecs gating, Ogg EOS, 48k duration, safe OPFS output PASS');
