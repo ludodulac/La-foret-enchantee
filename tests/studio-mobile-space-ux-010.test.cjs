@@ -326,28 +326,37 @@ assert(recordSource.includes("$('#record').classList.add('is-recording')"));
 assert(recordSource.includes("$('#record').classList.remove('is-recording')"));
 assert(!recordSource.includes("$('#record').innerHTML"));
 assert(css.includes('.record.is-recording{filter:brightness(1.18)'));
-console.log('REC_LABEL_STABLE PASS always ● REC');
+console.log('REC_LABEL_STABLE PASS always ● REC WAV');
 console.log('REC_ACTIVE_VISUAL_STATE PASS active class brightens/glows REC without relabeling');
 
 // Exactly one STOP visual control, and its handler routes to recorder OR playback.
 assert.equal((html.match(/id="stop"/g)||[]).length,1);
 assert(!recordSource.includes('STOP'));
-const controlsStart=html.indexOf("$('#record').onclick=record;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
-assert(controlsSource.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"));
+const controlsStart=html.indexOf("$('#record').onclick=recordSecurelyFromStudio;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
+assert(controlsStart>=0&&controlsEnd>controlsStart,'primary recording transport handlers located');
+assert(controlsSource.includes("wavController.stop()"),'STOP must stop secured WAV');
+assert(controlsSource.includes("recorder.stop();return"),'legacy STOP fallback retained');
+{
+  let handlers={},recStops=0,wavStops=0,playStops=0;
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording:false,secureCaptureState:'recording',wavController:{stop(){wavStops++}},recorder:{state:'inactive',stop(){recStops++}}};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert.equal(wavStops,1);assert.equal(recStops,0);assert.equal(playStops,1);
+}
 {
   let handlers={},recStops=0,playStops=0,recording=true,recorder={state:'recording',stop(){recStops++}};
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder,secureCaptureState:'idle',wavController:{stop(){throw Error('unexpected WAV')}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,1);assert.equal(playStops,0);
 }
 {
   let handlers={},recStops=0,playStops=0;
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,recorder:{state:'inactive',stop(){recStops++}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,secureCaptureState:'idle',wavController:{stop(){}},recorder:{state:'inactive',stop(){recStops++}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,0);assert.equal(playStops,1);
 }
 console.log('STOP_SINGLE_VISUAL_CONTROL PASS one ■ STOP control; REC never becomes STOP');
-console.log('STOP_STOPS_RECORDING PASS');
+console.log('STOP_STOPS_WAV PASS secure capture');
+console.log('STOP_STOPS_RECORDING PASS legacy fallback');
 console.log('STOP_STOPS_PLAYBACK PASS');
 
 
