@@ -99,7 +99,40 @@ const close=()=>new Promise(resolve=>server.close(resolve));
     for(const name of ['rmsStart','rmsMiddle','rmsEnd','rmsRight'])
       assert(result[name]>.06,name+' must contain audible sound');
     assert.equal(result.lastProgress,1);
-    console.log('STUDIO-OPUS-BROWSER-028: native encode -> Ogg -> independent decode, duration and nonzero audio PASS');
+    const long=await page.evaluate(async()=>{
+      // One minute of synthetic audio as repeated 1-second PCM fragments, still
+      // encoded via the actual File/Blob slices and native Chromium WebCodecs.
+      const seconds=60,rate=44100,frames=seconds*rate;
+      const header=new Uint8Array(44),v=new DataView(header.buffer);
+      const tag=(o,s)=>{for(let i=0;i<s.length;i++)header[o+i]=s.charCodeAt(i)};
+      tag(0,'RIFF');v.setUint32(4,44+frames*4-8,true);tag(8,'WAVEfmt ');
+      v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,2,true);
+      v.setUint32(24,rate,true);v.setUint32(28,rate*4,true);
+      v.setUint16(32,4,true);v.setUint16(34,16,true);tag(36,'data');v.setUint32(40,frames*4,true);
+      const oneSecond=new Uint8Array(rate*4),samples=new DataView(oneSecond.buffer);
+      for(let i=0;i<rate;i++){
+        const a=Math.round(Math.sin(2*Math.PI*440*i/rate)*17000);
+        samples.setInt16(4*i,a,true);samples.setInt16(4*i+2,a,true);
+      }
+      const wav=new Blob([header,...Array(seconds).fill(oneSecond)],{type:'audio/wav'});
+      const started=performance.now();
+      const encoded=await StudioOpusCompact.encodeWav(wav);
+      const elapsed=performance.now()-started;
+      const audio=new AudioContext({sampleRate:48000});
+      try{
+        const buffer=await audio.decodeAudioData(await encoded.file.arrayBuffer());
+        const d=buffer.getChannelData(0),start=Math.floor(59*buffer.sampleRate);
+        let e=0;for(let i=start;i<d.length;i++)e+=d[i]*d[i];
+        return{sourceBytes:wav.size,oggBytes:encoded.bytes,packets:encoded.packetCount,
+          decodedDuration:buffer.duration,tailRms:Math.sqrt(e/Math.max(1,d.length-start)),
+          encodeMillis:Math.round(elapsed)};
+      }finally{await audio.close();await encoded.cleanup()}
+    });
+    console.log('LONG_NATIVE_BROWSER_RESULT='+JSON.stringify(long));
+    assert(Math.abs(long.decodedDuration-60)<.025,'one-minute compressed Ogg must have exact duration');
+    assert(long.tailRms>.1,'last second of one-minute Opus must be audible');
+    assert(long.oggBytes<long.sourceBytes/5,'one-minute Opus must be compact');
+    console.log('STUDIO-OPUS-BROWSER-028: native short and 60s encode -> independent decode, phase/duration/end-sound PASS');
   }finally{
     try{await browser?.close()}catch{}
     if(server.listening)await close();
