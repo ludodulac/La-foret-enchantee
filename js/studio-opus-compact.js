@@ -116,7 +116,7 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
       }
     }
     await encoder.flush();await writeChain;if(encoderFault)throw encoderFault;
-    if(!lastPacket||outputPackets!==packetInputs)invalid('Paquets Opus manquants : fichier compact refusé');
+    if(!lastPacket||outputPackets!==packetInputs)invalid('Paquets Opus inattendus : attendus '+packetInputs+', reçus '+outputPackets+' (fichier compact refusé)');
     // The final packet is held back to guarantee a true Ogg EOS page.
     const lastGranule=originalTargetFrames+PRE_SKIP;
     writePages(mux.finishWithPacket(lastPacket,lastGranule));
