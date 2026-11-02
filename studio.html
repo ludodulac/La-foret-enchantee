@@ -526,7 +526,7 @@ async function play(from=cursor,monitor=false){
     if(token!==playGeneration)return false;
     playPreparing=false;startPreparedPlayback(from,monitor,prepared);return true
   }catch(e){
-    if(token===playGeneration){console.error('LECTURE STUDIO',e);stopPlay(false);msg('Lecture impossible : '+(e?.message||'source absente'))}
+    if(token===playGeneration){console.error('LECTURE STUDIO',e);stopPlay(false);msg('Impossible de préparer le son');if(/WAV|OPFS|fragment|Prise originale|Référence/i.test(e?.message||''))msg('Source WAV indisponible : '+e.message)}
     return false
   }
 }
