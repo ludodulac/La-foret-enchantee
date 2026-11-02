@@ -83,7 +83,6 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
       error(e){encoderFault=e instanceof Error?e:Error(String(e))}
     });
     encoder.configure(config);
-    const sampleMap=i=>Math.min(frames-1,Math.max(0,Math.floor(i*SOURCE_RATE/TARGET_RATE)));
     // Every block reads <= 885 input frames (3.6 KiB), not a 35-minute audio buffer.
     for(let packet=0;packet<packetInputs;packet++){
       cancelled(signal);if(encoderFault)throw encoderFault;
@@ -119,11 +118,8 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
     await encoder.flush();await writeChain;if(encoderFault)throw encoderFault;
     if(!lastPacket||outputPackets!==packetInputs)invalid('Paquets Opus manquants : fichier compact refusé');
     // The final packet is held back to guarantee a true Ogg EOS page.
-    writePages(mux.packet(lastPacket));
-    // A final full 25-packet page would be empty. For standard output this is avoided
-    // by the held packet except when the page boundary is exactly at packetInputs.
     const lastGranule=originalTargetFrames+PRE_SKIP;
-    writePages(mux.finish(lastGranule));
+    writePages(mux.finishWithPacket(lastPacket,lastGranule));
     await writeChain;
     cancelled(signal);if(encoderFault)throw encoderFault;
     await writer.close();closed=true;
