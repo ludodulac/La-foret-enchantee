@@ -57,3 +57,15 @@ La PR contient maintenant `tests/studio-opus-browser-native-028.test.cjs` et le 
 - La validation native couvre un fichier court **dans Chromium de CI uniquement**. La compatibilité Redmi/Brave, les longs fichiers, le montage multipiste réel sur téléphone et l'export dans La Forêt Enchantée **restent non validés**.
 
 La PR reste **DRAFT** : aucun projet utilisateur ni enregistrement original supprimé, aucune publication automatique.
+
+### 028 — vérification supplémentaire sur une minute (Chromium réel)
+
+La vérification native a ensuite été étendue à **60 secondes** pour détecter une anomalie invisible sur 1,5 seconde : le code appelait `AudioEncoder.flush()` toutes les 40 trames, ce qui créait **75 paquets Opus supplémentaires** par minute et faussait la durée. Il utilise désormais `encodeQueueSize` pour limiter la file d'attente et n'appelle `flush()` **qu'une seule fois à la fin**.
+
+**Résultat après correction, CI native Chromium Linux headless :**
+- Source synthétique stéréo PCM16 44,1 kHz : **10 584 044 octets** pour 60 secondes.
+- Ogg Opus : **729 855 octets** ; **3 001 paquets** (3 000 trames d'entrée et 1 paquet final d'encodeur).
+- Décodeur audio Chromium indépendant : **60 secondes exactement**, fin du signal audible (RMS **0,3695** sur la dernière seconde).
+- L'essai court de 1,5 seconde demeure correct : corrélation de phase **0,99996** / **0,99989**, durée exacte, taille réduite.
+
+Ce test est un **vrai encodage/décodage en navigateur** (pas un mock), mais pas un essai sur Redmi ni un enregistrement réellement capté par microphone. Aucun WAV source ou ancien projet n'est effacé.
