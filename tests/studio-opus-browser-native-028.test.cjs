@@ -95,6 +95,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
     assert(result.oggBytes<result.bytes/3,'Output should be substantially smaller than WAV');
     assert(Math.abs(result.decodedDuration-1.5)<.025,'decoded duration must match source');
     assert.equal(result.channels,2);
+    assert(result.phaseLeft>.98&&result.phaseRight>.98,'Ogg output must remain sample-aligned with original on both channels');
     for(const name of ['rmsStart','rmsMiddle','rmsEnd','rmsRight'])
       assert(result[name]>.06,name+' must contain audible sound');
     assert.equal(result.lastProgress,1);
