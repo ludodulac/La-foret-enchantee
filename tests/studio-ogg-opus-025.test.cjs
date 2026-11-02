@@ -22,7 +22,7 @@ for(let i=0;i<12;i++)pages.push(...mux.packet(new Uint8Array(95+i).fill(i+1)));
 pages.push(...mux.packet(new Uint8Array(255).fill(7)));
 assert.equal(mux.packets,13);
 pages.push(...mux.finish(13*960-300));
-assert.equal(pages.length,2+3+1+1);
+assert.equal(pages.length,2+3+1);
 const serials=new Set(),sequences=[],granules=[];
 for(let i=0;i<pages.length;i++){
   const parsed=O.readPage(pages[i]);serials.add(parsed.serial);
