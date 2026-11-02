@@ -55,7 +55,7 @@ assert.match(panel,/Core\.createTake\(await rootDir\(\),\{id,sampleRate:ac\.samp
 assert.match(panel,/Core\.appendChunk\(take,index,pcm\)/);
 assert.match(panel,/Bridge\.makeShortClipSource\(recovered\)/);assert.match(panel,/Long\.prepare\(recovered/);
 assert.match(html,/await registerSourceBlob\(pointer,null,\{origin:isLong\?'opfs-wav-long':'opfs-wav-short'/);
-assert.match(html,/await flushLocalAutosave\(\)/);assert.match(html,/await localStore\.saveWaveform\(sourceId,item\.waveform\)/);assert.match(html,/StudioWavLongPlayback\.start\(ctx,plan/);assert.match(html,/StudioWavLongPlayback\.prepare\(index,startFrame,endFrame\)/);assert.match(html,/const pointer=isLong\?new Blob/);assert.match(html,/Export montage long en développement/);
+assert.match(html,/await flushLocalAutosave\(\)/);assert.match(html,/await localStore\.saveWaveform\(sourceId,item\.waveform\)/);assert.match(html,/StudioWavLongPlayback\.start\(ctx,plan/);assert.match(html,/StudioWavLongPlayback\.prepare\(index,startFrame,endFrame\)/);assert.match(html,/const pointer=isLong\?new Blob/);assert.match(html,/return exportLongRange\(start,end,label,diagnostic\)/);assert.match(html,/StudioWavLongMix\.streamToOpfs\(mixInputs,plan/);
 assert.match(panel,/await attach\(true\)/);
 assert.match(panel,/recordingCompleted&&recovered/,'auto-import only after full stop acknowledgment');
 assert.match(panel,/getUserMedia\(\{audio:/);
