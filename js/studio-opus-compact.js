@@ -135,7 +135,7 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
     throw e;
   }finally{try{encoder?.close()}catch{}}
 }
-const TEMP_PATTERN=/^\\.studio-opus-[a-z0-9-]+\\.tmp\\.ogg$/;
+const TEMP_PATTERN=/^\.studio-opus-[a-z0-9-]+\.tmp\.ogg$/;
 async function listTemporaryExports(dir){
   if(!dir||typeof dir.entries!=='function')invalid('Stockage local inaccessible');
   const items=[];
