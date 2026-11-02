@@ -62,6 +62,8 @@ jobs:
         run: node tests/studio-wav-long-source-021.test.cjs
       - name: Run Studio long-source bounded playback 022
         run: node tests/studio-wav-long-playback-022.test.cjs
+      - name: Run Studio OPFS reference persistence 023
+        run: node tests/studio-wav-long-pointer-023.test.cjs
       - name: Run Studio delete controls 010
         run: node tests/studio-delete-controls-010.test.cjs
       - name: Run Studio production post-stop test
