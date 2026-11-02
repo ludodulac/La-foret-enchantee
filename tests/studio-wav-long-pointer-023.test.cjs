@@ -39,6 +39,6 @@ const Wave=require('../js/studio-waveform-core.js');
   assert.match(html,/origin:isLong\?'opfs-wav-long':'opfs-wav-short'/);
   assert.match(html,/longIndexForSource/);
   assert.match(html,/StudioWavLongPlayback\.start\(ctx,plan/);
-  assert.match(html,/Export montage long en développement/);
+  assert.match(html,/return exportLongRange\(start,end,label,diagnostic\)/);assert.match(html,/StudioWavLongMix\.streamToOpfs\(mixInputs,plan/);
   console.log('STUDIO-WAV-LONG-023: OPFS pointer autosave, reload, split/move, waveform, no PCM copy PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
