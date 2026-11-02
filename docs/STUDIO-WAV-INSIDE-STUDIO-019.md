@@ -44,7 +44,7 @@ Concevoir la version **longue** du raccordement `OPFS WAV → compression Opus s
 - En lecture, un index contient uniquement les durées et noms des fragments ; le moteur ouvre des fenêtres **500 ms** à la demande, alimente le WebAudio juste à temps et ne passe **jamais** les 5 minutes dans `decodeAudioData`. Une lecture en retard génère une erreur explicite et s'arrête, au lieu de prétendre avoir joué l'intégralité du son.
 - Les tests de contrat couvrent l'indexation et le déplacement jusqu'à l'extrémité d'une prise **virtuelle de 35 minutes** et la lecture simulée synchronisée en tranches. Ces tests **ne valident pas l'enregistrement, la lecture ni le montage réels de 35 minutes sur Android**.
 - Les clips OPFS peuvent être affichés, déplacés, coupés, rendus muets et conservés avec le projet ; la relecture depuis la timeline et la réouverture après fermeture nécessitent encore le **test humain Android**.
-- **Export du montage comportant une source OPFS longue encore bloqué volontairement** : le moteur historique de mixage exige un AudioBuffer complet. Le WAV individuel original reste téléchargeable jusqu'à 5 minutes, mais un fichier publié depuis le montage serait prématuré.
+- **Export du montage contenant une prise longue :** la branche en brouillon fournit maintenant un nouveau mélangeur qui écrit progressivement un WAV stéréo dans OPFS. Le WAV final reste **non compressé**, potentiellement très volumineux, et **son téléchargement sur Redmi n'a pas été vérifié**. La publication directe dans La Forêt Enchantée reste désactivée pour ce fichier OPFS temporaire.
 - Les références OPFS peuvent devenir invalides si l'utilisateur efface les données du navigateur : elles ne constituent pas une sauvegarde indépendante. Aucune suppression de WAV source n'est automatisée.
 
 ### Contrôles qui doivent réussir avant fusion
@@ -54,4 +54,19 @@ Concevoir la version **longue** du raccordement `OPFS WAV → compression Opus s
 3. Vérifier le comportement si la prise originale OPFS a disparu : erreur compréhensible, aucun écrasement d'un ancien projet et pas de faux succès.
 4. Vérifier que **toutes les anciennes pistes** et la sonothèque continuent de fonctionner. Pas de déploiement avant résultats.
 
-**Non livré :** compression Opus/MP3 automatique, export du montage OPFS long, fonctionnement écran verrouillé, lecture multitrack longue certifiée et 35 min réels.
+**Non livré :** compression Opus/MP3 automatique, validation Android du téléchargement d'un montage WAV long, fonctionnement écran verrouillé, lecture multipiste longue certifiée et 35 min réels.
+
+## 024 — Mixage stéréo WAV par fragments dans OPFS (DRAFT)
+
+Le bouton Exporter d'un projet ayant au moins une source `opfs-wav-long` utilise désormais `StudioWavLongMix.streamToOpfs` :
+- Les prises longues sont lues par fenêtres de moins de deux secondes, **sans décoder le WAV complet**. Le moteur accepte en parallèle des sources historiques courtes avec AudioBuffer (pas encore un modèle universel de sons longs).
+- Le mixage travaille sur `8192` échantillons de sortie stéréo à 44,1 kHz par passage, selon les positions, trims, gains et mutes des clips/pistes.
+- Le fichier final est écrit **directement dans un fichier temporaire OPFS** ; l'entête RIFF, la taille totale et la durée sont contrôlés avant de proposer le téléchargement.
+- En cas d'annulation, de manque d'espace ou d'erreur, seul le fichier **temporaire d'export** est nettoyé. Les prises WAV sources ne sont jamais supprimées.
+- Le téléchargement du montage final sur Android n'est pas considéré comme réussi sans test humain : un WAV stéréo de 35 minutes à 44,1 kHz/16 bits représente environ **370 Mo**, même si le mixage lui-même consomme peu de RAM.
+- Les tests couvrent un **vrai rendu simulé** d'un mixage sur deux pistes, son entête WAV et ses échantillons de début/fin, l'annulation, la limite de mémoire et un plan virtuel de 35 minutes. Cela **ne remplace pas** un test sur Redmi.
+- L'option de publication directe de ces gros WAV dans La Forêt Enchantée reste désactivée. L'encodage compact (Opus puis éventuellement MP3) sera ajouté **seulement après validation de l'export et de la lecture**, sans effacer le WAV original.
+
+### Autorisation concernant les anciens projets
+
+Ludo indique que **les anciens projets peuvent être supprimés**. Pour le développement suivant, il n'est donc plus nécessaire d'imposer la compatibilité avec chaque ancien projet comme préalable. **Aucun effacement automatique n'est programmé** : les projets stockés dans IndexedDB du téléphone ne sont pas accessibles par GitHub ; ils ne doivent pas être supprimés simplement en publiant une nouvelle version. Une suppression explicite dans l'interface, ou un nouveau démarrage après sauvegarde du nécessaire, pourra être proposé.
