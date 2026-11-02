@@ -43,3 +43,17 @@ Les tests automatisés Node valident :
 - Si l'encodeur n'est pas supporté sur Brave/Redmi : solution de repli étudiée séparément plutôt que de modifier l'enregistrement fiable.
 
 **La version actuelle en production reste inchangée.**
+
+## STUDIO OPUS 028 — première validation Chromium réel (2 novembre 2026)
+
+La PR contient maintenant `tests/studio-opus-browser-native-028.test.cjs` et le workflow isolé `.github/workflows/studio-opus-native.yml`.
+
+**Premier essai réel (Chromium Linux headless, pas Redmi)** : encoder WebCodecs natif disponible. Le test a initialement détecté un défaut réel : 78 paquets Opus émis pour 76 paquets soumis, dû au délai/vidage de l'encodeur. Le code accepte désormais un nombre strictement borné de paquets de vidage, puis arrête la lecture à la bonne durée via le granule EOS.
+
+**Deuxième défaut corrigé** : un silence artificiel de 312 échantillons avait été ajouté alors que le codec applique déjà sa propre latence. Après suppression de ce faux pré-roll, le test Chromium a mesuré pour 1,5 s de WAV stéréo synthétique :
+- WAV source : **264 644 octets** ; Ogg/Opus : **19 087 octets**.
+- Fichier Ogg relu par `AudioContext.decodeAudioData` **indépendamment** de l'encodeur : 1,500 s, 48 kHz, deux canaux.
+- Voix/test synthétique audible au début, au milieu et à la fin. Corrélation de phase source-sortie : **0,99996** gauche ; **0,99989** droite.
+- La validation native couvre un fichier court **dans Chromium de CI uniquement**. La compatibilité Redmi/Brave, les longs fichiers, le montage multipiste réel sur téléphone et l'export dans La Forêt Enchantée **restent non validés**.
+
+La PR reste **DRAFT** : aucun projet utilisateur ni enregistrement original supprimé, aucune publication automatique.
