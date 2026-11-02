@@ -116,7 +116,11 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
       }
     }
     await encoder.flush();await writeChain;if(encoderFault)throw encoderFault;
-    if(!lastPacket||outputPackets!==packetInputs)invalid('Paquets Opus inattendus : attendus '+packetInputs+', reçus '+outputPackets+' (fichier compact refusé)');
+    // Real Chromium Opus may emit 1–2 additional packets for encoder latency/drain.
+    // They do not extend the presentation duration: the EOS granule trims them.
+    // More than four extra packets indicates an incompatible output cadence.
+    if(!lastPacket||outputPackets<packetInputs||outputPackets>packetInputs+4)
+      invalid('Paquets Opus inattendus : attendus '+packetInputs+', reçus '+outputPackets+' (fichier compact refusé)');
     // The final packet is held back to guarantee a true Ogg EOS page.
     const lastGranule=originalTargetFrames+PRE_SKIP;
     writePages(mux.finishWithPacket(lastPacket,lastGranule));
