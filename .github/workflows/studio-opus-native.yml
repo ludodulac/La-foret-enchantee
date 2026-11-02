@@ -1,0 +1,28 @@
+name: Studio native Ogg Opus verification
+on:
+  pull_request:
+    paths:
+      - 'js/studio-opus-compact.js'
+      - 'js/studio-ogg-opus.js'
+      - 'tests/studio-opus-browser-native-028.test.cjs'
+      - '.github/workflows/studio-opus-native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@v4
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral Playwright browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Native WebCodecs Opus encoding and independent decode
+        run: node tests/studio-opus-browser-native-028.test.cjs
