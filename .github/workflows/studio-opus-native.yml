@@ -7,6 +7,7 @@ on:
       - 'tests/studio-opus-browser-native-028.test.cjs'
       - 'tests/studio-integrated-mobile-smoke-029.test.cjs'
       - 'tests/studio-wav-mobile-capture-030.test.cjs'
+      - 'tests/studio-main-rec-wav-031.test.cjs'
       - 'studio.html'
       - '.github/workflows/studio-opus-native.yml'
   workflow_dispatch:
@@ -33,6 +34,8 @@ jobs:
         run: node tests/studio-integrated-mobile-smoke-029.test.cjs
       - name: Synthetic microphone WAV capture, OPFS and project reload (isolated Chromium)
         run: node tests/studio-wav-mobile-capture-030.test.cjs
+      - name: Primary REC WAV / STOP on mobile Studio (synthetic mic and local persistence)
+        run: node tests/studio-main-rec-wav-031.test.cjs
       - name: Preserve isolated mobile UI screenshot for review
         if: always()
         uses: actions/upload-artifact@v4
