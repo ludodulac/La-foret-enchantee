@@ -34,10 +34,16 @@ assert.match(html,/id="studio-wav-player"/);
 assert.match(html,/Les prises jusqu’à 5 minutes peuvent être ajoutées/);
 assert.doesNotMatch(html,/experiments\/studio-recording-wav-001\.html/);
 
-// L'ancien REC n'a pas été remplacé avant la validation Android en vrai.
-assert.match(html,/\$\('#record'\)\.onclick=record/);
-assert.match(html,/\$\('#stop'\)\.onclick=\(\)=>\{if\(recording&&recorder\?\.state!=='inactive'\)/);
-assert.match(html,/StudioWavPanel\.mount\(\{isStudioRecording:\(\)=>recording,isProjectOpen:\(\)=>!!currentProjectId,onImportTake:async item=>\{/);
+// La prévisualisation utilise REC et STOP directement avec l'enregistreur WAV.
+// Le moteur MediaRecorder historique est conservé en solution de repli, sans suppression.
+assert.match(html,/\$\('#record'\)\.onclick=recordSecurelyFromStudio/);
+assert.match(html,/wavController\.stop\(\)/);
+assert.match(html,/if\(recording&&recorder\?\.state!=='inactive'\)\{recorder\.stop\(\);return\}/);
+assert.match(html,/wavController=StudioWavPanel\.mount\(\{/);
+assert.match(html,/onStateChange:state=>/);
+assert.match(html,/onImportTake:async item=>/);
+assert.match(html,/secureCaptureInfo\?\.start\?\?cursor/);
+assert.match(html,/secureCaptureInfo\?\.trackId\|\|recordTrackIdFor\(\)/);
 
 // Scripts OPFS insérés avant la logique principale, sans mutation d'anciens projets.
 assert.ok(html.indexOf('src="js/studio-recording-wav-core.js"')<html.indexOf('src="js/studio-wav-bridge.js"'));
