@@ -450,6 +450,7 @@ function clickBeat(at){let o=ctx.createOscillator(),g=ctx.createGain();o.frequen
 const longIndexCache=new Map();let longPlaybackControllers=[];
 function stopPlay(keep=true){playGeneration++;playPreparing=false;playing=false;clearInterval(tick);tick=null;stopMetro();longPlaybackControllers.forEach(p=>p.stop());longPlaybackControllers=[];sources.forEach(s=>{try{s.stop()}catch{}});sources=[];$('#play').textContent='▶';if(keep)setCursor(cursor)}
 function updateLiveRecordingVisual(t){liveDuration=Math.max(liveDuration,t+5);if(liveRec)liveRec.len=Math.max(.03,t-liveRec.start);let pps=pixelsPerSecond(),tl=$('#timeline'),canvas=$('#canvas'),needed=Math.max(tl.clientWidth,projectDuration()*pps),current=parseFloat(canvas.style.width)||0;if(needed>current)canvas.style.width=needed+'px';let e=$('#liveclip');if(e&&liveRec){e.style.left=(liveRec.start*pps)+'px';e.style.width=(liveRec.len*pps)+'px'}}
+function isLongSourceId(id){return typeof localSources!=='undefined'&&localSources.get(id)?.origin==='opfs-wav-long'}
 async function longIndexForSource(id){
   if(longIndexCache.has(id))return longIndexCache.get(id);
   const source=localSources.get(id);if(source?.origin!=='opfs-wav-long')throw Error('Source WAV longue absente');
@@ -470,7 +471,7 @@ async function preparePlayback(from){
     let t=tracks.find(x=>x.id===c.track),off=Math.max(0,from-c.start),remain=c.len-off;
     if(c.muted||t?.muted||remain<=0)return;
     const id=sourceIdFor(c);
-    if(localSources.get(id)?.origin==='opfs-wav-long')longs.push({clip:c,id,off});
+    if(isLongSourceId(id))longs.push({clip:c,id,off});
     else ids.add(id);
   });
   const entries=await Promise.all([...ids].map(async id=>[id,await getDecodedSource(id)]));
@@ -489,7 +490,7 @@ function startPreparedPlayback(from,monitor,prepared){
   sources=[];longPlaybackControllers=[];
   clips.forEach(c=>{
     let t=tracks.find(x=>x.id===c.track);
-    if(c.muted||t?.muted||localSources.get(sourceIdFor(c))?.origin==='opfs-wav-long')return;
+    if(c.muted||t?.muted||isLongSourceId(sourceIdFor(c)))return;
     let off=Math.max(0,from-c.start),remain=c.len-off;
     if(remain<=0)return;
     let buffer=prepared.get(sourceIdFor(c));if(!buffer)return;
