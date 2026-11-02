@@ -70,3 +70,7 @@ Le bouton Exporter d'un projet ayant au moins une source `opfs-wav-long` utilise
 ### Autorisation concernant les anciens projets
 
 Ludo indique que **les anciens projets peuvent être supprimés**. Pour le développement suivant, il n'est donc plus nécessaire d'imposer la compatibilité avec chaque ancien projet comme préalable. **Aucun effacement automatique n'est programmé** : les projets stockés dans IndexedDB du téléphone ne sont pas accessibles par GitHub ; ils ne doivent pas être supprimés simplement en publiant une nouvelle version. Une suppression explicite dans l'interface, ou un nouveau démarrage après sauvegarde du nécessaire, pourra être proposé.
+
+### Téléchargement Android : pas de faux succès
+
+Le rendu WAV OPFS (éventuellement plusieurs centaines de Mio) reste présent localement après l'appui sur « TÉLÉCHARGER » : aucun nettoyage arbitraire **30 secondes** après la demande. Le message dit désormais **« téléchargement demandé »** et non « fichier téléchargé », car Brave ne garantit pas à la page l'achèvement de la copie dans Android. L'utilisateur doit vérifier manuellement dans « Fichiers » ; une future fonction de nettoyage **explicite** des fichiers temporaires sera nécessaire pour éviter de remplir le stockage. Les prises sources restent inchangées.
