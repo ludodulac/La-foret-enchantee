@@ -116,7 +116,7 @@ async function streamToOpfs(clips,plan,{navigator:nav=typeof navigator!=='undefi
     throw e;
   }
 }
-const TEMP_PATTERN=/^\\.studio-wav-mix-[a-z0-9-]+\\.tmp\\.wav$/;
+const TEMP_PATTERN=/^\.studio-wav-mix-[a-z0-9-]+\.tmp\.wav$/;
 async function listTemporaryExports(dir){
   if(!dir||typeof dir.entries!=='function')throw Error('Stockage local inaccessible');
   const entries=[];
