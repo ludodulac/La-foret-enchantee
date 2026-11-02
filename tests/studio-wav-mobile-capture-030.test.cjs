@@ -69,6 +69,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   await page.waitForFunction(()=>!document.querySelector('#app').hidden);
   await page.locator('#tools-menu-toggle').click();
   await page.locator('#studio-wav-open').click();
+  await page.locator('#studio-wav-start').locator('xpath=ancestor::details').locator('summary').click();
   await page.locator('#studio-wav-start').click();
 
   // Real browser AudioWorklet + OPFS fragment writer, but FAKE 100% synthetic mic.
