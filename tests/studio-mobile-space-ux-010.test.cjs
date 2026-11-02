@@ -320,7 +320,7 @@ console.log('TRIM_LIVE_WAVEFORM_REDRAW PASS no stale canvas during left trim');
 
 // REC label remains stable; active recording is visual state only.
 const recordStart=html.indexOf('async function record()'),recordEnd=html.indexOf('function clickBeat',recordStart),recordSource=html.slice(recordStart,recordEnd);
-assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record"><b>●</b> REC</button>'));
+assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record" title="Enregistrement WAV sécurisé"><b>●</b> REC WAV</button>'));
 assert(recordSource.includes('async function record(){if(recording)return;try{'));
 assert(recordSource.includes("$('#record').classList.add('is-recording')"));
 assert(recordSource.includes("$('#record').classList.remove('is-recording')"));
