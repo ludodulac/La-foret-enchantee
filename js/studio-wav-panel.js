@@ -144,7 +144,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   open.onclick=async()=>{
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement en cours.');return}
     panel.hidden=false;clearPlayer();clearDownload();
-    try{await listTakes();report('Prises WAV locales. Ces prises ne sont pas encore sur la timeline.')}
+    try{await listTakes();report('Prises WAV locales : sélectionne une prise, puis RETROUVER. Jusqu’à 5 minutes, tu peux l’ajouter à une piste.')}
     catch(e){report('Prises introuvables : '+e.message)}
     buttons();ui.close.focus();
   };
