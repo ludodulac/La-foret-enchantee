@@ -5,6 +5,8 @@ on:
       - 'js/studio-opus-compact.js'
       - 'js/studio-ogg-opus.js'
       - 'tests/studio-opus-browser-native-028.test.cjs'
+      - 'tests/studio-integrated-mobile-smoke-029.test.cjs'
+      - 'studio.html'
       - '.github/workflows/studio-opus-native.yml'
   workflow_dispatch:
 permissions:
@@ -26,3 +28,13 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Native WebCodecs Opus encoding and independent decode
         run: node tests/studio-opus-browser-native-028.test.cjs
+      - name: Integrated Studio UI smoke in mobile Chromium (offline, no microphone)
+        run: node tests/studio-integrated-mobile-smoke-029.test.cjs
+      - name: Preserve isolated mobile UI screenshot for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-029-mobile-smoke
+          path: artifacts/studio-mobile-smoke-029.png
+          if-no-files-found: ignore
+          retention-days: 7
