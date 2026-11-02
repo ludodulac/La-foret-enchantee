@@ -60,7 +60,9 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
   const cleanup=async()=>{if(removed)return;removed=true;await root.removeEntry(name)};
   const targetFrames=Math.round(frames*TARGET_RATE/SOURCE_RATE);
   const originalTargetFrames=targetFrames;
-  const totalFrames=targetFrames+PRE_SKIP;
+  // The native Opus encoder itself contributes the 312-frame codec priming delay.
+  // Do not prepend 312 silent input frames: doing so shifts the waveform by 6.5 ms.
+  const totalFrames=targetFrames;
   const packetInputs=Math.ceil(totalFrames/FRAMES_PER_PACKET);
   const mux=Ogg.createMuxer({channels:2,preSkip:PRE_SKIP,inputRate:SOURCE_RATE,packetsPerPage:25,
     serial:0x53545544});
@@ -87,16 +89,16 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
     for(let packet=0;packet<packetInputs;packet++){
       cancelled(signal);if(encoderFault)throw encoderFault;
       const base=packet*FRAMES_PER_PACKET,end=base+FRAMES_PER_PACKET;
-      const firstInput=Math.max(0,Math.floor(Math.max(0,base-PRE_SKIP)*SOURCE_RATE/TARGET_RATE));
-      const lastInput=Math.min(frames-1,Math.ceil(Math.max(0,end-PRE_SKIP)*SOURCE_RATE/TARGET_RATE)+1);
+      const firstInput=Math.max(0,Math.floor(base*SOURCE_RATE/TARGET_RATE));
+      const lastInput=Math.min(frames-1,Math.ceil(end*SOURCE_RATE/TARGET_RATE)+1);
       const startByte=44+firstInput*4,endByte=44+(lastInput+1)*4;
       const raw=await file.slice(startByte,endByte).arrayBuffer(),view=new DataView(raw);
       if(raw.byteLength!==(lastInput-firstInput+1)*4)invalid('Échantillons WAV tronqués');
       const samples=new Float32Array(FRAMES_PER_PACKET*CHANNELS);
       for(let f=0;f<FRAMES_PER_PACKET;f++){
         const absolute=base+f;
-        if(absolute<PRE_SKIP||absolute>=totalFrames)continue;
-        const pos=(absolute-PRE_SKIP)*SOURCE_RATE/TARGET_RATE;
+        if(absolute>=totalFrames)continue;
+        const pos=absolute*SOURCE_RATE/TARGET_RATE;
         const i=Math.min(frames-1,Math.floor(pos)),j=Math.min(frames-1,i+1);
         const w=pos-i,ai=(i-firstInput)*4,aj=(j-firstInput)*4;
         for(let ch=0;ch<2;ch++){
