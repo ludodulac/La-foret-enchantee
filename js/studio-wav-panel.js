@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge,Long=root.StudioWavLongSource;
-function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null}={}){
+function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null,onStateChange=()=>{},onStatus=()=>{}}={}){
   const $=id=>document.getElementById(id);
   const panel=$('studio-wav-panel'),open=$('studio-wav-open');
   if(!panel||!open||!Core||!Bridge||!Long)throw Error('Panneau Studio WAV introuvable');
@@ -12,7 +12,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   let ac=null,mic=null,node=null,gain=null,take=null,writeChain=Promise.resolve();
   let pending=0,seq=0,failed=null,starting=false,stopping=false,attaching=false,ack=null,timer=null,startAt=null;
   let recovered=null,previewUrl=null,downloadUrl=null;
-  const report=message=>{ui.status.textContent=message};
+  const report=message=>{ui.status.textContent=message;if(panel.hidden&&(/impossible|incomplet|interrompu|stockage trop lent|Prise enregistrée et ajoutée/i.test(message)))onStatus(message)};
   const clock=seconds=>{const n=Math.max(0,Math.floor(seconds));ui.time.textContent='⏱ '+String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
   const stopClock=()=>{if(timer!==null)clearInterval(timer);timer=null;if(startAt!==null)clock((performance.now()-startAt)/1000);startAt=null};
   const running=()=>!!ac;
@@ -51,7 +51,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   }
   async function stop(){
     if(!running()||stopping)return;
-    stopping=true;buttons();stopClock();report('Arrêt et sauvegarde des fragments en cours…');
+    stopping=true;onStateChange('finalizing');buttons();stopClock();report('Arrêt et sauvegarde des fragments en cours…');
     const savedId=take?.meta?.id;
     let recordingCompleted=false;
     try{
@@ -70,8 +70,8 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       await release();stopping=false;
       try{await listTakes(savedId);if(savedId){ui.select.value=savedId;await recover()}}catch(e){report('Prise conservée ; liste indisponible : '+e.message)}
       buttons();
-      if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake)
-        await attach(true);
+      try{if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake)
+        await attach(true)}finally{onStateChange('idle')}
     }
   }
   async function start(){
@@ -79,7 +79,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return}
     if(!isProjectOpen()){report('Ouvre d’abord un projet Studio.');return}
     clearPlayer();clearDownload();recovered=null;writeChain=Promise.resolve();pending=0;seq=0;failed=null;
-    starting=true;buttons();report('Ouverture du microphone…');
+    starting=true;onStateChange('starting');buttons();report('Ouverture du microphone…');
     try{
       const AC=root.AudioContext||root.webkitAudioContext;
       if(!AC)throw Error('Web Audio indisponible');
@@ -102,9 +102,11 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       ac.createMediaStreamSource(mic).connect(node);node.connect(gain).connect(ac.destination);
       startAt=performance.now();clock(0);
       timer=setInterval(()=>{if(startAt!==null)clock((performance.now()-startAt)/1000)},250);
+      onStateChange('recording');
       report('● Enregistrement WAV en cours — fragments sauvegardés chaque seconde.');
     }catch(e){report('Impossible de démarrer : '+e.message);await release()}
-    starting=false;buttons();
+    starting=false;if(!running())onStateChange('idle');buttons();
+    return running();
   }
   async function listen(){
     if(running()||!recovered)return;
@@ -155,7 +157,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   ui.download.onclick=()=>{ui.download.textContent='↻ TÉLÉCHARGER À NOUVEAU';report('Téléchargement demandé à Brave : vérifie le dossier Téléchargements.')};
   root.addEventListener('pagehide',()=>{stopClock();if(running()){try{node?.port.postMessage({type:'stop'})}catch{}mic?.getTracks().forEach(t=>t.stop())}});
   buttons();
-  return{start,stop,recover,listTakes};
+  return{start,stop,recover,listTakes,isRecording:()=>running()&&!stopping,isBusy:()=>running()||starting||stopping||attaching};
 }
 root.StudioWavPanel={mount};
 })(typeof window!=='undefined'?window:globalThis);
