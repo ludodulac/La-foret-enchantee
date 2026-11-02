@@ -379,6 +379,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <div class="export-destination-actions">
       <button class="game-btn game-btn-standard" id="export-download-ready" type="button">⬇ TÉLÉCHARGER WAV</button>
       <button class="game-btn game-btn-standard game-btn-green" id="export-compress-opus" type="button" disabled>🎧 FICHIER LÉGER (OPUS) · ESSAI</button>
+      <button class="game-btn game-btn-compact game-btn-secondary" id="export-opus-cancel" type="button" hidden>✕ ANNULER LA COMPRESSION</button>
       <a class="game-btn game-btn-standard" id="export-opus-download" type="button" hidden>⬇ TÉLÉCHARGER OGG OPUS</a>
       <button class="game-btn game-btn-standard game-btn-green" id="export-forest-ready" type="button">🌲 EXPORTER DANS LA FORÊT ENCHANTÉE</button>
       <button class="game-btn game-btn-compact game-btn-secondary" id="export-destination-cancel" type="button">ANNULER</button>
@@ -626,11 +627,12 @@ function showExportTooLargeDiagnostic(start,end){let p=$('#export-error-panel'),
 $('#export-error-close').onclick=closeExportError;
 function setExportBusy(b){exportBusy=b;$('#export').disabled=b;$('#export-selection').disabled=b}
 function cleanupPreparedExport(x){if(!x?.opfsCleanup)return;let fn=x.opfsCleanup;x.opfsCleanup=null;Promise.resolve(fn()).catch(e=>console.warn('OPFS cleanup',e))}
-let compactBusy=false,compactExport=null,compactUrl=null,compactGate=0;
+let compactBusy=false,compactExport=null,compactUrl=null,compactGate=0,compactAbort=null;
 function clearCompactUi(){
   if(compactUrl)URL.revokeObjectURL(compactUrl);
   compactUrl=null;compactExport=null;compactGate++;
   $('#export-opus-download').hidden=true;$('#export-opus-download').removeAttribute('href');
+  $('#export-opus-cancel').hidden=true;
   $('#export-compress-opus').disabled=true;
   $('#export-opus-status').textContent='Opus Ogg expérimental · le WAV original reste disponible.';
 }
@@ -662,13 +664,14 @@ function openExportDestination(artifact){
 }
 async function compressPreparedExport(){
   if(!pendingExport||compactBusy||compactExport)return;
-  const item=pendingExport;compactBusy=true;
+  const item=pendingExport;compactBusy=true;compactAbort=new AbortController();
+  $('#export-opus-cancel').hidden=false;
   $('#export-compress-opus').disabled=true;
   $('#export-download-ready').disabled=true;
   $('#export-destination-cancel').disabled=true;
   $('#export-opus-status').textContent='Compression Opus : préparation…';
   try{
-    const compact=await StudioOpusCompact.encodeWav(item.blob,{navigator,
+    const compact=await StudioOpusCompact.encodeWav(item.blob,{navigator,signal:compactAbort.signal,
       onProgress:p=>{$('#export-opus-status').textContent='Compression Opus '+Math.round(p*100)+' %…'}});
     if(pendingExport!==item)throw Error('Export changé pendant la compression');
     compactExport=compact;
@@ -681,14 +684,16 @@ async function compressPreparedExport(){
     console.error('COMPRESSION OPUS',e);
     $('#export-opus-status').textContent='Compression indisponible : '+(e?.message||String(e))+' · le WAV original est conservé.';
   }finally{
-    compactBusy=false;$('#export-download-ready').disabled=false;$('#export-destination-cancel').disabled=false;
+    compactBusy=false;compactAbort=null;$('#export-opus-cancel').hidden=true;
+    $('#export-download-ready').disabled=false;$('#export-destination-cancel').disabled=false;
     if(!compactExport)$('#export-compress-opus').disabled=false;
   }
 }
-function downloadPreparedExport(){let x=pendingExport;if(!x||compactBusy)return;let url=URL.createObjectURL(x.blob),a=document.createElement('a'),cleanup=x.opfsCleanup;x.opfsCleanup=null;a.href=url;a.download=x.filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>{URL.revokeObjectURL(url);if(cleanup&&!x.opfsBacked)Promise.resolve(cleanup()).catch(e=>console.warn('OPFS cleanup',e))},30000);if(x.diagnostic)selectionDiagnostic('TÉLÉCHARGEMENT DÉCLENCHÉ\n'+x.filename+'\nsélection '+selectionSeconds(x.requestedStart)+' → '+selectionSeconds(x.requestedEnd)+' s\nframes WAV = '+x.wavInfo.frames+'\ndurée WAV = '+selectionSeconds(x.wavInfo.duration)+' s\ntaille = '+x.blob.size+' octets');pendingExport=null;$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;msg('TÉLÉCHARGEMENT DEMANDÉ · '+(x.blob.size/1048576).toFixed(2)+' Mio · vérifie dans Fichiers')}
+function downloadPreparedExport(){let x=pendingExport;if(!x||compactBusy)return;let url=URL.createObjectURL(x.blob),a=document.createElement('a'),cleanup=x.opfsCleanup;x.opfsCleanup=null;a.href=url;a.download=x.filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>{URL.revokeObjectURL(url);if(cleanup&&!x.opfsBacked)Promise.resolve(cleanup()).catch(e=>console.warn('OPFS cleanup',e))},30000);if(x.diagnostic)selectionDiagnostic('TÉLÉCHARGEMENT DÉCLENCHÉ\n'+x.filename+'\nsélection '+selectionSeconds(x.requestedStart)+' → '+selectionSeconds(x.requestedEnd)+' s\nframes WAV = '+x.wavInfo.frames+'\ndurée WAV = '+selectionSeconds(x.wavInfo.duration)+' s\ntaille = '+x.blob.size+' octets');pendingExport=null;clearCompactUi();$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;msg('TÉLÉCHARGEMENT DEMANDÉ · '+(x.blob.size/1048576).toFixed(2)+' Mio · vérifie dans Fichiers')}
 async function publishPreparedExport(){if(forestPublishBusy||!pendingExport)return;let x=pendingExport;if(x.opfsBacked)return msg('Upload long non activé dans cette mission · télécharge le WAV');let btn=$('#export-forest-ready');forestPublishBusy=true;btn.disabled=true;btn.textContent='PUBLICATION…';try{let explicitTitle=$('#export-title-input').value,result=await ForestAudioPublish.publishNormalAudio({dbClient,blob:x.blob,title:explicitTitle,projectName:currentProjectName,duration:x.wavInfo.duration});closeExportDestination();msg('Audio ajouté à La Forêt Enchantée ✓');return result}catch(e){console.error('FOREST EXPORT',e);msg(e?.rollbackError?'Erreur publication · nettoyage Storage incomplet':'Erreur publication · aucun audio ajouté')}finally{forestPublishBusy=false;btn.disabled=false;btn.textContent='🌲 EXPORTER DANS LA FORÊT ENCHANTÉE'}}
 $('#export-download-ready').onclick=downloadPreparedExport;
 $('#export-compress-opus').onclick=compressPreparedExport;
+$('#export-opus-cancel').onclick=()=>compactAbort?.abort();
 $('#export-opus-download').onclick=()=>{msg('Téléchargement OGG Opus demandé · vérifie le fichier dans Fichiers');};
 $('#export-forest-ready').onclick=publishPreparedExport;
 $('#export-destination-cancel').onclick=closeExportDestination;
