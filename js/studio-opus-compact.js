@@ -111,7 +111,18 @@ async function encodeWav(file,{AudioEncoderType=globalThis.AudioEncoder,AudioDat
         timestamp:packet*20000,data:samples});
       try{encoder.encode(audio)}finally{audio.close()}
       if(packet%40===39||packet===packetInputs-1){
-        await encoder.flush();await writeChain;
+        // IMPORTANT: flush() injects Opus drain/padding packets. Flush only ONCE
+        // at the very end. Each 40-packet flush was adding 75 phantom packets
+        // to a one-minute input, causing an invalid duration and sound drift.
+        // Use encodeQueueSize for bounded backpressure instead.
+        let pauses=0;
+        while(Number.isFinite(encoder.encodeQueueSize)&&encoder.encodeQueueSize>20){
+          if(encoderFault)throw encoderFault;
+          cancelled(signal);
+          if(++pauses>500)invalid('Encodeur Opus trop lent : export conservé en WAV');
+          await new Promise(resolve=>setTimeout(resolve,10));
+        }
+        await writeChain;
         if(encoderFault)throw encoderFault;
         onProgress((packet+1)/packetInputs);
         await yieldFn();
