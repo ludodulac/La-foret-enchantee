@@ -35,3 +35,23 @@ Sur Redmi/Brave, Ludo a validé l'enregistrement, la récupération de prises, l
 ## Étape ultérieure (non réalisée)
 
 Concevoir la version **longue** du raccordement `OPFS WAV → compression Opus si disponible → source segmentée sur la timeline → export MP3/WAV` **sans décoder 35 minutes d'un seul coup ni recopier de gros WAV dans IndexedDB**, avec reprise de conversion interrompue, contrôle de durée, vérification du fichier compressé, et conservation des fragments originaux jusqu'à validation. Le MP3 nécessite une bibliothèque d'encodage distincte (WebCodecs encode Opus/AAC, pas MP3 directement). Aucune compression automatique n'est encore livrée.
+
+## Étape de raccordement 021–022 — clips longs avec référence OPFS (DRAFT, non validé sur Redmi)
+
+- L'enregistreur expérimental valide **5 minutes en vrai sur Redmi** ; la présente intégration dans le Studio multipiste est **seulement testée techniquement**, pas en conditions réelles.
+- Une prise de **30 secondes à 5 minutes** peut être liée à la timeline avec une **référence de quelques octets** enregistrée en tant que source IndexedDB v3 `origin='opfs-wav-long'`, sans recopier les ~29 Mo de son PCM dans la base. Le WAV découpé reste intact dans OPFS.
+- Lors du raccordement, la forme d'onde est calculée en parcourant des tranches PCM de **32 768 échantillons maximum** et en rendant la main à l'interface après chaque tranche. Les crêtes (environ 256 octets par seconde) sont conservées pour la réouverture des projets.
+- En lecture, un index contient uniquement les durées et noms des fragments ; le moteur ouvre des fenêtres **500 ms** à la demande, alimente le WebAudio juste à temps et ne passe **jamais** les 5 minutes dans `decodeAudioData`. Une lecture en retard génère une erreur explicite et s'arrête, au lieu de prétendre avoir joué l'intégralité du son.
+- Les tests de contrat couvrent l'indexation et le déplacement jusqu'à l'extrémité d'une prise **virtuelle de 35 minutes** et la lecture simulée synchronisée en tranches. Ces tests **ne valident pas l'enregistrement, la lecture ni le montage réels de 35 minutes sur Android**.
+- Les clips OPFS peuvent être affichés, déplacés, coupés, rendus muets et conservés avec le projet ; la relecture depuis la timeline et la réouverture après fermeture nécessitent encore le **test humain Android**.
+- **Export du montage comportant une source OPFS longue encore bloqué volontairement** : le moteur historique de mixage exige un AudioBuffer complet. Le WAV individuel original reste téléchargeable jusqu'à 5 minutes, mais un fichier publié depuis le montage serait prématuré.
+- Les références OPFS peuvent devenir invalides si l'utilisateur efface les données du navigateur : elles ne constituent pas une sauvegarde indépendante. Aucune suppression de WAV source n'est automatisée.
+
+### Contrôles qui doivent réussir avant fusion
+
+1. Sur un **projet d'essai**, enregistrer une prise de 15 s dans OUTILS → PRISES WAV SÉCURISÉES ; arrêter ; constater son ajout à la piste, puis lecture, coupe et réouverture.
+2. Sur une prise de **3 à 5 minutes** déjà enregistrée, ajouter à la piste active ; parcourir la forme d'onde, écouter **le début puis un passage près de la fin**, arrêter/reprendre, fermer et rouvrir le projet.
+3. Vérifier le comportement si la prise originale OPFS a disparu : erreur compréhensible, aucun écrasement d'un ancien projet et pas de faux succès.
+4. Vérifier que **toutes les anciennes pistes** et la sonothèque continuent de fonctionner. Pas de déploiement avant résultats.
+
+**Non livré :** compression Opus/MP3 automatique, export du montage OPFS long, fonctionnement écran verrouillé, lecture multitrack longue certifiée et 35 min réels.
