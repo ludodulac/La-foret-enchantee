@@ -161,6 +161,21 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   await page.evaluate(()=>{window.__releaseFirstOpfsWrite();window.__releaseFirstOpfsWrite=null});
   await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===2,null,{timeout:15000});
   console.log('STUDIO-032 SLOW STORAGE RELEASE PASS '+JSON.stringify(blocking));
+  // A 10-second Android microphone dialog is not allowed to trap the user.
+  // STOP must cancel immediately and also dispose of a stream granted later.
+  await page.evaluate(()=>{window.__microphoneMode='held'});
+  await page.locator('#record').click();
+  await page.waitForFunction(()=>secureCaptureState==='starting'
+    && typeof window.__grantPendingMicrophone==='function',null,{timeout:10000});
+  assert.equal(await page.locator('#stop').isEnabled(),true,'STOP usable before permission is granted');
+  await page.locator('#stop').click();
+  await page.waitForFunction(()=>secureCaptureState==='idle',null,{timeout:3500});
+  assert.match(await page.locator('#recording-state').textContent(),/Ouverture annulée/);
+  assert.equal(await page.locator('#record').isEnabled(),true);
+  assert.equal(await page.evaluate(()=>clips.length),2,'Cancel startup must not affect old recordings');
+  await page.evaluate(()=>{window.__microphoneMode='tone';window.__grantPendingMicrophone()});
+  await page.waitForFunction(()=>window.__producedStreams.at(-1).getAudioTracks()[0].readyState==='ended',null,{timeout:10000});
+  console.log('STUDIO-032 USER STOP DURING PERMISSION PASS: immediate cancel and late stream released');
   assert.deepEqual(errors,[],'No uncaught page errors');
  }finally{
   try{await browser?.close()}catch{}
