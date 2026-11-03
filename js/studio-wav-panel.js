@@ -139,7 +139,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     stage('starting','Annulation de la demande de microphone…');
     return true;
   }
-  async function start(){
+  async function start({onCaptureStart=null}={}){
     if(running()||starting||stopping||attaching)return false;
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return false}
     if(!isProjectOpen()){report('Ouvre d’abord un projet Studio.');return false}
@@ -211,6 +211,12 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
         writeChain=writeChain.then(()=>Core.appendChunk(take,index,pcm)).catch(err=>{failed=err;stop()}).finally(()=>pending--);
       };
       inputNode=ac.createMediaStreamSource(mic);inputNode.connect(node);node.connect(gain).connect(ac.destination);
+      // Synchronous hand-off: the guide playback has been decoded BEFORE
+      // acquiring the microphone. Start its AudioBufferSources here, in the
+      // same JavaScript turn as connecting the capture AudioWorklet. Never
+      // wait for an async decoder after microphone capture already began.
+      if(typeof onCaptureStart==='function')
+        onCaptureStart({performanceTime:performance.now(),sampleRate:ac.sampleRate});
       startAt=performance.now();clock(0);
       timer=setInterval(()=>{
         if(startAt===null)return;
