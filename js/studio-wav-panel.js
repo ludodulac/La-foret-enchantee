@@ -132,6 +132,13 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
         onStage('error','⚠ ENREGISTREMENT INCOMPLET : '+stopProblem+'. Microphone libéré.');
     }
   }
+  function cancelStart(){
+    if(!starting)return false;
+    captureGeneration++;
+    cancelPendingOpen?.();
+    stage('starting','Annulation de la demande de microphone…');
+    return true;
+  }
   async function start(){
     if(running()||starting||stopping||attaching)return false;
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return false}
@@ -222,12 +229,15 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     }catch(e){
       failure=e?.message||String(e);
       if(generation===captureGeneration)captureGeneration++;
-      report('Impossible d’utiliser le microphone : '+failure);
+      report(/Microphone libéré : changement d’application/.test(failure)?'Ouverture du microphone annulée.':'Impossible d’utiliser le microphone : '+failure);
       await release();
     }
     cancelPendingOpen=null;
     starting=false;if(!running())onStateChange('idle');buttons();
-    if(failure)stage('error','⚠ MICROPHONE INDISPONIBLE — '+failure+'. Ferme les applications utilisant le micro.');
+    if(failure&&!/Microphone libéré : changement d’application/.test(failure))
+      stage('error','⚠ MICROPHONE INDISPONIBLE — '+failure+'. Ferme les applications utilisant le micro.');
+    else if(failure)
+      stage('starting','Ouverture annulée : aucun enregistrement en cours.');
     return running();
   }
   async function listen(){
@@ -280,7 +290,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   // Release microphone when leaving the Studio. On Android a background tab
   // can otherwise monopolize the input needed by keyboard voice dictation.
   function leaveStudio(){
-    if(starting){captureGeneration++;cancelPendingOpen?.();return} // late getUserMedia results are stopped above
+    if(starting){cancelStart();return} // late getUserMedia results are stopped above
     if(running()&&!stopping){
       void stop();
       releaseMicImmediately();
@@ -289,7 +299,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   root.addEventListener('pagehide',leaveStudio);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')leaveStudio()});
   buttons();
-  return{start,stop,recover,listTakes,isRecording:()=>running()&&!stopping,isBusy:()=>running()||starting||stopping||attaching};
+  return{start,stop,cancelStart,recover,listTakes,isRecording:()=>running()&&!stopping,isBusy:()=>running()||starting||stopping||attaching};
 }
 root.StudioWavPanel={mount};
 })(typeof window!=='undefined'?window:globalThis);
