@@ -121,7 +121,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   assert.equal(data.sourceOrigin,'opfs-wav-short');
   assert(Math.abs(data.clipSeconds-data.seconds)<0.02,'Clip matches complete recorded duration');
   await page.locator('#studio-wav-close').click();
-  await page.locator('#tools-menu-toggle').click();
+  await page.locator('#tools-close').click();
   await page.locator('#back-projects').click();
   await page.reload({waitUntil:'load',timeout:30000});
   await page.waitForFunction(()=>document.querySelector('#local-project-list .local-project-card'));
