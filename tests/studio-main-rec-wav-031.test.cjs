@@ -123,6 +123,23 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   console.log('STUDIO-031 VISUAL LIVE PASS '+JSON.stringify(visual));
   fs.mkdirSync(path.join(ROOT,'artifacts'),{recursive:true});
   await page.screenshot({path:path.join(ROOT,'artifacts','studio-main-rec-live-031.png'),timeout:10000});
+  // Human recording lasted about 14 seconds. Reproduce a comparable real-time
+  // capture autonomously, including the progressive timeline growth.
+  await page.waitForTimeout(11700);
+  const longVisual=await page.evaluate(()=>({
+    seconds:liveRec?.len,clipWidth:document.querySelector('#liveclip')?.getBoundingClientRect().width,
+    cursor,track:liveRec?.track,
+    peaks:secureWavePeaks.length,
+    status:document.querySelector('#recording-state')?.textContent,
+    wavActive:secureCaptureState==='recording'
+  }));
+  assert(longVisual.seconds>=13&&longVisual.seconds<25,'Recording should stay visible after 14 seconds '+JSON.stringify(longVisual));
+  assert(longVisual.clipWidth>150,'Live WAV clip should span the track visibly after 14 seconds');
+  assert(longVisual.peaks>350,'Actual PCM fragments should keep accumulating during live capture');
+  assert(longVisual.cursor>13,'Playhead must follow voice recording after 14 seconds');
+  assert.equal(longVisual.wavActive,true);
+  await page.screenshot({path:path.join(ROOT,'artifacts','studio-main-rec-14s-031.png'),timeout:10000});
+  console.log('STUDIO-031 14-SECOND LIVE PASS '+JSON.stringify(longVisual));
   await page.locator('#stop').click();
   await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===1,null,{timeout:20000});
   assert.equal(await page.locator('#record').isEnabled(),true);
@@ -149,7 +166,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   });
   console.log('STUDIO-031 actual captured data='+JSON.stringify(data));
   assert.equal(data.interrupted,false,'WAV segments continuous');
-  assert(data.seconds>=2&&data.seconds<=15,'Synthetic short recording in expected bounds');
+  assert(data.seconds>=13&&data.seconds<=25,'Synthetic 14-second recording in expected bounds');
   assert(data.wavBytes===data.pcmBytes+44,'WAV size and header match');
   assert(data.peak>0,'Synthetic microphone generated non-silent PCM');
   assert.equal(data.clipCount,1,'WAV inserted exactly once');
