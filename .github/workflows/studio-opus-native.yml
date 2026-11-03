@@ -12,6 +12,9 @@ on:
       - 'tests/studio-hung-microphone-033.test.cjs'
       - 'tests/studio-overdub-synchronization-036.test.cjs'
       - 'tests/studio-rhythmic-overdub-037.test.cjs'
+      - 'js/studio-latency-compensation.js'
+      - 'tests/studio-latency-compensation-038.test.cjs'
+      - 'tests/studio-loopback-calibration-039.test.cjs'
       - 'studio.html'
       - '.github/workflows/studio-opus-native.yml'
   workflow_dispatch:
@@ -48,6 +51,10 @@ jobs:
         run: node tests/studio-overdub-synchronization-036.test.cjs
       - name: Real WAV attack-time alignment against guide clicks, even after slow decode
         run: node tests/studio-rhythmic-overdub-037.test.cjs
+      - name: Latency offset and loopback detection mathematical contract
+        run: node tests/studio-latency-compensation-038.test.cjs
+      - name: Calibrated loopback with speaker-to-mic roundtrip, saved overdub and clip nudges
+        run: node tests/studio-loopback-calibration-039.test.cjs
       - name: Preserve isolated mobile UI screenshot for review
         if: always()
         uses: actions/upload-artifact@v4
