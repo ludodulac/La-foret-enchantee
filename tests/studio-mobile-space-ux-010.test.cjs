@@ -11,7 +11,14 @@ const dragSource=section('function dragLaneAt','function trimGesture');
 const trimSource=section('function trimGesture','function chooseFile');
 const renderSource=section('function render(){','function dragLaneAt');
 const playbackSource010=section('function startPreparedPlayback','async function play(');
-const recordTrackSelectionSource=section('function recordTrackIdFor',"$('#track-volume-slider').oninput");
+const trackSelectionRaw=section('function recordTrackIdFor',"$('#track-volume-slider').oninput");
+// Source now also contains LATENCY control bindings between these helpers.
+// They are tested separately in the real browser; do not execute full UI
+// bindings in this minimal Node VM that intentionally has no DOM.
+const latencyStart=trackSelectionRaw.indexOf('function syncLatencyDisplay(');
+const selectionRestart=trackSelectionRaw.indexOf('function selectRecordTrack(');
+assert(latencyStart>0&&selectionRestart>latencyStart,'latency feature and selection helpers separated');
+const recordTrackSelectionSource=trackSelectionRaw.slice(0,latencyStart)+trackSelectionRaw.slice(selectionRestart);
 
 // Reference viewport required by mission.
 const VIEWPORT_W=390,VIEWPORT_H=844;
