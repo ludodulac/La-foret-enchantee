@@ -160,22 +160,23 @@ console.log('NO_CLIP_SELECTED_SPACE PASS');
 console.log('CLIP_SELECTED_CONTEXT PASS name + volume + cut/duplicate/delete/mute');
 
 // Bottom bar provides general structural commands.
-for(const id of ['import-phone','sound-library-jump','addtrack','project-menu-toggle','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
+for(const id of ['import-phone','sound-library-jump','addtrack','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
+assert(!html.includes('id="project-menu-toggle"'),'The redundant PROJECT bottom button was deliberately removed');
+assert(css.includes('grid-template-columns:repeat(4,1fr)'),'Exactly four bottom commands on mobile');
 assert(positions.bottom>positions.context);
 assert(html.includes("$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView"));
-console.log('BOTTOM_BAR_ACCESS PASS IMPORTER / SONS / +PISTE / PROJET / OUTILS');
+console.log('BOTTOM_BAR_ACCESS PASS four commands IMPORTER / SONS / +PISTE / OUTILS');
 
-// Project menu keeps editor navigation without reintroducing manual save.
-for(const marker of [
- "$('#editor-projects').onclick=returnToProjectLibrary",
- "$('#editor-new-project').onclick=createLocalProject",
- "$('#download-project').onclick=downloadProjectCopy"
-])assert(html.includes(marker),'project handler changed '+marker);
+// Navigation in the top header and project library replaces duplicate PROJECT.
+assert(html.includes("$('#back-projects').onclick=returnToProjectLibrary"));
+assert(html.includes("$('#create-local-project').onclick=createLocalProject"));
+assert(html.includes("$('#download-project').onclick=downloadProjectCopy"));
+assert(html.includes('id="studio-wav-clean-temp"'));
 assert(!html.includes('id="save-project"'));
 assert(!html.includes('id="projects"'));
-assert(css.includes('.projectbar.menu-open{display:grid}'));
-console.log('PROJECT_MENU PASS');
-console.log('PROJECT_ACTION_HANDLERS_RETAINED PASS local project navigation + advanced copy; no manual save');
+assert(!html.includes('id="project-menu-panel"'));
+assert(html.includes('<details class="studio-advanced-tools">'));
+console.log('PROJECT_MENU_REMOVED PASS top navigation and safe backup/cleanup preserved in collapsed options');
 
 // Tools menu retains selection + metronome.
 for(const marker of ["$('#sel-start').onclick","$('#sel-end').onclick","$('#sel-clear').onclick","$('#export-selection').onclick","$('#metro').onclick","$('#bpm-minus').onclick","$('#bpm-plus').onclick"])assert(html.includes(marker),'tools handler changed '+marker);
@@ -213,14 +214,14 @@ for(const [id,klass] of [
   ['minus','game-btn-standard'],['plus','game-btn-standard'],
   ['import-phone','game-btn-standard'],['sound-library-jump','game-btn-violet'],
   ['addtrack','game-btn-green'],['del','game-btn-red'],['clipmute','game-btn-dark'],
-  ['project-menu-toggle','game-btn-dark'],['tools-menu-toggle','game-btn']
+  ['tools-menu-toggle','game-btn']
 ]){
   const rx=new RegExp('<button[^>]*class="[^"]*'+klass+'[^"]*"[^>]*id="'+id+'"|<button[^>]*id="'+id+'"[^>]*class="[^"]*'+klass+'[^"]*"');
   assert(rx.test(html),'semantic class missing '+id+' '+klass);
 }
 assert(renderSource.includes("game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')"));
 assert(renderSource.includes('game-btn game-btn-compact game-btn-secondary" data-vol'));
-console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete/project semantics retained');
+console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete semantics retained');
 
 // Physical press feedback, no heavy animation.
 for(const marker of [
