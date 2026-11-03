@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge,Long=root.StudioWavLongSource;
-function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null,onStateChange=()=>{},onStatus=()=>{}}={}){
+function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null,onStateChange=()=>{},onStatus=()=>{},onProgress=()=>{},onPeaks=()=>{}}={}){
   const $=id=>document.getElementById(id);
   const panel=$('studio-wav-panel'),open=$('studio-wav-open');
   if(!panel||!open||!Core||!Bridge||!Long)throw Error('Panneau Studio WAV introuvable');
@@ -14,6 +14,18 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   let recovered=null,previewUrl=null,downloadUrl=null;
   const report=message=>{ui.status.textContent=message;if(panel.hidden&&(/impossible|incomplet|interrompu|stockage trop lent|Prise enregistrée et ajoutée/i.test(message)))onStatus(message)};
   const clock=seconds=>{const n=Math.max(0,Math.floor(seconds));ui.time.textContent='⏱ '+String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
+  // Low-cost waveform for the live editor. Audio continues to be stored as
+  // untouched PCM WAV fragments; only small numeric peaks reach the UI.
+  function visualizeChunk(pcm,rate){
+    const samples=new DataView(pcm.buffer,pcm.byteOffset,pcm.byteLength);
+    const step=Math.max(1,Math.round(rate/35)),count=pcm.byteLength/2,peaks=[];
+    for(let i=0;i<count;i+=step){
+      let peak=0;
+      for(let j=i;j<Math.min(count,i+step);j++)peak=Math.max(peak,Math.abs(samples.getInt16(j*2,true))/32768);
+      peaks.push(peak);
+    }
+    try{onPeaks(peaks)}catch(e){console.warn('Waveform only',e)}
+  }
   const stopClock=()=>{if(timer!==null)clearInterval(timer);timer=null;if(startAt!==null)clock((performance.now()-startAt)/1000);startAt=null};
   const running=()=>!!ac;
   const rootDir=async()=>{if(!navigator.storage?.getDirectory)throw Error('Enregistrement local OPFS indisponible');return navigator.storage.getDirectory()};
@@ -95,13 +107,14 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
         if(e.data?.type==='stopped'){ack?.();return}
         if(e.data?.type!=='pcm'||failed)return;
         const pcm=new Uint8Array(e.data.bytes),index=seq++;
+        visualizeChunk(pcm,ac.sampleRate);
         pending++;
         if(pending>5){failed=Error('Stockage trop lent');stop();return}
         writeChain=writeChain.then(()=>Core.appendChunk(take,index,pcm)).catch(err=>{failed=err;stop()}).finally(()=>pending--);
       };
       ac.createMediaStreamSource(mic).connect(node);node.connect(gain).connect(ac.destination);
       startAt=performance.now();clock(0);
-      timer=setInterval(()=>{if(startAt!==null)clock((performance.now()-startAt)/1000)},250);
+      timer=setInterval(()=>{if(startAt!==null){let sec=(performance.now()-startAt)/1000;clock(sec);try{onProgress(sec)}catch(e){console.warn('Recording clock only',e)}}},120);
       onStateChange('recording');
       report('● Enregistrement WAV en cours — fragments sauvegardés chaque seconde.');
     }catch(e){report('Impossible de démarrer : '+e.message);await release()}
