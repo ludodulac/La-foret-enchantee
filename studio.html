@@ -972,12 +972,60 @@ document.addEventListener('visibilitychange',()=>{
 $('#export').onclick=()=>{let end=Math.max(0,...clips.map(c=>c.start+c.len));exportRange(0,end,'montage-son')};
 $('#export-selection').onclick=()=>{if(selectionStart===null||selectionEnd===null){selectionDiagnostic('SÉLECTION INVALIDE — début et fin requis');return msg('Choisis un début et une fin')}if(selectionEnd<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — DÉBUT = '+selectionSeconds(selectionStart)+' s, FIN = '+selectionSeconds(selectionEnd)+' s');return msg('La fin doit être après le début')}let start=selectionStart,end=selectionEnd;exportRange(start,end,'selection-son',true)};
 initializeProjectLibraryEntry().catch(e=>{console.error('PROJECT LIBRARY INIT',e);$('#project-library-status').textContent='Impossible de charger les projets locaux';msg('Bibliothèque projets indisponible')});
+async function runLatencyCalibration(){
+  if(calibrationSession||secureOverdubPreparing||secureCaptureState!=='idle'||!currentProjectId){
+    msg('Ouvre un projet et arrête les enregistrements avant de calibrer');return;
+  }
+  const run={chunks:[],rate:0,stopRequested:false,source:null,done:false};
+  calibrationSession=run;
+  $('#latency-calibrate').disabled=true;
+  $('#latency-status').textContent='🎧 Calibration : quatre clics vont sortir du téléphone. Laisse le micro les écouter, sans parler.';
+  try{
+    // User gesture resumes output before microphone permissions, as required
+    // by Chromium autoplay policy.
+    await ctx.resume();
+    const started=await wavController.start({
+      calibration:true,
+      onCaptureStart:()=>{
+        const source=ctx.createBufferSource();
+        source.buffer=StudioLatencyCompensation.createTestTone(ctx);
+        source.connect(ctx.destination);run.source=source;
+        source.start(ctx.currentTime+StudioLatencyCompensation.START_LEAD);
+      }
+    });
+    if(!started&&calibrationSession===run){
+      run.done=true;calibrationSession=null;
+      $('#latency-calibrate').disabled=false;
+      $('#latency-status').textContent='⚠ Calibration interrompue. Vérifie l’accès au microphone puis réessaie.';
+    }
+  }catch(e){
+    calibrationSession=null;$('#latency-calibrate').disabled=false;
+    $('#latency-status').textContent='⚠ Impossible de calibrer : '+(e?.message||e);
+  }
+}
+function completeLatencyCalibration(){
+  const session=calibrationSession;
+  if(!session||session.done)return;
+  session.done=true;calibrationSession=null;
+  $('#latency-calibrate').disabled=false;
+  try{session.source?.disconnect()}catch{}
+  try{
+    const m=StudioLatencyCompensation.measure(session.chunks,session.rate);
+    setLatency(m.ms,'✅ Retard mesuré : '+m.ms+' ms ('+m.clicks+' clics). Les prochains doublages seront corrigés automatiquement.');
+    msg('Synchronisation étalonnée : '+m.ms+' ms ✓');
+  }catch(e){
+    $('#latency-status').textContent='⚠ Mesure non fiable : '+e.message+'. Réessaie dans le calme, volume audible, sans casque isolant le micro.';
+  }
+}
+$('#latency-calibrate').onclick=()=>{void runLatencyCalibration()};
 wavController=StudioWavPanel.mount({
   isStudioRecording:()=>recording,
   isProjectOpen:()=>!!currentProjectId,
   onStateChange:state=>{
     secureCaptureState=state;
     const status=$('#recording-state');
+    if(state==='idle'&&calibrationSession&&!calibrationSession.done)
+      queueMicrotask(completeLatencyCalibration);
     if(state==='recording'){
       secureWavePeaks=[];secureLastWaveDraw=0;secureMicroStage=null;
       const info=secureCaptureInfo;
@@ -990,7 +1038,7 @@ wavController=StudioWavPanel.mount({
       status.hidden=false;status.classList.remove('finalizing','error');
     }else if(state==='finalizing'){
       stopPlay(false);status.hidden=false;status.classList.add('finalizing');
-      status.textContent='■ ARRÊT · SAUVEGARDE ET AJOUT DE LA PRISE…';
+      status.textContent=calibrationSession?'🎯 ANALYSE DES CLICS DE CALIBRATION…':'■ ARRÊT · SAUVEGARDE ET AJOUT DE LA PRISE…';
     }else if(state==='starting'){
       status.hidden=false;status.classList.remove('finalizing','error');
       status.textContent='🎙 PRÉPARATION DE L’ENREGISTREMENT…';
@@ -1008,7 +1056,22 @@ wavController=StudioWavPanel.mount({
     $('#play').disabled=state!=='idle';
     $('#back').disabled=state!=='idle';$('#forward').disabled=state!=='idle';
   },
-  onProgress:seconds=>updateSecureRecordingProgress(seconds),
+  onProgress:seconds=>{
+    const run=calibrationSession;
+    if(run){
+      if(seconds>=3.55&&!run.stopRequested){
+        run.stopRequested=true;
+        void wavController.stop();
+      }
+      return
+    }
+    updateSecureRecordingProgress(seconds);
+  },
+  onPcm:(pcm,rate)=>{
+    const run=calibrationSession;
+    if(!run||run.done||run.chunks.length>=10)return;
+    run.rate=rate;run.chunks.push(pcm);
+  },
   onPeaks:peaks=>{
     if(secureCaptureState!=='recording')return;
     for(const peak of peaks)if(secureWavePeaks.length<35000)secureWavePeaks.push(peak);
