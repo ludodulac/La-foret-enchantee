@@ -11,6 +11,7 @@ on:
       - 'tests/studio-microphone-release-032.test.cjs'
       - 'tests/studio-hung-microphone-033.test.cjs'
       - 'tests/studio-overdub-synchronization-036.test.cjs'
+      - 'tests/studio-rhythmic-overdub-037.test.cjs'
       - 'studio.html'
       - '.github/workflows/studio-opus-native.yml'
   workflow_dispatch:
@@ -45,6 +46,8 @@ jobs:
         run: node tests/studio-hung-microphone-033.test.cjs
       - name: Multitrack overdub starts after backing decode and with capture, not 1 second late
         run: node tests/studio-overdub-synchronization-036.test.cjs
+      - name: Real WAV attack-time alignment against guide clicks, even after slow decode
+        run: node tests/studio-rhythmic-overdub-037.test.cjs
       - name: Preserve isolated mobile UI screenshot for review
         if: always()
         uses: actions/upload-artifact@v4
