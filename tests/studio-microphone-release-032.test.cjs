@@ -36,7 +36,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
  try{
   const port=await listen();
   browser=await chromium.launch({headless:true,args:[
-    '--no-sandbox','--autoplay-policy=no-user-gesture-required'
+    '--no-sandbox'
   ]});
   const context=await browser.newContext({
     viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true
@@ -44,9 +44,16 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{
+    window.__resumeCalls=[];
+    const resume=AudioContext.prototype.resume;
+    AudioContext.prototype.resume=function(...args){
+      window.__resumeCalls.push({at:performance.now(),state:this.state});
+      return resume.apply(this,args);
+    };
     window.__microphoneMode='held';
     window.__producedStreams=[];
     navigator.mediaDevices.getUserMedia=()=>{
+      window.__resumeCallsBeforeMicrophone=window.__resumeCalls.length;
       const supply=async()=>{
         const ctx=new AudioContext(),osc=ctx.createOscillator(),gain=ctx.createGain(),
           dest=ctx.createMediaStreamDestination();
@@ -76,6 +83,8 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   // must immediately exit the wait instead of occupying the input later.
   await page.locator('#record').click();
   await page.waitForFunction(()=>typeof window.__grantPendingMicrophone==='function',null,{timeout:15000});
+  assert((await page.evaluate(()=>window.__resumeCallsBeforeMicrophone))>=1,
+    'Capture AudioContext must resume on REC tap, before asking for microphone');
   assert.equal(await page.locator('#record').isDisabled(),true);
   await page.evaluate(()=>{
     Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>window.__simulatedVisibility||'visible'});
@@ -100,6 +109,8 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   await page.waitForTimeout(3400);
   await page.waitForFunction(()=>/AUCUN SIGNAL MICRO/.test(document.querySelector('#recording-state').textContent),null,{timeout:4000});
   await page.locator('#stop').click();
+  assert.equal(await page.evaluate(()=>window.__producedStreams[1].getAudioTracks()[0].readyState),'ended',
+    'STOP must release microphone synchronously, before async OPFS completion');
   await page.waitForFunction(()=>secureCaptureState==='idle',null,{timeout:15000});
   assert.equal(await page.evaluate(()=>clips.length),0,'Silent microphone must not create fake editable clip');
   assert.match(await page.locator('#recording-state').textContent(),/AUCUN SON REÇU DU MICRO/);
@@ -122,6 +133,34 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   assert.equal(await page.evaluate(()=>clips.length),1,'Valid WAV saved safely on background switch');
   assert.equal(await page.locator('#record').isEnabled(),true);
   console.log('STUDIO-032 BACKGROUND MIC RELEASE PASS: active stream stopped and good WAV preserved');
+
+  // Simulate a painfully slow Android storage transaction. The actual
+  // microphone must be released on STOP even while WAV bytes are still queued.
+  await page.evaluate(()=>{
+    window.__microphoneMode='tone';
+    const original=StudioRecordingWavCore.appendChunk;
+    let first=true;
+    StudioRecordingWavCore.appendChunk=async function(...args){
+      if(first){
+        first=false;
+        await new Promise(resolve=>{window.__releaseFirstOpfsWrite=resolve});
+      }
+      return original.apply(this,args);
+    };
+  });
+  await page.locator('#record').click();
+  await page.waitForFunction(()=>secureCaptureState==='recording',null,{timeout:15000});
+  await page.waitForFunction(()=>typeof window.__releaseFirstOpfsWrite==='function',null,{timeout:12000});
+  await page.locator('#stop').click();
+  const blocking=await page.evaluate(()=>({
+    microphoneTrack:window.__producedStreams.at(-1).getAudioTracks()[0].readyState,
+    state:secureCaptureState,firstWriteStillBlocked:typeof window.__releaseFirstOpfsWrite==='function'
+  }));
+  assert.equal(blocking.microphoneTrack,'ended','Mic still owned during simulated slow OPFS write');
+  assert.equal(blocking.state,'finalizing','UI must not falsely claim clip is saved');
+  await page.evaluate(()=>{window.__releaseFirstOpfsWrite();window.__releaseFirstOpfsWrite=null});
+  await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===2,null,{timeout:15000});
+  console.log('STUDIO-032 SLOW STORAGE RELEASE PASS '+JSON.stringify(blocking));
   assert.deepEqual(errors,[],'No uncaught page errors');
  }finally{
   try{await browser?.close()}catch{}
