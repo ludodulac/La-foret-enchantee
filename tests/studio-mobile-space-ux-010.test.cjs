@@ -77,7 +77,7 @@ assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
 assert(css.includes('.trimhandle.left{left:-22px}'));
 assert(css.includes('.trimhandle.right{right:-22px}'));
 assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
-assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
 console.log('TRIM_VISUAL_WIDTH PASS visual=5px');
 console.log('TRIM_TOUCH_TARGET PASS touchTarget=24px; outward=22px; inward=2px/side');
 
@@ -432,7 +432,7 @@ console.log('STOP_STOPS_PLAYBACK PASS');
 // Real trim hit-area audit: the declared 24px must be actually reachable at timeline edges.
 assert(css.includes('.timeline{display:block;position:relative;border:0;box-shadow:none;border-radius:0;padding:0 22px;'));
 assert(css.includes('.lane{min-height:88px;overflow:visible}'));
-assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
 assert(css.includes('.trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}'));
 assert(html.includes('.playhead{position:absolute')&&html.includes('z-index:15'));
 assert(trimSource.includes('e.stopPropagation();e.preventDefault();handle.setPointerCapture(e.pointerId)'));
