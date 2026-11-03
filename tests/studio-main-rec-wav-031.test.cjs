@@ -40,7 +40,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   ]});
   const context=await browser.newContext({
     viewport:{width:390,height:844},deviceScaleFactor:1,
-    isMobile:true,hasTouch:true
+    isMobile:true,hasTouch:true,acceptDownloads:true
   });
   const page=await context.newPage(),errors=[];
   // A controlled 440 Hz browser-generated MediaStream. Real WebAudio and OPFS
@@ -121,6 +121,8 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   assert(visual.liveWidth>25,'Red recording clip must grow: '+JSON.stringify(visual));
   assert(visual.cursor>armed.cursor+1.8,'Timeline playhead must advance with capture clock');
   console.log('STUDIO-031 VISUAL LIVE PASS '+JSON.stringify(visual));
+  fs.mkdirSync(path.join(ROOT,'artifacts'),{recursive:true});
+  await page.screenshot({path:path.join(ROOT,'artifacts','studio-main-rec-live-031.png'),timeout:10000});
   await page.locator('#stop').click();
   await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===1,null,{timeout:20000});
   assert.equal(await page.locator('#record').isEnabled(),true);
@@ -176,6 +178,49 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   await page.locator('#stop').click();
   assert.equal(await page.evaluate(()=>playing),false,'STOP stops normal playback');
   console.log('STUDIO-031 PLAYBACK PASS '+JSON.stringify(playback));
+
+  // Second take: overdub on another track while the first one is audible.
+  await page.locator('#track-controls [data-arm]').first().click();
+  await page.evaluate(()=>setCursor(0,true));
+  await page.locator('#record').click();
+  await page.waitForFunction(()=>secureCaptureState==='recording',null,{timeout:15000});
+  assert.equal(await page.locator('#play').isDisabled(),true);
+  await page.waitForTimeout(2400);
+  assert(await page.evaluate(()=>secureWavePeaks.some(x=>x>.05)),'Second take also captures audible PCM');
+  await page.locator('#stop').click();
+  await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===2,null,{timeout:15000});
+  const both=await page.evaluate(async()=>{
+    const takes=await StudioRecordingWavCore.listTakes(await navigator.storage.getDirectory());
+    return {takes:takes.length,clips:clips.map(c=>({track:c.track,start:c.start,len:c.len,origin:localSources.get(c.sourceId)?.origin}))}
+  });
+  assert.equal(both.takes,2,'Both WAV sources preserved in OPFS');
+  assert.equal(both.clips.length,2,'Both WAV takes are mounted on 2 tracks');
+  assert.notEqual(both.clips[0].track,both.clips[1].track,'Independent recording tracks');
+  assert.equal(both.clips[1].start,0);
+  assert(both.clips[1].len>1.8);
+  console.log('STUDIO-031 MULTITRACK OVERDUB PASS '+JSON.stringify(both));
+
+  // Reopen the project again, then export the two-track mix as a full WAV.
+  await page.locator('#back-projects').click();
+  await page.reload({waitUntil:'load',timeout:30000});
+  await page.waitForFunction(()=>document.querySelector('#local-project-list .local-project-card'),null,{timeout:15000});
+  await page.locator('#local-project-list .local-project-card').first().click();
+  await page.waitForFunction(()=>!document.querySelector('#app').hidden);
+  assert.equal(await page.locator('#tracks .clip').count(),2);
+  await page.locator('#export').click();
+  await page.waitForFunction(()=>!document.querySelector('#export-destination-panel').hidden,null,{timeout:20000});
+  const exportInfo=await page.locator('#export-destination-note').textContent();
+  const downloadPromise=page.waitForEvent('download',{timeout:15000});
+  await page.locator('#export-download-ready').click();
+  const download=await downloadPromise;
+  const savedPath=await download.path();
+  const fh=fs.openSync(savedPath,'r'),header=Buffer.alloc(44);
+  fs.readSync(fh,header,0,44,0);fs.closeSync(fh);
+  assert.equal(header.toString('ascii',0,4),'RIFF');
+  assert.equal(header.toString('ascii',8,12),'WAVE');
+  assert.equal(fs.statSync(savedPath).size,44+header.readUInt32LE(40));
+  assert(header.readUInt32LE(40)>100000,'Audible multi-track output WAV has content');
+  console.log('STUDIO-031 MULTITRACK EXPORT PASS '+JSON.stringify({name:download.suggestedFilename(),bytes:fs.statSync(savedPath).size,note:exportInfo}));
   assert.deepEqual(errors,[],'No uncaught errors');
   console.log('STUDIO-031 PASS: main REC/STOP + real AudioWorklet synthetic mic -> OPFS WAV -> armed track -> IndexedDB reload. '+JSON.stringify(data));
  }finally{
