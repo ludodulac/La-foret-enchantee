@@ -39,7 +39,7 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
     pixelsPerSecond:()=>100,
     snapshot:()=>({clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t}))}),
     undo,redo,buttons:()=>state.buttons++,markProjectDirty:()=>state.dirty++,render:()=>state.renders++,
-    selected:null,$:sel=>sel==='#editor'?editor:sel==='#clipvol'?clipvol:clipmute
+    selected:clip,$:sel=>sel==='#editor'?editor:sel==='#clipvol'?clipvol:clipmute
   };
   vm.createContext(context);vm.runInContext(dragSource,context);
   context.clipGesture(el,clip,30);
@@ -52,7 +52,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
 }
 
 (async()=>{
-  // 1 + 13 HORIZONTAL_DRAG / EXISTING_HORIZONTAL_DRAG
+  // Intentional movement only: this fixture has explicitly selected the clip.\n  // 1 + 13 HORIZONTAL_DRAG / EXISTING_HORIZONTAL_DRAG
   {
     const h=makeHarness();drag(h,{moveX:150,moveY:50});
     assert.equal(h.clip.start,12.9);assert.equal(h.clip.track,'A');assert.equal(h.undo.length,1);assert.equal(h.state.dirty,1);
