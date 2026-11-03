@@ -607,6 +607,7 @@ $('#record').onclick=recordSecurelyFromStudio;
 $('#play').onclick=()=>{if(secureCaptureState!=='idle')return;return playing||playPreparing?stopPlay():play()};
 $('#stop').onclick=()=>{
   if(secureCaptureState!=='idle'){
+    if(secureCaptureState==='starting'){wavController.cancelStart();return}
     if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}
     return;
   }
@@ -852,7 +853,7 @@ wavController=StudioWavPanel.mount({
     $('#record').classList.toggle('is-recording',state==='recording');
     $('#record').disabled=state!=='idle';
     $('#stop').classList.toggle('is-recording',state==='recording');
-    $('#stop').disabled=state==='starting'||state==='finalizing';
+    $('#stop').disabled=state==='finalizing'; // STOP cancels a pending microphone request
     $('#play').disabled=state!=='idle';
     $('#back').disabled=state!=='idle';$('#forward').disabled=state!=='idle';
   },
