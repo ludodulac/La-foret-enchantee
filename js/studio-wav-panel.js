@@ -148,7 +148,13 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     const generation=++captureGeneration;
     const checkOpen=()=>{if(generation!==captureGeneration)throw Error('Microphone interrompu lors du changement d’application')};
     const canceled=new Promise((_,reject)=>{cancelPendingOpen=()=>reject(Error('Microphone libéré : changement d’application'))});
-    const wait=(promise,ms,label)=>Promise.race([bounded(promise,ms,label),canceled]);
+    // A hard TOTAL budget, not a separate 8+10+7-second wait for each stage:
+    // Android must never get trapped indefinitely in a microphone spinner.
+    const openingDeadline=performance.now()+9000;
+    const wait=(promise,ms,label)=>{
+      const remaining=Math.max(100,Math.min(ms,openingDeadline-performance.now()));
+      return Promise.race([bounded(promise,remaining,label),canceled]);
+    };
     starting=true;onStateChange('starting');buttons();
     let failure=null;
     try{
