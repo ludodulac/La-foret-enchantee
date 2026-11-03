@@ -124,7 +124,7 @@ console.log('REDO PASS');
 for(const id of ['back','record','play','stop','forward','undo','redo'])assert(html.includes('id="'+id+'"'),'transport missing '+id);
 for(const marker of [
  "$('#record').onclick=recordSecurelyFromStudio",
- "$('#play').onclick=()=>playing||playPreparing?stopPlay():play()",
+ "$('#play').onclick=()=>{if(secureCaptureState!=='idle')return;return playing||playPreparing?stopPlay():play()}",
  "$('#stop').onclick=()=>{",
  "$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)}",
  "$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)}"
