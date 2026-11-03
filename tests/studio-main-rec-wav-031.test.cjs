@@ -78,6 +78,15 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   assert.equal(await page.locator('#record').isDisabled(),true);
   assert.equal(await page.locator('#stop').isEnabled(),true);
   assert.equal(await page.locator('#studio-wav-panel').isVisible(),false);
+  // The real user's video showed an entirely blank track and an active PLAY
+  // button during capture. Both are now explicit acceptance criteria.
+  assert.equal(await page.locator('#recording-state').isVisible(),true);
+  assert.match(await page.locator('#recording-state').textContent(),/ENREGISTREMENT WAV/);
+  assert.equal(await page.locator('#play').isDisabled(),true,'PLAY must not interfere with recording');
+  assert.equal(await page.locator('#back').isDisabled(),true);
+  assert.equal(await page.locator('#forward').isDisabled(),true);
+  assert.equal(await page.locator('#liveclip').isVisible(),true,'Live red clip must appear immediately');
+  assert.equal(await page.locator('#liveclip').evaluate(el=>el.classList.contains('secure-wav-live')),true);
 
   // Real browser AudioWorklet + OPFS fragment writer, but FAKE 100% synthetic mic.
   await page.waitForFunction(()=>/Enregistrement WAV en cours/.test(document.querySelector('#studio-wav-status')?.textContent||''),null,{timeout:15000});
@@ -96,9 +105,28 @@ const close=()=>new Promise(resolve=>server.close(resolve));
     await page.waitForTimeout(400);
   }
   assert(ready.seconds>=2,'At least 2 PCM seconds must be persisted before stop: '+JSON.stringify(ready));
+  const visual=await page.evaluate(()=>{
+    const el=document.querySelector('#liveclip'),canvas=document.querySelector('#livewave');
+    const pixel=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+    let painted=0;for(let i=3;i<pixel.length;i+=4)if(pixel[i])painted++;
+    return {state:secureCaptureState,peakCount:secureWavePeaks.length,
+      liveWidth:el?.getBoundingClientRect().width,elapsed:liveRec?.len,
+      clock:document.querySelector('#clock')?.textContent,
+      cursor:cursor,painted,status:document.querySelector('#recording-state')?.textContent};
+  });
+  assert.equal(visual.state,'recording');
+  assert(visual.elapsed>=1.8,'Duration must visibly advance while recording: '+JSON.stringify(visual));
+  assert(visual.peakCount>=20,'Real PCM peaks must reach the editor');
+  assert(visual.painted>20,'Live waveform must be visible, not empty: '+JSON.stringify(visual));
+  assert(visual.liveWidth>25,'Red recording clip must grow: '+JSON.stringify(visual));
+  assert(visual.cursor>armed.cursor+1.8,'Timeline playhead must advance with capture clock');
+  console.log('STUDIO-031 VISUAL LIVE PASS '+JSON.stringify(visual));
   await page.locator('#stop').click();
   await page.waitForFunction(()=>secureCaptureState==='idle'&&clips.length===1,null,{timeout:20000});
   assert.equal(await page.locator('#record').isEnabled(),true);
+  assert.equal(await page.locator('#play').isEnabled(),true);
+  assert.equal(await page.locator('#liveclip').count(),0,'Live ghost disappears after WAV is saved');
+  assert.equal(await page.locator('#tracks .clip').count(),1,'Final blue editable clip appears');
   const status=await page.locator('#studio-wav-status').textContent();
   assert.match(status,/Prise enregistrée et ajoutée à la piste active/, 'Capture and attach must succeed: '+status);
 
@@ -137,6 +165,17 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   const after=await page.evaluate(()=>({clips:clips.length,seconds:clips[0]?.len,track:clips[0]?.track,source:localSources.get(clips[0]?.sourceId)?.origin}));
   assert.equal(after.clips,1);assert.equal(after.source,'opfs-wav-short');assert.equal(after.track,armed.target);
   assert(Math.abs(after.seconds-data.seconds)<0.02);
+  // Playback exercises the actual Studio AudioBuffer runtime after reload.
+  await page.evaluate(()=>setCursor(0,true));
+  await page.locator('#play').click();
+  await page.waitForFunction(()=>playing===true,null,{timeout:10000});
+  await page.waitForTimeout(350);
+  const playback=await page.evaluate(()=>({cursor,playing,sources:sources.length,audio:ctx.state}));
+  assert(playback.cursor>0.2,'Playback cursor must advance');
+  assert(playback.sources>=1,'Real Studio AudioBufferSource must be scheduled');
+  await page.locator('#stop').click();
+  assert.equal(await page.evaluate(()=>playing),false,'STOP stops normal playback');
+  console.log('STUDIO-031 PLAYBACK PASS '+JSON.stringify(playback));
   assert.deepEqual(errors,[],'No uncaught errors');
   console.log('STUDIO-031 PASS: main REC/STOP + real AudioWorklet synthetic mic -> OPFS WAV -> armed track -> IndexedDB reload. '+JSON.stringify(data));
  }finally{
