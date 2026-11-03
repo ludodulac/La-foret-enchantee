@@ -441,9 +441,49 @@ let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWa
 let secureOverdubPreparing=false,secureOverdubGeneration=0,secureOverdubSync=null;
 let measuredLatencyMs=StudioLatencyCompensation.load(localStorage),calibrationSession=null;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
-function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
+function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;$('#clip-early').disabled=!has;$('#clip-late').disabled=!has;$('#clip-calibrated').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
 function recordTrackIdFor(id=selectedRecordTrackId){return tracks.some(t=>t.id===id)?id:(tracks.find(t=>t.type==='voice')?.id||tracks[0]?.id||null)}
+function syncLatencyDisplay(message=''){
+  $('#latency-ms').value=measuredLatencyMs;
+  $('#clip-calibrated').textContent=measuredLatencyMs>0?'🎯 −'+measuredLatencyMs+' ms':'🎯 CALIBRER';
+  if(message)$('#latency-status').textContent=message;
+  else $('#latency-status').textContent=measuredLatencyMs
+    ?'Correction automatique active pour les nouveaux doublages : '+measuredLatencyMs+' ms. Pour une ancienne prise, sélectionne-la puis utilise CORRIGER.'
+    :'Aucune correction mesurée. Le bouton MESURER utilise 4 clics émis par le téléphone et enregistrés par son micro.';
+}
+function setLatency(ms,description=''){
+  measuredLatencyMs=StudioLatencyCompensation.save(localStorage,ms);
+  syncLatencyDisplay(description||'Correction des futurs doublages : '+measuredLatencyMs+' ms. Valeur conservée sur ce navigateur.');
+}
+function applyClipTiming(clip,shiftMs,automatic=false){
+  if(!shiftMs)return clip;
+  const adjusted=StudioLatencyCompensation.shiftClip(clip,shiftMs);
+  if(automatic)adjusted.latencyCorrectionMs=shiftMs;
+  return adjusted
+}
+function adjustSelectedClip(shiftMs){
+  if(!selected||secureOverdubPreparing||secureCaptureState!=='idle')return;
+  try{
+    const next=applyClipTiming(selected,shiftMs);
+    checkpoint();Object.assign(selected,next);
+    selected.latencyCorrectionMs=(Number(selected.latencyCorrectionMs)||0)+shiftMs;
+    render();markProjectDirty();
+    msg('Prise recalée de '+Math.abs(shiftMs)+' ms vers '+(shiftMs>0?'la gauche':'la droite')+' ✓');
+  }catch(e){msg('Décalage impossible : '+e.message)}
+}
+$('#clip-early').onclick=()=>adjustSelectedClip(25);
+$('#clip-late').onclick=()=>adjustSelectedClip(-25);
+$('#clip-calibrated').onclick=()=>{
+  if(measuredLatencyMs<=0){msg('Calibre d’abord le téléphone dans OUTILS');return}
+  if(!selected)return;
+  adjustSelectedClip(measuredLatencyMs-(Number(selected.latencyCorrectionMs)||0));
+};
+$('#latency-ms').onchange=e=>setLatency(e.target.value);
+$('#latency-less').onclick=()=>setLatency(measuredLatencyMs-25);
+$('#latency-more').onclick=()=>setLatency(measuredLatencyMs+25);
+$('#latency-reset').onclick=()=>setLatency(0);
+syncLatencyDisplay();
 function selectRecordTrack(id,dirty=true){let next=recordTrackIdFor(id);if(!next)return false;let changed=selectedRecordTrackId!==next;selectedRecordTrackId=next;document.querySelectorAll('.track-control').forEach(el=>{let armed=el.dataset.trackId===next;el.classList.toggle('record-armed',armed);let arm=el.querySelector('[data-arm]');if(arm){arm.classList.toggle('is-active',armed);arm.setAttribute('aria-pressed',armed?'true':'false')}});if(changed&&dirty)markProjectDirty();return true}
 function deleteClipById(id){let c=clips.find(x=>x.id===id);if(!c)return false;checkpoint();clips=clips.filter(x=>x.id!==id);if(selected?.id===id){selected=null;$('#editor').classList.remove('show')}render();return true}
 function deleteTrackById(id,confirmFn=window.confirm){let index=tracks.findIndex(t=>t.id===id);if(index<0)return false;if(tracks.length<=1){msg('Impossible de supprimer la dernière piste');return false}let track=tracks[index],owned=clips.filter(c=>c.track===id);if(owned.length){let label=owned.length===1?'1 morceau':owned.length+' morceaux';if(!confirmFn('Supprimer cette piste et ses '+label+' ?'))return false}checkpoint();tracks=tracks.filter(t=>t.id!==id);clips=clips.filter(c=>c.track!==id);if(selected&&selected.track===id){selected=null;$('#editor').classList.remove('show')}if(selectedRecordTrackId===id)selectedRecordTrackId=tracks[0]?.id||null;selectedRecordTrackId=recordTrackIdFor();render();return true}
@@ -733,7 +773,7 @@ function sourceDurationFor(c){let w=waveformCache.get(c.sourceId),b=decodedSourc
 function autosaveStatus(text,error=false){let e=$('#autosave-status');if(!e)return;e.textContent=text;e.style.color=error?'#ff8d8d':'#b9bec8'}
 async function registerSourceBlob(blob,buffer,meta={}){if(!(blob instanceof Blob))throw Error('Source audio originale invalide');let id=meta.id||crypto.randomUUID(),row={id,blob,sourceSchema:meta.sourceSchema||StudioAutosave.SOURCE_SCHEMA_VERSION,mimeType:meta.mimeType||blob.type||'',originalName:meta.originalName||'',origin:meta.origin||'',size:blob.size,createdAt:meta.createdAt||new Date().toISOString()};localSources.set(id,row);if(meta.waveform)waveformCache.seed(id,meta.waveform);if(buffer){localSourceIds.set(buffer,id);decodedSourceCache.inject(id,buffer);await ensureWaveformForSource(id,buffer)}return id}
 function sourceIdFor(c){let id=c.sourceId||c.source_id||localSourceIds.get(c.buffer);if(!id)throw Error('Source audio locale non enregistrée');c.sourceId=id;return id}
-function localSnapshot(){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:currentProjectId||null,name:currentProjectName||'',remoteProjectId:null,cursor,zoom,selectionStart,selectionEnd,selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map(t=>({...t})),clips:clips.map(c=>({id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,sourceId:sourceIdFor(c)}))}}
+function localSnapshot(){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:currentProjectId||null,name:currentProjectName||'',remoteProjectId:null,cursor,zoom,selectionStart,selectionEnd,selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map(t=>({...t})),clips:clips.map(c=>({id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,latencyCorrectionMs:Number(c.latencyCorrectionMs)||0,sourceId:sourceIdFor(c)}))}}
 async function runAutosave(){if(restoringLocal||!currentProjectId)return;if(autosaveBusy){autosaveAgain=true;return autosaveCurrentPromise}autosaveBusy=true;autosavePending=false;autosaveStatus('Sauvegarde automatique…');autosaveCurrentPromise=(async()=>{let snap=localSnapshot(),fresh=[],freshIds=new Set();for(const c of clips){let id=sourceIdFor(c);if(!persistedLocalSources.has(id)&&!freshIds.has(id)){let source=localSources.get(id);if(!source)throw Error('Source audio originale absente : '+id);fresh.push(source);freshIds.add(id)}}let saved=await localStore.saveProject(currentProjectId,snap,fresh);fresh.forEach(x=>persistedLocalSources.add(x.id));currentProjectName=saved.card.name;autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')})();
 try{await autosaveCurrentPromise}catch(e){console.error('AUTOSAVE STUDIO',e);autosavePending=true;let quota=e?.name==='QuotaExceededError'||/quota/i.test(e?.message||'');autosaveStatus(quota?'SAUVEGARDE LOCALE IMPOSSIBLE — espace insuffisant':'SAUVEGARDE LOCALE IMPOSSIBLE — '+(e?.message||'erreur'),true)}finally{autosaveBusy=false;autosaveCurrentPromise=null;if(autosaveAgain){autosaveAgain=false;autosavePending=true;return runAutosave()}}}
 function markProjectDirty(){if(restoringLocal||!currentProjectId)return;autosavePending=true;autosaveStatus('Sauvegarde automatique : modifications en attente…');clearTimeout(autosaveTimer);autosaveTimer=setTimeout(runAutosave,1500)}
@@ -742,7 +782,7 @@ function blankTrack(){return{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:
 function autoProjectName(now=new Date()){let date=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long'}).format(now),time=new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit',hour12:false}).format(now);return'Projet '+date+' - '+time}
 function emptyProjectSnapshot(name,id){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:id,name,remoteProjectId:null,cursor:0,zoom:1,selectionStart:null,selectionEnd:null,selectedRecordTrackId:'voice',tracks:[blankTrack()],clips:[]}}
 function resetEditorRuntime(){stopPlay();longIndexCache.clear();clips=[];tracks=[blankTrack()];selectedRecordTrackId='voice';cursor=0;zoom=1;selectionStart=selectionEnd=null;selected=null;undo=[];redo=[];localSources.clear();persistedLocalSources.clear();waveformCache.clear();waveformBuilds.clear();decodedSourceCache.clear();$('#editor').classList.remove('show');closeTrackPanels()}
-async function applyLocalProject(saved){restoringLocal=true;try{longIndexCache.clear();decodedSourceCache.clear();waveformCache.clear();waveformBuilds.clear();localSources.clear();persistedLocalSources.clear();for(const [id,waveform] of saved.waveforms||[])waveformCache.seed(id,waveform);for(const [id,blob] of saved.audio){let row=saved.sources?.get(id)||{id,blob};await registerSourceBlob(blob,null,{...row,id,waveform:saved.waveforms?.get(id)||null});persistedLocalSources.add(id)}let snap=saved.snapshot,rebuilt=snap.clips.map(c=>{if(!localSources.has(c.sourceId))throw Error('Audio local manquant');return{id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,sourceId:c.sourceId}});clips=rebuilt;tracks=snap.tracks;selectedRecordTrackId=recordTrackIdFor(snap.selectedRecordTrackId);cursor=Number.isFinite(snap.cursor)?snap.cursor:0;zoom=Number.isFinite(snap.zoom)?snap.zoom:1;selectionStart=Number.isFinite(snap.selectionStart)?snap.selectionStart:null;selectionEnd=Number.isFinite(snap.selectionEnd)?snap.selectionEnd:null;currentProjectId=saved.card.id;currentProjectName=saved.card.name;syncCurrentProjectName();selected=null;undo=[];redo=[];autosavePending=false;render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')}finally{restoringLocal=false}}
+async function applyLocalProject(saved){restoringLocal=true;try{longIndexCache.clear();decodedSourceCache.clear();waveformCache.clear();waveformBuilds.clear();localSources.clear();persistedLocalSources.clear();for(const [id,waveform] of saved.waveforms||[])waveformCache.seed(id,waveform);for(const [id,blob] of saved.audio){let row=saved.sources?.get(id)||{id,blob};await registerSourceBlob(blob,null,{...row,id,waveform:saved.waveforms?.get(id)||null});persistedLocalSources.add(id)}let snap=saved.snapshot,rebuilt=snap.clips.map(c=>{if(!localSources.has(c.sourceId))throw Error('Audio local manquant');return{id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,latencyCorrectionMs:Number(c.latencyCorrectionMs)||0,sourceId:c.sourceId}});clips=rebuilt;tracks=snap.tracks;selectedRecordTrackId=recordTrackIdFor(snap.selectedRecordTrackId);cursor=Number.isFinite(snap.cursor)?snap.cursor:0;zoom=Number.isFinite(snap.zoom)?snap.zoom:1;selectionStart=Number.isFinite(snap.selectionStart)?snap.selectionStart:null;selectionEnd=Number.isFinite(snap.selectionEnd)?snap.selectionEnd:null;currentProjectId=saved.card.id;currentProjectName=saved.card.name;syncCurrentProjectName();selected=null;undo=[];redo=[];autosavePending=false;render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')}finally{restoringLocal=false}}
 function showEditorScreen(){$('#project-library-screen').hidden=true;$('#app').hidden=false;requestAnimationFrame(()=>render())}
 function showProjectLibraryScreen(){$('#app').hidden=true;$('#project-library-screen').hidden=false}
 function formatProjectUpdated(at){let d=new Date(at);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d)}
@@ -1012,8 +1052,11 @@ wavController=StudioWavPanel.mount({
   if(!target)throw Error('Piste originale d’enregistrement introuvable');
   const at=secureCaptureInfo?.start??cursor;
   checkpoint();
-  clips.push({id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:at,trim:0,len:item.seconds,gain:1,muted:false});
-  render();setCursor(at+item.seconds,true);
+  const rawClip={id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:at,trim:0,len:item.seconds,gain:1,muted:false};
+  const compensation=secureOverdubSync?measuredLatencyMs:0;
+  const attached=compensation?applyClipTiming(rawClip,compensation,true):rawClip;
+  clips.push(attached);
+  render();setCursor(attached.start+attached.len,true);
   await flushLocalAutosave();
   if(autosavePending)throw Error('Prise ajoutée mais sauvegarde automatique incomplète : garde les fragments WAV');
 }});
