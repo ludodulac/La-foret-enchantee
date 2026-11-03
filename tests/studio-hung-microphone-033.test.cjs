@@ -62,6 +62,10 @@ const close=()=>new Promise(resolve=>server.close(resolve));
     }
     process(){return true}
   });`;
+  // AudioWorklet module fetches may bypass Playwright page.route.
+  // Stub at the actual HTTP server layer so the test never falls back
+  // to the production AudioWorklet implementation.
+  STUBS['/js/studio-recording-wav-worklet.js']=worklet;
   await page.route('**/*',route=>{
     const u=new URL(route.request().url());
     if(u.pathname==='/js/studio-recording-wav-worklet.js')
