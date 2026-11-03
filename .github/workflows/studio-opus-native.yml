@@ -44,5 +44,6 @@ jobs:
           path: |
             artifacts/studio-mobile-smoke-029.png
             artifacts/studio-main-rec-live-031.png
+            artifacts/studio-main-rec-14s-031.png
           if-no-files-found: ignore
           retention-days: 7
