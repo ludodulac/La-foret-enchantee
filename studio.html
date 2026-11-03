@@ -12,11 +12,17 @@
 #recording-state:before{content:'●';margin-right:6px;color:#ffcf69}
 .recording .track-arm,.recording .track-more{pointer-events:none;opacity:.55}.clipname{position:absolute;left:8px;top:5px;font-size:10px;font-weight:850;text-shadow:0 1px 3px #000}.addtrack,.addsound{width:100%;min-height:50px;margin-top:10px;border:1px dashed #51555f;background:transparent;border-radius:13px;color:#d5d8df;font-weight:800}.addsound{height:76px;margin:0}.selection{position:absolute;top:25px;bottom:0;background:#fff2;border-left:2px solid #f3d56c;border-right:2px solid #f3d56c;z-index:12;pointer-events:none}.selectionmark{position:absolute;top:20px;bottom:0;width:4px;background:#f3d56c;z-index:13;pointer-events:none;box-shadow:0 0 0 2px #17191e,0 0 8px #f3d56c}.selectionmark::before{position:absolute;top:-18px;font-size:11px;font-weight:900;color:#f3d56c;background:#17191e;padding:1px 3px;border-radius:4px}.selectionmark.start::before{content:'DÉBUT';left:0}.selectionmark.end::before{content:'FIN';right:0}.selectionmark.end{display:none}.help{color:#8d929d;text-align:center;font-size:11px;margin-top:9px}.editor{display:none;position:fixed;left:0;right:0;bottom:91px;background:#1b1d22f7;backdrop-filter:blur(15px);border-top:1px solid #343740;padding:8px 10px;z-index:25}.editin{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.editor.show{display:block}.editor button{min-height:50px;background:#292c34;border-radius:12px;font-size:11px;font-weight:800}.editor button:disabled{opacity:.32}.volrow{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px}.volrow input{width:100%}.tools{position:fixed;bottom:0;left:0;right:0;background:#141519f5;backdrop-filter:blur(16px);border-top:1px solid #30323a;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:30}.toolsin{max-width:760px;margin:auto;display:grid;grid-template-columns:.75fr .75fr 1.25fr .75fr;gap:7px;align-items:center}.transport{height:56px;border-radius:16px;background:#292c33;font-size:17px;font-weight:800}.record{height:68px;border-radius:21px;background:#ff3c50;font-weight:900;font-size:12px}.record b{display:block;font-size:20px}.toast{display:none;position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#fff;color:#111;border-radius:20px;padding:10px 15px;font-weight:750;z-index:50;white-space:nowrap}.recording .quick,.recording .addtrack,.recording .addsound{pointer-events:none;opacity:.3}.recording .record{background:#fff;color:#111}#file,#library-files{display:none}.soundlib{margin:14px 0 0;background:#16181d;border:1px solid #2b2e36;border-radius:17px;padding:12px}.soundlib h2{font-size:15px;margin:0 0 8px}.libactions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.folderpicker{display:none;margin-top:8px;padding:10px;background:#1d2026;border-radius:13px}.folderpicker.show{display:block}.folderpicker b{display:block;margin-bottom:7px}.folderbuttons{display:flex;flex-wrap:wrap;gap:6px}.folderbuttons button{min-height:42px;padding:0 11px;border-radius:11px;background:#343740;font-weight:800}.libbtn,.libsearch{min-height:46px;border-radius:12px;background:#292c33;color:#fff;border:0;padding:0 12px;font-weight:800}.libsearch{width:100%;margin-top:8px;font-weight:600}.libstatus{margin:9px 0;padding:10px 12px;border-radius:12px;background:#1b1e24;font-size:12px;line-height:1.5}.liberrors{display:none;margin:8px 0;padding:10px 12px;border-radius:12px;background:#2a1d1d;font-size:11px;white-space:pre-wrap;max-height:180px;overflow:auto}.liblist{display:grid;gap:7px;margin-top:9px}.libitem{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;background:#22252b;border-radius:11px;padding:8px}.libname{min-width:0}.libname b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.libname small{color:#949aa6}.libitem button{height:38px;border-radius:10px;background:#343740;padding:0 10px}.libempty{color:#9298a4;text-align:center;padding:14px 5px;font-size:12px}
 </style><style>
-.latency-tools{border:2px solid #16c4a7;padding:10px;display:grid;gap:8px;background:#0c2434;color:#fff;line-height:1.4;font-size:12px}
-.latency-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-#latency-ms{width:80px;max-width:100%;padding:6px;background:#f2f8ff;color:#101722;border:1px solid #6b9bd7;font-size:16px}
-.latency-tools .game-btn{font-size:11px;min-height:38px}
-#latency-status{margin:0;color:#c9e7fa}
+.latency-tools{border:1px solid #16a78e;padding:5px 7px;background:#0c2434;color:#fff;line-height:1.2;font-size:12px}
+.latency-compact{display:flex;gap:6px;align-items:center;justify-content:space-between;min-height:36px}
+#latency-current{min-width:0;font-size:12px;font-weight:bold;white-space:normal}
+#latency-calibrate{min-height:34px;flex-shrink:0;padding:3px 9px;font-size:10px}
+#latency-status{margin:5px 0 0;color:#c9e7fa;font-size:11px}
+#latency-status[hidden]{display:none!important}
+.studio-advanced-tools{border:1px solid #24476c;padding:4px 6px;margin:6px 0;color:#cfe7ff}
+.studio-advanced-tools summary{cursor:pointer;padding:7px 2px;min-height:30px;font-size:11px;font-weight:800}
+.studio-advanced-tools .quick{margin-top:6px}
+.studio-project-advanced{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:6px 0}
+.studio-project-advanced button{min-height:36px;font-size:10px}
 .clip-latency{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;margin:4px 0}
 .clip-latency button{min-height:34px;font-size:10px;padding:5px 8px}
  /* PIXEL UI 009 — presentation only */
@@ -148,7 +154,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   #del{grid-column:3;grid-row:2}
   #clipmute{grid-column:4;grid-row:2}
 
-  .bottomcmd{display:grid;position:relative;flex:0 0 auto;bottom:auto;z-index:46;grid-template-columns:repeat(5,1fr);gap:3px;margin:0 0 0;padding:4px;background:#050b18f5;border:2px solid var(--px-blue);box-shadow:0 -2px 0 #02050b}
+  .bottomcmd{display:grid;position:relative;flex:0 0 auto;bottom:auto;z-index:46;grid-template-columns:repeat(4,1fr);gap:3px;margin:0 0 0;padding:4px;background:#050b18f5;border:2px solid var(--px-blue);box-shadow:0 -2px 0 #02050b}
   .bottomcmd button{min-height:42px;padding:0 2px;font-size:8px}
   .bottomcmd #addtrack{width:auto;margin:0;min-height:42px}
   .mobile-menu-toggle{display:block}
@@ -321,33 +327,19 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button class="libbtn game-btn game-btn-standard" id="import-phone">＋ IMPORTER</button>
   <button class="game-btn game-btn-standard game-btn-violet" id="sound-library-jump">🎧 SONS</button>
   <button class="addtrack game-btn game-btn-standard game-btn-green" id="addtrack">＋ PISTE</button>
-  <button class="mobile-menu-toggle game-btn game-btn-compact game-btn-dark game-btn-secondary" id="project-menu-toggle" type="button">PROJET</button>
   <button class="mobile-menu-toggle game-btn game-btn-compact game-btn-secondary" id="tools-menu-toggle" type="button">OUTILS</button>
 </nav>
-
-<div class="projectbar" id="project-menu-panel">
-  <button class="game-btn game-btn-standard game-btn-violet" id="editor-projects" type="button">← MES PROJETS</button>
-  <button class="game-btn game-btn-standard game-btn-green" id="editor-new-project" type="button">＋ NOUVEAU PROJET</button>
-  <details class="project-advanced"><summary>OPTIONS AVANCÉES</summary><button class="game-btn game-btn-compact game-btn-secondary" id="download-project">⬇ TÉLÉCHARGER UNE COPIE</button><button class="game-btn game-btn-compact game-btn-secondary" id="studio-wav-clean-temp" type="button">🧹 EFFACER LES WAV TEMPORAIRES</button></details>
-</div>
 
 <div class="secondarytools" id="tools-menu-panel">
   <button class="game-btn game-btn-standard game-btn-green" id="studio-wav-open" type="button">📁 MES PRISES WAV</button>
   <div class="latency-tools" role="group" aria-label="Synchronisation des enregistrements">
-    <strong>🎯 SYNCHRONISATION DES PISTES</strong>
-    <button class="game-btn game-btn-standard game-btn-violet" id="latency-calibrate" type="button">MESURER LE RETARD DU TÉLÉPHONE</button>
-    <div class="latency-row">
-      <label for="latency-ms">Correction automatique :</label>
-      <input type="number" id="latency-ms" min="0" max="800" step="5" inputmode="numeric" value="0" aria-label="Correction automatique en millisecondes">
-      <span>ms</span>
+    <div class="latency-compact">
+      <span id="latency-current" aria-live="polite">🎯 Synchronisation : à calibrer</span>
+      <button class="game-btn game-btn-compact game-btn-violet" id="latency-calibrate" type="button">Recalibrer</button>
     </div>
-    <div class="latency-row">
-      <button class="game-btn game-btn-compact" id="latency-less" type="button">− 25 ms</button>
-      <button class="game-btn game-btn-compact" id="latency-more" type="button">＋ 25 ms</button>
-      <button class="game-btn game-btn-compact game-btn-secondary" id="latency-reset" type="button">ANNULER LA CORRECTION</button>
-    </div>
-    <p id="latency-status" role="status">Calibre une fois, puis les nouvelles prises sont recalées automatiquement. Sans mesure, aucune valeur n'est inventée.</p>
+    <p id="latency-status" role="status" hidden></p>
   </div>
+  <details class="studio-advanced-tools"><summary>ÉDITION ET OPTIONS OCCASIONNELLES</summary>
   <div class="quick">
     <button class="game-btn game-btn-compact game-btn-secondary" id="undo">↶ ANNULER</button>
     <button class="game-btn game-btn-compact game-btn-secondary" id="redo">↷ RÉTABLIR</button>
@@ -357,6 +349,11 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-compact" id="export-selection">⬇ EXPORT SÉLECTION</button>
   </div>
   <div class="exportdiag" id="selection-diagnostic" aria-live="polite"></div>
+  <div class="studio-project-advanced">
+    <button class="game-btn game-btn-compact game-btn-secondary" id="download-project" type="button">⬇ TÉLÉCHARGER UNE COPIE</button>
+    <button class="game-btn game-btn-compact game-btn-secondary" id="studio-wav-clean-temp" type="button">🧹 EFFACER LES WAV TEMPORAIRES</button>
+  </div>
+  </details>
   <div class="metro">
     <button class="game-btn game-btn-compact game-btn-violet" id="metro">🎵 CLIC : NON</button>
     <button class="game-btn game-btn-compact" id="bpm-minus">−</button>
@@ -445,12 +442,13 @@ function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.sta
 const TRIM_GUTTER_PX=22;
 function recordTrackIdFor(id=selectedRecordTrackId){return tracks.some(t=>t.id===id)?id:(tracks.find(t=>t.type==='voice')?.id||tracks[0]?.id||null)}
 function syncLatencyDisplay(message=''){
-  $('#latency-ms').value=measuredLatencyMs;
+  $('#latency-current').textContent=measuredLatencyMs>0
+    ?'🎯 Synchronisation : '+measuredLatencyMs+' ms ✅'
+    :'🎯 Synchronisation : à calibrer';
   $('#clip-calibrated').textContent=measuredLatencyMs>0?'🎯 −'+measuredLatencyMs+' ms':'🎯 CALIBRER';
-  if(message)$('#latency-status').textContent=message;
-  else $('#latency-status').textContent=measuredLatencyMs
-    ?'Correction automatique active pour les nouveaux doublages : '+measuredLatencyMs+' ms. Pour une ancienne prise, sélectionne-la puis utilise CORRIGER.'
-    :'Aucune correction mesurée. Le bouton MESURER utilise 4 clics émis par le téléphone et enregistrés par son micro.';
+  const status=$('#latency-status');
+  status.hidden=!message;
+  status.textContent=message||'';
 }
 function setLatency(ms,description=''){
   measuredLatencyMs=StudioLatencyCompensation.save(localStorage,ms);
@@ -479,10 +477,6 @@ $('#clip-calibrated').onclick=()=>{
   if(!selected)return;
   adjustSelectedClip(measuredLatencyMs-(Number(selected.latencyCorrectionMs)||0));
 };
-$('#latency-ms').onchange=e=>setLatency(e.target.value);
-$('#latency-less').onclick=()=>setLatency(measuredLatencyMs-25);
-$('#latency-more').onclick=()=>setLatency(measuredLatencyMs+25);
-$('#latency-reset').onclick=()=>setLatency(0);
 syncLatencyDisplay();
 function selectRecordTrack(id,dirty=true){let next=recordTrackIdFor(id);if(!next)return false;let changed=selectedRecordTrackId!==next;selectedRecordTrackId=next;document.querySelectorAll('.track-control').forEach(el=>{let armed=el.dataset.trackId===next;el.classList.toggle('record-armed',armed);let arm=el.querySelector('[data-arm]');if(arm){arm.classList.toggle('is-active',armed);arm.setAttribute('aria-pressed',armed?'true':'false')}});if(changed&&dirty)markProjectDirty();return true}
 function deleteClipById(id){let c=clips.find(x=>x.id===id);if(!c)return false;checkpoint();clips=clips.filter(x=>x.id!==id);if(selected?.id===id){selected=null;$('#editor').classList.remove('show')}render();return true}
@@ -500,10 +494,7 @@ $('#track-delete-action').onclick=()=>{let id=trackMenuTargetId;closeTrackPanels
 function syncStudioViewport(){let v=window.visualViewport,h=Math.max(1,Math.round(v?.height||window.innerHeight||document.documentElement.clientHeight||1)),top=Math.max(0,Math.round(v?.offsetTop||0));document.documentElement.style.setProperty('--studio-vh',h+'px');document.documentElement.style.setProperty('--studio-vv-top',top+'px')}
 syncStudioViewport();window.addEventListener('resize',syncStudioViewport,{passive:true});if(window.visualViewport){visualViewport.addEventListener('resize',syncStudioViewport,{passive:true});visualViewport.addEventListener('scroll',syncStudioViewport,{passive:true})}
 function toggleMobileMenu(panel,other){closeTrackPanels();let p=$(panel),o=$(other);if(o)o.classList.remove('menu-open');if(p)p.classList.toggle('menu-open')}
-$('#project-menu-toggle').onclick=()=>toggleMobileMenu('#project-menu-panel','#tools-menu-panel');
 $('#back-projects').onclick=returnToProjectLibrary;
-$('#editor-projects').onclick=returnToProjectLibrary;
-$('#editor-new-project').onclick=createLocalProject;
 $('#create-local-project').onclick=createLocalProject;
 $('#project-options-close').onclick=closeProjectOptions;
 $('#project-option-rename').onclick=()=>{let p=projectOptionsTarget;if(p)openProjectRename(p)};
@@ -514,7 +505,7 @@ $('#project-rename-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();
 $('#project-delete-cancel').onclick=closeProjectDelete;
 $('#project-delete-confirm').onclick=commitProjectDelete;
 if(window.visualViewport){visualViewport.addEventListener('resize',keepProjectRenameVisible,{passive:true});visualViewport.addEventListener('scroll',keepProjectRenameVisible,{passive:true})}
-$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel','#project-menu-panel');$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
+$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel',null);$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
 function xToTime(clientX){let r=$('#canvas').getBoundingClientRect();return Math.max(0,Math.min(projectDuration(),(clientX-r.left)/pixelsPerSecond()))}function setCursor(t,scroll=false){cursor=Math.max(0,Math.min(projectDuration(),t));let pps=pixelsPerSecond();$('#playhead').style.left=(cursor*pps)+'px';$('#clock').textContent=fmt(cursor);if(scroll){let x=cursor*pps+TRIM_GUTTER_PX,tl=$('#timeline'),target=x-tl.clientWidth*.72;tl.scrollLeft=Math.max(0,target)}}
 function waveform(canvas,c){let cached=waveformCache.get(c.sourceId);if(!cached){canvas.style.display='none';return}let tl=$('#timeline'),pps=pixelsPerSecond(),h=Math.max(1,canvas.parentElement?.clientHeight||66),dpr=devicePixelRatio||1,plan=StudioWaveform.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft:Math.max(0,tl.scrollLeft-TRIM_GUTTER_PX),viewportWidth:tl.clientWidth,sourceDuration:cached.duration,peakRate:cached.peakRate,dpr});if(!plan.visible){canvas.style.display='none';return}canvas.style.display='block';canvas.style.left=plan.canvasLeft+'px';canvas.style.width=plan.cssWidth+'px';canvas.style.height=h+'px';canvas.width=plan.bitmapWidth;canvas.height=Math.max(1,Math.ceil(h*dpr));let g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,plan.cssWidth,h);g.strokeStyle='rgba(255,255,255,.78)';g.lineWidth=1;g.beginPath();for(let i=0;i<plan.columns;i++){let m=StudioWaveform.peakForColumn(cached,plan,i,plan.columns),x=i*StudioWaveform.DRAW_STEP_PX,y=m*h*.46;g.moveTo(x,h/2-y);g.lineTo(x,h/2+y)}g.stroke()}
 let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;document.querySelectorAll('.wavecanvas').forEach(cv=>{if(cv._clip)waveform(cv,cv._clip)})}$('#timeline').addEventListener('scroll',()=>{if(!waveformScrollRaf)waveformScrollRaf=requestAnimationFrame(refreshVisibleWaveforms)},{passive:true});
@@ -979,6 +970,7 @@ async function runLatencyCalibration(){
   const run={chunks:[],rate:0,stopRequested:false,source:null,done:false};
   calibrationSession=run;
   $('#latency-calibrate').disabled=true;
+  $('#latency-status').hidden=false;
   $('#latency-status').textContent='🎧 Calibration : quatre clics vont sortir du téléphone. Laisse le micro les écouter, sans parler.';
   try{
     // User gesture resumes output before microphone permissions, as required
@@ -996,10 +988,12 @@ async function runLatencyCalibration(){
     if(!started&&calibrationSession===run){
       run.done=true;calibrationSession=null;
       $('#latency-calibrate').disabled=false;
+      $('#latency-status').hidden=false;
       $('#latency-status').textContent='⚠ Calibration interrompue. Vérifie l’accès au microphone puis réessaie.';
     }
   }catch(e){
     calibrationSession=null;$('#latency-calibrate').disabled=false;
+    $('#latency-status').hidden=false;
     $('#latency-status').textContent='⚠ Impossible de calibrer : '+(e?.message||e);
   }
 }
@@ -1014,6 +1008,7 @@ function completeLatencyCalibration(){
     setLatency(m.ms,'✅ Retard mesuré : '+m.ms+' ms ('+m.clicks+' clics). Les prochains doublages seront corrigés automatiquement.');
     msg('Synchronisation étalonnée : '+m.ms+' ms ✓');
   }catch(e){
+    $('#latency-status').hidden=false;
     $('#latency-status').textContent='⚠ Mesure non fiable : '+e.message+'. Réessaie dans le calme, volume audible, sans casque isolant le micro.';
   }
 }
