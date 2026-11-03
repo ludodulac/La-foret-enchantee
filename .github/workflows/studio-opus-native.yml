@@ -9,6 +9,7 @@ on:
       - 'tests/studio-wav-mobile-capture-030.test.cjs'
       - 'tests/studio-main-rec-wav-031.test.cjs'
       - 'tests/studio-microphone-release-032.test.cjs'
+      - 'tests/studio-hung-microphone-033.test.cjs'
       - 'studio.html'
       - '.github/workflows/studio-opus-native.yml'
   workflow_dispatch:
@@ -39,6 +40,8 @@ jobs:
         run: node tests/studio-main-rec-wav-031.test.cjs
       - name: Mic startup cancellations, silent Android input and background release
         run: node tests/studio-microphone-release-032.test.cjs
+      - name: Dead worklet and ignored Android microphone permission watchdog
+        run: node tests/studio-hung-microphone-033.test.cjs
       - name: Preserve isolated mobile UI screenshot for review
         if: always()
         uses: actions/upload-artifact@v4
