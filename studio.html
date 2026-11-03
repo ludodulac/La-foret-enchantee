@@ -495,7 +495,7 @@ function updateSecureRecordingProgress(seconds){
   updateLiveRecordingVisual(at);
   setCursor(at,true);
   const tag=$('#recording-state');
-  tag.textContent=(secureMicroStage?'⚠ '+secureMicroStage:'● ENREGISTREMENT WAV')+' · '+fmt(seconds)+' · ■ POUR ARRÊTER';
+  tag.textContent=(secureMicroStage?'⚠ '+secureMicroStage:'● ENREGISTREMENT WAV')+' · '+fmt(seconds)+' · ■ POUR ARRÊTER'+(secureOverdubSync?' · 🎧 CASQUE CONSEILLÉ':'');
   if(performance.now()-secureLastWaveDraw>130){
     drawSecureLiveWave();secureLastWaveDraw=performance.now()
   }
@@ -595,7 +595,7 @@ function setOverdubPreparing(active){
   if(active){
     $('#recording-state').hidden=false;
     $('#recording-state').classList.remove('finalizing','error');
-    $('#recording-state').textContent='🎧 PRÉPARATION DES PISTES · MICROPHONE EN ATTENTE…';
+    $('#recording-state').textContent='🎧 PRÉPARATION DES PISTES (CASQUE CONSEILLÉ) · MICROPHONE EN ATTENTE…';
   }else if(secureCaptureState==='idle'){
     $('#recording-state').hidden=true;
   }
