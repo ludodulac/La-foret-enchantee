@@ -1,7 +1,7 @@
 (function(root){
 'use strict';
 const Core=root.StudioRecordingWavCore,Bridge=root.StudioWavBridge,Long=root.StudioWavLongSource;
-function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null,onStateChange=()=>{},onStatus=()=>{},onProgress=()=>{},onPeaks=()=>{},onStage=()=>{}}={}){
+function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=null,onStateChange=()=>{},onStatus=()=>{},onProgress=()=>{},onPeaks=()=>{},onStage=()=>{},onPcm=()=>{}}={}){
   const $=id=>document.getElementById(id);
   const panel=$('studio-wav-panel'),open=$('studio-wav-open');
   if(!panel||!open||!Core||!Bridge||!Long)throw Error('Panneau Studio WAV introuvable');
@@ -9,7 +9,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     select:$('studio-wav-saved'),recover:$('studio-wav-recover'),listen:$('studio-wav-listen'),
     export:$('studio-wav-export'),download:$('studio-wav-download'),attach:$('studio-wav-attach'),player:$('studio-wav-player'),
     time:$('studio-wav-time'),status:$('studio-wav-status')};
-  let ac=null,mic=null,inputNode=null,node=null,gain=null,take=null,writeChain=Promise.resolve();
+  let ac=null,mic=null,inputNode=null,node=null,gain=null,take=null,writeChain=Promise.resolve(),calibrating=false;
   let pending=0,seq=0,failed=null,starting=false,stopping=false,attaching=false,ack=null,timer=null,startAt=null;
   let recovered=null,previewUrl=null,downloadUrl=null,captureGeneration=0,cancelPendingOpen=null,nonSilentPcm=false,validPcmSeconds=0,mutedCaptureWarning=false,lastCaptureStageAt=0,micTrackEnded=false,noPcmWarning=false;
   const report=message=>{ui.status.textContent=message;if(panel.hidden&&(/impossible|incomplet|interrompu|stockage trop lent|Prise enregistrée et ajoutée/i.test(message)))onStatus(message)};
@@ -96,6 +96,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     if(!running()||stopping)return;
     stopping=true;onStateChange('finalizing');buttons();stopClock();report('Arrêt et sauvegarde des fragments en cours…');
     const savedId=take?.meta?.id;
+    const wasCalibration=calibrating;
     let recordingCompleted=false,receivedSignal=false,stopProblem=null;
     try{
       const stoppedAck=node?bounded(new Promise(resolve=>{
@@ -122,10 +123,10 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
         if(recordingCompleted&&recovered&&!recovered.interrupted&&!receivedSignal&&recovered.seconds>=2){
           report('Micro muet : prise WAV conservée mais aucun son reçu. Non ajoutée automatiquement.');
 
-        }else if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake){
+        }else if(!wasCalibration&&recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake){
           await attach(true);
         }
-      }finally{onStateChange('idle')}
+      }finally{calibrating=false;onStateChange('idle')}
       if(recordingCompleted&&recovered&&!recovered.interrupted&&!receivedSignal&&recovered.seconds>=2)
         onStage('silence','⚠ AUCUN SON REÇU DU MICRO : prise conservée, pas ajoutée au montage.');
       else if(stopProblem)
@@ -139,10 +140,11 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     stage('starting','Annulation de la demande de microphone…');
     return true;
   }
-  async function start({onCaptureStart=null}={}){
+  async function start({onCaptureStart=null,calibration=false}={}){
     if(running()||starting||stopping||attaching)return false;
     if(isStudioRecording()){report('Arrête d’abord l’enregistrement normal du Studio.');return false}
     if(!isProjectOpen()){report('Ouvre d’abord un projet Studio.');return false}
+    calibrating=Boolean(calibration);
     clearPlayer();clearDownload();recovered=null;writeChain=Promise.resolve();pending=0;seq=0;failed=null;
     nonSilentPcm=false;validPcmSeconds=0;mutedCaptureWarning=false;micTrackEnded=false;noPcmWarning=false;lastCaptureStageAt=performance.now();
     const generation=++captureGeneration;
@@ -205,6 +207,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
         if(e.data?.type==='stopped'){ack?.();return}
         if(e.data?.type!=='pcm'||failed)return;
         const pcm=new Uint8Array(e.data.bytes),index=seq++;
+        if(calibrating)try{onPcm(pcm,ac.sampleRate)}catch(err){console.warn('Calibration PCM collector',err)}
         visualizeChunk(pcm,ac.sampleRate);
         pending++;
         if(pending>5){failed=Error('Stockage trop lent');stop();return}
@@ -245,7 +248,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       await release();
     }
     cancelPendingOpen=null;
-    starting=false;if(!running())onStateChange('idle');buttons();
+    starting=false;if(!running()){calibrating=false;onStateChange('idle')}buttons();
     if(failure&&!/Microphone libéré : changement d’application/.test(failure))
       stage('error','⚠ MICROPHONE INDISPONIBLE — '+failure+'. Ferme les applications utilisant le micro.');
     else if(failure)
