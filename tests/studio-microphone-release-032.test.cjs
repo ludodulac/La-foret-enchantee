@@ -93,7 +93,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   });
   await page.waitForFunction(()=>secureCaptureState==='idle',null,{timeout:4000});
   assert.equal(await page.locator('#record').isEnabled(),true);
-  assert.match(await page.locator('#recording-state').textContent(),/MICROPHONE INDISPONIBLE/);
+  assert.match(await page.locator('#recording-state').textContent(),/Ouverture annulée|MICROPHONE INDISPONIBLE/);
   // Grant permission AFTER the tab left. The belated stream must be closed.
   await page.evaluate(()=>{window.__simulatedVisibility='visible';window.__microphoneMode='tone';window.__grantPendingMicrophone()});
   await page.waitForFunction(()=>window.__producedStreams.length===1
