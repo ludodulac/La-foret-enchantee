@@ -338,21 +338,32 @@ assert(controlsSource.includes("wavController.stop()"),'STOP must stop secured W
 assert(controlsSource.includes("recorder.stop();return"),'legacy STOP fallback retained');
 {
   let handlers={},recStops=0,wavStops=0,playStops=0;
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording:false,secureCaptureState:'recording',wavController:{stop(){wavStops++}},recorder:{state:'inactive',stop(){recStops++}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording:false,secureCaptureState:'recording',secureOverdubPreparing:false,wavController:{stop(){wavStops++}},recorder:{state:'inactive',stop(){recStops++}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(wavStops,1);assert.equal(recStops,0);assert.equal(playStops,1);
 }
 {
   let handlers={},recStops=0,playStops=0,recording=true,recorder={state:'recording',stop(){recStops++}};
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder,secureCaptureState:'idle',wavController:{stop(){throw Error('unexpected WAV')}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder,secureCaptureState:'idle',secureOverdubPreparing:false,wavController:{stop(){throw Error('unexpected WAV')}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,1);assert.equal(playStops,0);
 }
 {
   let handlers={},recStops=0,playStops=0;
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,secureCaptureState:'idle',wavController:{stop(){}},recorder:{state:'inactive',stop(){recStops++}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,secureCaptureState:'idle',secureOverdubPreparing:false,wavController:{stop(){}},recorder:{state:'inactive',stop(){recStops++}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,0);assert.equal(playStops,1);
+}
+{
+  let handlers={},cancelled=false,ended=0;
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},
+    play(){},stopPlay(){},setCursor(){},cursor:0,playPreparing:false,playing:false,
+    recording:false,secureCaptureState:'idle',secureOverdubPreparing:true,
+    secureOverdubGeneration:1,secureCaptureInfo:{},setOverdubPreparing(v){ended++;this.secureOverdubPreparing=v},
+    msg(){cancelled=true},wavController:{},recorder:{state:'inactive',stop(){}}};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert(cancelled&&ctx.secureOverdubGeneration===2&&ctx.secureCaptureInfo===null&&ended===1,
+    'STOP cancels guide pre-decoding without opening microphone');
 }
 console.log('STOP_SINGLE_VISUAL_CONTROL PASS one ■ STOP control; REC never becomes STOP');
 console.log('STOP_STOPS_WAV PASS secure capture');
