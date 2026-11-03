@@ -96,7 +96,7 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   assert.equal(calibrated.echoed,1);
   console.log('STUDIO-039 MEASURED MOBILE LATENCY PASS '+JSON.stringify(calibrated));
 
-  await page.locator('#tools-menu-toggle').click();
+  await page.locator('#tools-close').click();
   await page.evaluate(()=>{window.__calibrationTestMode='voice'});
   await page.locator('#record').click();
   await page.waitForFunction(()=>secureCaptureState==='recording',null,{timeout:14000});
