@@ -8,6 +8,7 @@
 #recording-state{position:relative;display:block;margin:3px 0;padding:5px 8px;background:#641322;border:1px solid #fb8594;border-radius:6px;color:#fff;font-weight:800;font-size:12px;text-align:center}
 #recording-state[hidden]{display:none!important}
 #recording-state.finalizing{background:#273f58;border-color:#6cb8ec}
+#recording-state.error{background:#703019;border-color:#ffad5a;color:#fff}
 #recording-state:before{content:'●';margin-right:6px;color:#ffcf69}
 .recording .track-arm,.recording .track-more{pointer-events:none;opacity:.55}.clipname{position:absolute;left:8px;top:5px;font-size:10px;font-weight:850;text-shadow:0 1px 3px #000}.addtrack,.addsound{width:100%;min-height:50px;margin-top:10px;border:1px dashed #51555f;background:transparent;border-radius:13px;color:#d5d8df;font-weight:800}.addsound{height:76px;margin:0}.selection{position:absolute;top:25px;bottom:0;background:#fff2;border-left:2px solid #f3d56c;border-right:2px solid #f3d56c;z-index:12;pointer-events:none}.selectionmark{position:absolute;top:20px;bottom:0;width:4px;background:#f3d56c;z-index:13;pointer-events:none;box-shadow:0 0 0 2px #17191e,0 0 8px #f3d56c}.selectionmark::before{position:absolute;top:-18px;font-size:11px;font-weight:900;color:#f3d56c;background:#17191e;padding:1px 3px;border-radius:4px}.selectionmark.start::before{content:'DÉBUT';left:0}.selectionmark.end::before{content:'FIN';right:0}.selectionmark.end{display:none}.help{color:#8d929d;text-align:center;font-size:11px;margin-top:9px}.editor{display:none;position:fixed;left:0;right:0;bottom:91px;background:#1b1d22f7;backdrop-filter:blur(15px);border-top:1px solid #343740;padding:8px 10px;z-index:25}.editin{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.editor.show{display:block}.editor button{min-height:50px;background:#292c34;border-radius:12px;font-size:11px;font-weight:800}.editor button:disabled{opacity:.32}.volrow{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px}.volrow input{width:100%}.tools{position:fixed;bottom:0;left:0;right:0;background:#141519f5;backdrop-filter:blur(16px);border-top:1px solid #30323a;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:30}.toolsin{max-width:760px;margin:auto;display:grid;grid-template-columns:.75fr .75fr 1.25fr .75fr;gap:7px;align-items:center}.transport{height:56px;border-radius:16px;background:#292c33;font-size:17px;font-weight:800}.record{height:68px;border-radius:21px;background:#ff3c50;font-weight:900;font-size:12px}.record b{display:block;font-size:20px}.toast{display:none;position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#fff;color:#111;border-radius:20px;padding:10px 15px;font-weight:750;z-index:50;white-space:nowrap}.recording .quick,.recording .addtrack,.recording .addsound{pointer-events:none;opacity:.3}.recording .record{background:#fff;color:#111}#file,#library-files{display:none}.soundlib{margin:14px 0 0;background:#16181d;border:1px solid #2b2e36;border-radius:17px;padding:12px}.soundlib h2{font-size:15px;margin:0 0 8px}.libactions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.folderpicker{display:none;margin-top:8px;padding:10px;background:#1d2026;border-radius:13px}.folderpicker.show{display:block}.folderpicker b{display:block;margin-bottom:7px}.folderbuttons{display:flex;flex-wrap:wrap;gap:6px}.folderbuttons button{min-height:42px;padding:0 11px;border-radius:11px;background:#343740;font-weight:800}.libbtn,.libsearch{min-height:46px;border-radius:12px;background:#292c33;color:#fff;border:0;padding:0 12px;font-weight:800}.libsearch{width:100%;margin-top:8px;font-weight:600}.libstatus{margin:9px 0;padding:10px 12px;border-radius:12px;background:#1b1e24;font-size:12px;line-height:1.5}.liberrors{display:none;margin:8px 0;padding:10px 12px;border-radius:12px;background:#2a1d1d;font-size:11px;white-space:pre-wrap;max-height:180px;overflow:auto}.liblist{display:grid;gap:7px;margin-top:9px}.libitem{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;background:#22252b;border-radius:11px;padding:8px}.libname{min-width:0}.libname b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.libname small{color:#949aa6}.libitem button{height:38px;border-radius:10px;background:#343740;padding:0 10px}.libempty{color:#9298a4;text-align:center;padding:14px 5px;font-size:12px}
 </style><style>
@@ -408,7 +409,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 <div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-bridge.js"></script><script src="js/studio-wav-long-source.js"></script><script src="js/studio-wav-long-playback.js"></script><script src="js/studio-wav-long-mix.js"></script><script src="js/studio-ogg-opus.js"></script><script src="js/studio-opus-compact.js"></script><script src="js/studio-wav-panel.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();
-let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWavePeaks=[],secureLastWaveDraw=0;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
+let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWavePeaks=[],secureLastWaveDraw=0,secureMicroStage=null;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
 function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
@@ -493,7 +494,7 @@ function updateSecureRecordingProgress(seconds){
   updateLiveRecordingVisual(at);
   setCursor(at,true);
   const tag=$('#recording-state');
-  tag.textContent='● ENREGISTREMENT WAV · '+fmt(seconds)+' · ■ POUR ARRÊTER';
+  tag.textContent=(secureMicroStage?'⚠ '+secureMicroStage:'● ENREGISTREMENT WAV')+' · '+fmt(seconds)+' · ■ POUR ARRÊTER';
   if(performance.now()-secureLastWaveDraw>130){
     drawSecureLiveWave();secureLastWaveDraw=performance.now()
   }
@@ -592,6 +593,9 @@ async function recordSecurelyFromStudio(){
   if(!trackId)return msg('Choisis une piste avant d’enregistrer');
   const snapshot={projectId:currentProjectId,trackId,start:cursor};
   secureCaptureInfo=snapshot;
+  // Stop playback immediately, BEFORE asking Android to acquire the mic.
+  // Overdub resumes only once WAV capture has actually started.
+  if(playing||playPreparing)stopPlay(false);
   const success=await wavController.start();
   if(!success){secureCaptureInfo=null;return}
   // Accompagnement des pistes existantes : le microphone WAV reste distinct.
@@ -823,7 +827,7 @@ wavController=StudioWavPanel.mount({
     secureCaptureState=state;
     const status=$('#recording-state');
     if(state==='recording'){
-      secureWavePeaks=[];secureLastWaveDraw=0;
+      secureWavePeaks=[];secureLastWaveDraw=0;secureMicroStage=null;
       const info=secureCaptureInfo;
       if(info){
         liveRec={start:info.start,len:.03,track:info.trackId};
@@ -831,13 +835,13 @@ wavController=StudioWavPanel.mount({
         render();
         updateSecureRecordingProgress(0);
       }
-      status.hidden=false;status.classList.remove('finalizing');
+      status.hidden=false;status.classList.remove('finalizing','error');
     }else if(state==='finalizing'){
       stopPlay(false);status.hidden=false;status.classList.add('finalizing');
       status.textContent='■ ARRÊT · SAUVEGARDE ET AJOUT DE LA PRISE…';
     }else if(state==='starting'){
-      status.hidden=false;status.classList.remove('finalizing');
-      status.textContent='🎙 OUVERTURE DU MICROPHONE…';
+      status.hidden=false;status.classList.remove('finalizing','error');
+      status.textContent='🎙 PRÉPARATION DE L’ENREGISTREMENT…';
     }else if(state==='idle'){
       liveRec=null;liveDuration=0;
       status.hidden=true;status.classList.remove('finalizing');
@@ -859,6 +863,22 @@ wavController=StudioWavPanel.mount({
     drawSecureLiveWave();
   },
   onStatus:message=>msg(message),
+  onStage:(kind,message)=>{
+    const banner=$('#recording-state');
+    if(kind==='warning'){
+      secureMicroStage='AUCUN SIGNAL MICRO — vérifie les autres applications';
+      banner.hidden=false;banner.classList.add('error');
+      banner.textContent=message;
+    }else if(kind==='recording'){
+      secureMicroStage=null;banner.classList.remove('error');
+    }else if(kind==='starting'){
+      banner.hidden=false;banner.classList.remove('error','finalizing');
+      banner.textContent='🎙 '+message;
+    }else if(kind==='error'||kind==='silence'){
+      secureMicroStage=null;banner.hidden=false;banner.classList.add('error');
+      banner.textContent=message;
+    }
+  },
   onImportTake:async item=>{
   if(!currentProjectId||recording)throw Error('Aucun projet actif ou enregistrement normal en cours');
   const isLong=item.kind==='opfs-long';
