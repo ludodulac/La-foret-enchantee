@@ -18,6 +18,8 @@
 #latency-calibrate{min-height:34px;flex-shrink:0;padding:3px 9px;font-size:10px}
 #latency-status{margin:5px 0 0;color:#c9e7fa;font-size:11px}
 #latency-status[hidden]{display:none!important}
+.studio-tools-header{display:flex;align-items:center;justify-content:space-between;padding:0 2px 5px;font-size:12px}
+.studio-tools-header #tools-close{min-height:32px;font-size:10px;padding:2px 8px}
 .studio-advanced-tools{border:1px solid #24476c;padding:4px 6px;margin:6px 0;color:#cfe7ff}
 .studio-advanced-tools summary{cursor:pointer;padding:7px 2px;min-height:30px;font-size:11px;font-weight:800}
 .studio-advanced-tools .quick{margin-top:6px}
@@ -82,7 +84,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .projectbar.menu-open{display:grid}
   .projectbar button{min-height:42px}
   .projectbar .projectpanel{grid-column:1/-1;margin:0}
-  .secondarytools{display:none;position:fixed;left:7px;right:7px;bottom:76px;z-index:45;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
+  .secondarytools{display:none;position:fixed;left:7px;right:7px;bottom:76px;z-index:48;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
   .secondarytools.menu-open{display:block}
   .project-advanced{grid-column:1/-1;border-top:1px solid #24476c;padding-top:5px}
   .project-advanced summary{cursor:pointer;min-height:34px;display:flex;align-items:center;font-size:9px;font-weight:900;color:#9bb2cb}
@@ -331,6 +333,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 </nav>
 
 <div class="secondarytools" id="tools-menu-panel">
+  <div class="studio-tools-header"><strong>OUTILS</strong><button type="button" class="game-btn game-btn-compact game-btn-secondary" id="tools-close" aria-label="Fermer les outils">✕ FERMER</button></div>
   <button class="game-btn game-btn-standard game-btn-green" id="studio-wav-open" type="button">📁 MES PRISES WAV</button>
   <div class="latency-tools" role="group" aria-label="Synchronisation des enregistrements">
     <div class="latency-compact">
@@ -505,7 +508,8 @@ $('#project-rename-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();
 $('#project-delete-cancel').onclick=closeProjectDelete;
 $('#project-delete-confirm').onclick=commitProjectDelete;
 if(window.visualViewport){visualViewport.addEventListener('resize',keepProjectRenameVisible,{passive:true});visualViewport.addEventListener('scroll',keepProjectRenameVisible,{passive:true})}
-$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel',null);$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
+$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel',null);
+$('#tools-close').onclick=()=>$('#tools-menu-panel').classList.remove('menu-open');$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
 function xToTime(clientX){let r=$('#canvas').getBoundingClientRect();return Math.max(0,Math.min(projectDuration(),(clientX-r.left)/pixelsPerSecond()))}function setCursor(t,scroll=false){cursor=Math.max(0,Math.min(projectDuration(),t));let pps=pixelsPerSecond();$('#playhead').style.left=(cursor*pps)+'px';$('#clock').textContent=fmt(cursor);if(scroll){let x=cursor*pps+TRIM_GUTTER_PX,tl=$('#timeline'),target=x-tl.clientWidth*.72;tl.scrollLeft=Math.max(0,target)}}
 function waveform(canvas,c){let cached=waveformCache.get(c.sourceId);if(!cached){canvas.style.display='none';return}let tl=$('#timeline'),pps=pixelsPerSecond(),h=Math.max(1,canvas.parentElement?.clientHeight||66),dpr=devicePixelRatio||1,plan=StudioWaveform.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft:Math.max(0,tl.scrollLeft-TRIM_GUTTER_PX),viewportWidth:tl.clientWidth,sourceDuration:cached.duration,peakRate:cached.peakRate,dpr});if(!plan.visible){canvas.style.display='none';return}canvas.style.display='block';canvas.style.left=plan.canvasLeft+'px';canvas.style.width=plan.cssWidth+'px';canvas.style.height=h+'px';canvas.width=plan.bitmapWidth;canvas.height=Math.max(1,Math.ceil(h*dpr));let g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,plan.cssWidth,h);g.strokeStyle='rgba(255,255,255,.78)';g.lineWidth=1;g.beginPath();for(let i=0;i<plan.columns;i++){let m=StudioWaveform.peakForColumn(cached,plan,i,plan.columns),x=i*StudioWaveform.DRAW_STEP_PX,y=m*h*.46;g.moveTo(x,h/2-y);g.lineTo(x,h/2+y)}g.stroke()}
 let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;document.querySelectorAll('.wavecanvas').forEach(cv=>{if(cv._clip)waveform(cv,cv._clip)})}$('#timeline').addEventListener('scroll',()=>{if(!waveformScrollRaf)waveformScrollRaf=requestAnimationFrame(refreshVisibleWaveforms)},{passive:true});
