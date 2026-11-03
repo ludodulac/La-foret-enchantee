@@ -409,7 +409,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 <div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-bridge.js"></script><script src="js/studio-wav-long-source.js"></script><script src="js/studio-wav-long-playback.js"></script><script src="js/studio-wav-long-mix.js"></script><script src="js/studio-ogg-opus.js"></script><script src="js/studio-opus-compact.js"></script><script src="js/studio-wav-panel.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();
-let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWavePeaks=[],secureLastWaveDraw=0,secureMicroStage=null;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
+let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWavePeaks=[],secureLastWaveDraw=0,secureMicroStage=null;
+let secureOverdubPreparing=false,secureOverdubGeneration=0,secureOverdubSync=null;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
 function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
@@ -587,28 +588,99 @@ function renderSelection(){let e=$('#selection'),a=$('#selection-start-mark'),b=
 $('#sel-start').onclick=()=>{selectionStart=cursor;if(selectionEnd!==null&&selectionEnd<=selectionStart)selectionEnd=null;renderSelection();selectionDiagnostic('SÉLECTION DÉBUT = '+selectionSeconds(selectionStart)+' s');markProjectDirty();msg('Début de sélection posé')};
 $('#sel-end').onclick=()=>{if(selectionStart===null){selectionDiagnostic('SÉLECTION INVALIDE — pose d’abord le DÉBUT');return msg('Pose d’abord le début')}if(cursor<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — FIN = '+selectionSeconds(cursor)+' s, DÉBUT = '+selectionSeconds(selectionStart)+' s');return msg('Place le curseur après le début')}selectionEnd=cursor;renderSelection();selectionDiagnostic('SÉLECTION = '+selectionSeconds(selectionStart)+' → '+selectionSeconds(selectionEnd)+' s\nDURÉE = '+selectionSeconds(selectionEnd-selectionStart)+' s');markProjectDirty();msg('Fin de sélection posée')};
 $('#sel-clear').onclick=()=>{selectionStart=selectionEnd=null;renderSelection();markProjectDirty();msg('Sélection effacée')};
+function setOverdubPreparing(active){
+  secureOverdubPreparing=active;
+  // The microphone has not been requested yet. Preparing/decompressing an
+  // existing take must never be counted as WAV capture or shift the timeline.
+  if(active){
+    $('#recording-state').hidden=false;
+    $('#recording-state').classList.remove('finalizing','error');
+    $('#recording-state').textContent='🎧 PRÉPARATION DES PISTES · MICROPHONE EN ATTENTE…';
+  }else if(secureCaptureState==='idle'){
+    $('#recording-state').hidden=true;
+  }
+  $('#app').classList.toggle('recording',active||secureCaptureState!=='idle'||recording);
+  $('#record').disabled=active||secureCaptureState!=='idle';
+  $('#play').disabled=active||secureCaptureState!=='idle';
+  $('#back').disabled=active||secureCaptureState!=='idle';
+  $('#forward').disabled=active||secureCaptureState!=='idle';
+}
 async function recordSecurelyFromStudio(){
-  if(!wavController||secureCaptureState!=='idle'||!currentProjectId)return;
+  if(!wavController||secureCaptureState!=='idle'||secureOverdubPreparing||!currentProjectId)return;
   const trackId=recordTrackIdFor();
   if(!trackId)return msg('Choisis une piste avant d’enregistrer');
   const snapshot={projectId:currentProjectId,trackId,start:cursor};
+  const token=++secureOverdubGeneration;
   secureCaptureInfo=snapshot;
-  // Stop playback immediately, BEFORE asking Android to acquire the mic.
-  // Overdub resumes only once WAV capture has actually started.
+  secureOverdubSync=null;
+  // Stop unrelated playback immediately, BEFORE requesting the microphone.
   if(playing||playPreparing)stopPlay(false);
-  // Unlock the existing playback context on the SAME REC user gesture.
-  // Waiting for Android microphone permission would otherwise lose activation.
-  if(clips.length&&ctx.state==='suspended')void ctx.resume().catch(e=>console.warn('Playback activation',e));
-  const success=await wavController.start();
-  if(!success){secureCaptureInfo=null;return}
-  // Accompagnement des pistes existantes : le microphone WAV reste distinct.
-  if(clips.length&&currentProjectId===snapshot.projectId){
-    try{await play(snapshot.start,true)}catch(e){console.warn('Lecture accompagnement indisponible',e)}
+  // Resume on the REC gesture. Existing sources are decoded and cached before
+  // opening the Android microphone, rather than after WAV capture starts.
+  const guideAudible=clips.some(c=>{
+    const track=tracks.find(t=>t.id===c.track);
+    return !c.muted&&!track?.muted&&c.start+c.len>snapshot.start;
+  });
+  let prepared=null;
+  if(guideAudible){
+    setOverdubPreparing(true);
+    try{
+      const primed=ctx.resume();
+      await Promise.race([
+        (async()=>{await primed;return preparePlayback(snapshot.start)})()
+          .then(p=>{prepared=p;return p}),
+        new Promise((_,reject)=>setTimeout(()=>reject(Error('Préparation des pistes trop longue')),9000))
+      ]);
+    }catch(e){
+      if(token===secureOverdubGeneration){
+        secureCaptureInfo=null;setOverdubPreparing(false);
+        msg('Enregistrement annulé : accompagnement indisponible');
+        console.warn('OVERDUB PRÉPARATION',e);
+      }
+      return;
+    }
+    if(token!==secureOverdubGeneration||currentProjectId!==snapshot.projectId){
+      secureCaptureInfo=null;return;
+    }
+    // At this point no hardware microphone has been opened yet.
+    setOverdubPreparing(false);
+  }
+  const success=await wavController.start({
+    onCaptureStart:({performanceTime,sampleRate})=>{
+      if(currentProjectId!==snapshot.projectId||token!==secureOverdubGeneration)
+        throw Error('Projet changé pendant la préparation du doublage');
+      if(prepared){
+        // Synchronous (no awaiting decode!) same-turn start of guide and WAV.
+        const start=performance.now();
+        startPreparedPlayback(snapshot.start,true,prepared);
+        secureOverdubSync={
+          captureActivationAt:performanceTime,
+          monitorStartAt:start,
+          monitorStartDelayMs:Math.round((start-performanceTime)*1000)/1000,
+          estimatedOutputLatencyMs:Math.round((Number(ctx.outputLatency)||0)*1000),
+          estimatedBaseLatencyMs:Math.round((Number(ctx.baseLatency)||0)*1000),
+          captureRate:sampleRate,
+          guidePreparedBeforeMic:true
+        };
+      }
+    }
+  });
+  if(!success&&token===secureOverdubGeneration){
+    secureCaptureInfo=null;
+    // No playback should remain active on a failed capture.
+    if(playing||playPreparing)stopPlay(false);
   }
 }
 $('#record').onclick=recordSecurelyFromStudio;
 $('#play').onclick=()=>{if(secureCaptureState!=='idle')return;return playing||playPreparing?stopPlay():play()};
 $('#stop').onclick=()=>{
+  if(secureOverdubPreparing){
+    secureOverdubGeneration++;
+    secureCaptureInfo=null;
+    setOverdubPreparing(false);
+    msg('Préparation annulée · microphone non ouvert');
+    return;
+  }
   if(secureCaptureState!=='idle'){
     if(secureCaptureState==='starting'){wavController.cancelStart();return}
     if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}
@@ -656,11 +728,11 @@ function openProjectRename(p){closeProjectOptions();renameProjectTargetId=p.id;$
 async function commitProjectRename(){let id=renameProjectTargetId;if(!id)return;let projects=await localStore.listProjects(),before=projects.find(p=>p.id===id);if(!before)return closeProjectRename();let next=await localStore.renameProject(id,$('#project-rename-input').value);if(currentProjectId===id){currentProjectName=next.name;syncCurrentProjectName()}closeProjectRename();await renderLocalProjectLibrary();return next}
 function closeProjectDelete(){deleteProjectTarget=null;hideProjectDialog('#project-delete-panel');$('#project-delete-copy').textContent=''}
 function openProjectDelete(p){closeProjectOptions();deleteProjectTarget={id:p.id,name:p.name};$('#project-delete-copy').textContent='Supprimer « '+p.name+' » ?';$('#project-delete-panel').hidden=false}
-async function commitProjectDelete(){if(secureCaptureState!=='idle')return msg('Termine la prise WAV avant de supprimer un projet');let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
+async function commitProjectDelete(){if(secureOverdubPreparing||secureCaptureState!=='idle')return msg('Termine la prise WAV avant de supprimer un projet');let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
 async function renderLocalProjectLibrary(){let list=$('#local-project-list'),status=$('#project-library-status'),projects=await localStore.listProjects();list.innerHTML='';for(const p of projects){let row=document.createElement('div');row.className='local-project-row';row.dataset.projectId=p.id;let card=document.createElement('button');card.type='button';card.className='local-project-card game-btn game-btn-standard game-btn-dark';card.dataset.projectId=p.id;card.innerHTML='<b></b><small></small>';card.querySelector('b').textContent=p.name;card.querySelector('small').textContent='Modifié '+formatProjectUpdated(p.updatedAt);card.onclick=()=>openLocalProject(p.id);let more=document.createElement('button');more.type='button';more.className='local-project-more game-btn game-btn-compact game-btn-secondary';more.textContent='⋯';more.setAttribute('aria-label','Options de '+p.name);more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectOptions(p)};row.append(card,more);list.appendChild(row)}if(!projects.length)list.innerHTML='<div class="project-library-empty">Aucun projet pour le moment.</div>';status.textContent=projects.length?projects.length+' projet'+(projects.length>1?'s':''):'Crée ton premier projet.';return projects}
-async function createLocalProject(){if(recording||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
-async function openLocalProject(id){if(recording||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de changer de projet');await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();msg('Projet ouvert ✓');return saved.card}
-async function returnToProjectLibrary(){if(recording||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de quitter le projet');await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
+async function createLocalProject(){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
+async function openLocalProject(id){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de changer de projet');await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();msg('Projet ouvert ✓');return saved.card}
+async function returnToProjectLibrary(){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de quitter le projet');await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
 async function initializeProjectLibraryEntry(){let migration=await localStore.initializeLibrary();showProjectLibraryScreen();let projects=await renderLocalProjectLibrary();if(migration.migrated)$('#project-library-status').textContent='Projet précédent récupéré ✓ · '+projects.length+' projet'+(projects.length>1?'s':'');return migration}
 let librarySounds=[],libraryPreview=null,libraryPreviewButton=null,currentProjectId=null,currentProjectName='';
 function cleanFrenchName(name){return name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()}
