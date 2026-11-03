@@ -192,8 +192,18 @@ const close=()=>new Promise(resolve=>server.close(resolve));
   const playback=await page.evaluate(()=>({cursor,playing,sources:sources.length,audio:ctx.state}));
   assert(playback.cursor>0.2,'Playback cursor must advance');
   assert(playback.sources>=1,'Real Studio AudioBufferSource must be scheduled');
-  await page.locator('#stop').click();
-  assert.equal(await page.evaluate(()=>playing),false,'STOP stops normal playback');
+  // Switch to Gboard/ChatGPT while audio is playing: playback must stop and
+  // suspend its AudioContext to avoid holding Android's audio output focus.
+  await page.evaluate(()=>{
+    Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>window.__visibilityForTest||'visible'});
+    window.__visibilityForTest='hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.waitForFunction(()=>ctx.state==='suspended',null,{timeout:5000});
+  assert.equal(await page.evaluate(()=>playing),false,'Playback stops when Studio loses visibility');
+  await page.evaluate(()=>{window.__visibilityForTest='visible';document.dispatchEvent(new Event('visibilitychange'))});
+  assert.equal(await page.evaluate(()=>ctx.state),'suspended','Returning must not auto-resume playback');
+  console.log('STUDIO-031 BACKGROUND AUDIO FOCUS RELEASE PASS');
   console.log('STUDIO-031 PLAYBACK PASS '+JSON.stringify(playback));
 
   // Second take: overdub on another track while the first one is audible.
