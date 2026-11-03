@@ -101,23 +101,73 @@ function makeTrimHarness(side){
 {const h=makeTrimHarness('left');assert(Math.abs(h.c.start-1.2)<1e-9);assert(Math.abs(h.c.trim-.7)<1e-9);assert(Math.abs(h.c.len-1.8)<1e-9);assert.equal(h.undo.length,1);console.log('TRIM_LEFT PASS actual production trimGesture')}
 {const h=makeTrimHarness('right');assert(Math.abs(h.c.len-2.2)<1e-9);assert.equal(h.undo.length,1);console.log('TRIM_RIGHT PASS actual production trimGesture')}
 
-// Exercise actual 009 selected clip movement + cross-track.
-function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x)}}
+// Clip body gestures: unselected=horizontal scroll, tapped=select/toggle,
+// selected+second gesture=deliberate move. No audio data is edited by a pan.
+function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x),toggle(x,b){if(b)s.add(x);else s.delete(x)}}}
 function lane(id,top,bottom){return{dataset:{trackId:id},classList:classList(),getBoundingClientRect:()=>({top,bottom}),appendChild(el){el.parentElement=this}}}
-{
+function clipHarness(selectedAtStart=false){
  const lanes=[lane('A',100,176),lane('B',183,259),lane('C',266,342)];
  const clip={id:'small',track:'A',sourceId:'src',start:2,trim:0,len:1,gain:1,muted:false};
- const state={captured:new Set(),dirty:0},el={style:{},parentElement:lanes[0],setPointerCapture:id=>state.captured.add(id),hasPointerCapture:id=>state.captured.has(id),releasePointerCapture:id=>state.captured.delete(id)};
- const context={console,Math,document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]}},pixelsPerSecond:()=>100,snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},selected:clip,$:sel=>sel==='#editor'?{classList:{add(){}}}:sel==='#clipvol'?{value:0}:{textContent:''}};
+ const state={captured:new Set(),dirty:0},timeline={scrollLeft:100},
+   editor={classList:classList()},volume={value:0},mute={textContent:'',classList:classList()};
+ const el={style:{},parentElement:lanes[0],setPointerCapture:id=>state.captured.add(id),
+   hasPointerCapture:id=>state.captured.has(id),releasePointerCapture:id=>state.captured.delete(id)};
+ const context={console,Math,
+   document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;
+     if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]},
+     querySelector(){return null}},
+   pixelsPerSecond:()=>100,
+   snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),
+   undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},
+   selected:selectedAtStart?clip:null,
+   $:sel=>sel==='#editor'?editor:sel==='#clipvol'?volume:sel==='#clipmute'?mute:sel==='#timeline'?timeline:{textContent:''}};
  vm.createContext(context);vm.runInContext(dragSource,context);context.clipGesture(el,clip,20);
- const e=(x,y,id=7)=>({clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){},stopPropagation(){}});
- el.onpointerdown(e(50,130));el.onpointermove(e(80,210));el.onpointerup(e(80,210));
- assert.equal(clip.start,2.3);assert.equal(clip.track,'B');assert.equal(context.undo.length,1);assert.equal(state.dirty,1);
- console.log('MOVE_SELECTED_CLIP PASS selected clip retains body drag');
+ const e=(x,y,pointerType='touch',id=7)=>({clientX:x,clientY:y,pointerId:id,pointerType,isPrimary:true,
+   preventDefault(){},stopPropagation(){}});
+ return {lanes,clip,state,timeline,editor,el,context,e}
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(80,130));h.el.onpointermove(h.e(115,210));h.el.onpointerup(h.e(115,210));
+ assert.equal(h.clip.start,2,'Unselected touch swipe must NEVER move audio in time');
+ assert.equal(h.clip.track,'A','Unselected touch swipe must NEVER change track');
+ assert.equal(h.context.selected,null);
+ assert.equal(h.context.undo.length,0);
+ assert.equal(h.state.dirty,0);
+ console.log('UNSELECTED_TOUCH_SWIPE_NEVER_EDITS_AUDIO PASS');
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(110,130,'mouse'));h.el.onpointermove(h.e(145,130,'mouse'));
+ h.el.onpointerup(h.e(145,130,'mouse'));
+ assert.equal(h.timeline.scrollLeft,65,'Desktop unselected drag pans viewport');
+ assert.equal(h.clip.start,2);assert.equal(h.state.dirty,0);
+ console.log('UNSELECTED_MOUSE_PAN_TIMELINE PASS');
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(60,130));h.el.onpointerup(h.e(60,130));
+ assert.equal(h.context.selected,h.clip);
+ assert.equal(h.editor.classList.contains('show'),true);
+ h.el.onpointerdown(h.e(60,130));h.el.onpointerup(h.e(60,130));
+ assert.equal(h.context.selected,null,'Second tap on selected clip must deselect');
+ assert.equal(h.editor.classList.contains('show'),false,'Deselect must close clip panel');
+ assert.equal(h.clip.start,2);assert.equal(h.context.undo.length,0);
+ console.log('TAP_SELECT_SECOND_TAP_CLOSE_EDITOR PASS');
+}
+{
+ const h=clipHarness(true);
+ h.el.onpointerdown(h.e(50,130));h.el.onpointermove(h.e(80,210));h.el.onpointerup(h.e(80,210));
+ assert.equal(h.clip.start,2.3);assert.equal(h.clip.track,'B');
+ assert.equal(h.context.undo.length,1);assert.equal(h.state.dirty,1);
+ console.log('MOVE_ONLY_PRESELECTED_CLIP PASS');
  console.log('CROSS_TRACK_DRAG_009 PASS A -> B');
 }
-assert(dragSource.includes("el.onpointercancel=e=>finish(e,true)"));assert(dragSource.includes("c.start=startState.start;c.track=startState.track"));
-console.log('POINTER_CANCEL PASS policy A retained');
+assert(dragSource.includes('el.onpointercancel=e=>end(e,true)'));
+assert(dragSource.includes('c.start=g.start;c.track=g.track'));
+assert(html.includes('.clip:not(.sel){touch-action:pan-x pan-y}'));
+assert(html.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
+console.log('POINTER_CANCEL_AND_NATIVE_TOUCH_SCROLL PASS');
 
 // Undo + redo handlers retained.
 for(const marker of [
