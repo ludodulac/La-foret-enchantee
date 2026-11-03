@@ -88,8 +88,8 @@ const close=()=>new Promise(resolve=>server.close(resolve));
     // Never request microphone access in CI: only exercise opening/closing UI.
     await page.locator('#studio-wav-close').click();
     assert.equal(await page.locator('#studio-wav-panel').isVisible(),false);
-    // The mobile TOOLS drawer stays open by design; close it before editing tracks.
-    await page.locator('#tools-menu-toggle').click();
+    // The mobile TOOLS drawer stays open by design; its own close action is reachable above the footer.
+    await page.locator('#tools-close').click();
     assert.equal(await page.locator('#tools-menu-panel').evaluate(el=>el.classList.contains('menu-open')),false);
 
     await page.locator('#addtrack').click();
