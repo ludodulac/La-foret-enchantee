@@ -11,7 +11,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     time:$('studio-wav-time'),status:$('studio-wav-status')};
   let ac=null,mic=null,node=null,gain=null,take=null,writeChain=Promise.resolve();
   let pending=0,seq=0,failed=null,starting=false,stopping=false,attaching=false,ack=null,timer=null,startAt=null;
-  let recovered=null,previewUrl=null,downloadUrl=null,captureGeneration=0,nonSilentPcm=false,validPcmSeconds=0,mutedCaptureWarning=false;
+  let recovered=null,previewUrl=null,downloadUrl=null,captureGeneration=0,cancelPendingOpen=null,nonSilentPcm=false,validPcmSeconds=0,mutedCaptureWarning=false;
   const report=message=>{ui.status.textContent=message;if(panel.hidden&&(/impossible|incomplet|interrompu|stockage trop lent|Prise enregistrée et ajoutée/i.test(message)))onStatus(message)};
   const clock=seconds=>{const n=Math.max(0,Math.floor(seconds));ui.time.textContent='⏱ '+String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
   // Low-cost waveform for the live editor. Audio continues to be stored as
@@ -101,7 +101,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       try{
         if(recordingCompleted&&recovered&&!recovered.interrupted&&!receivedSignal&&recovered.seconds>=2){
           report('Micro muet : prise WAV conservée mais aucun son reçu. Non ajoutée automatiquement.');
-          onStage('silence','⚠ AUCUN SON REÇU DU MICRO. Ferme l’enregistrement d’écran et les applications utilisant le microphone.');
+
         }else if(recordingCompleted&&recovered&&!recovered.interrupted&&recovered.seconds<=300&&isProjectOpen()&&onImportTake){
           await attach(true);
         }
@@ -118,6 +118,8 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
     nonSilentPcm=false;validPcmSeconds=0;mutedCaptureWarning=false;
     const generation=++captureGeneration;
     const checkOpen=()=>{if(generation!==captureGeneration)throw Error('Microphone interrompu lors du changement d’application')};
+    const canceled=new Promise((_,reject)=>{cancelPendingOpen=()=>reject(Error('Microphone libéré : changement d’application'))});
+    const wait=(promise,ms,label)=>Promise.race([bounded(promise,ms,label),canceled]);
     starting=true;onStateChange('starting');buttons();
     let failure=null;
     try{
@@ -125,7 +127,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       if(!AC)throw Error('Web Audio indisponible');
       onStage('starting','Préparation du moteur audio…');
       ac=new AC();
-      await bounded(ac.audioWorklet.addModule('js/studio-recording-wav-worklet.js'),8000,'Préparation audio');
+      await wait(ac.audioWorklet.addModule('js/studio-recording-wav-worklet.js'),8000,'Préparation audio');
       checkOpen();
       onStage('starting','Demande d’accès au microphone…');
       const request=navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
@@ -134,12 +136,12 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       request.then(stream=>{
         if(generation!==captureGeneration)stream.getTracks().forEach(track=>track.stop());
       },()=>{});
-      mic=await bounded(request,10000,'Ouverture du microphone');
+      mic=await wait(request,10000,'Ouverture du microphone');
       checkOpen();
       onStage('starting','Initialisation des fragments WAV…');
-      await bounded(ac.resume(),6000,'Démarrage audio');checkOpen();
+      await wait(ac.resume(),6000,'Démarrage audio');checkOpen();
       const id='rec-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
-      take=await bounded(Core.createTake(await rootDir(),{id,sampleRate:ac.sampleRate}),7000,'Stockage local WAV');
+      take=await wait(Core.createTake(await rootDir(),{id,sampleRate:ac.sampleRate}),7000,'Stockage local WAV');
       checkOpen();
       node=new AudioWorkletNode(ac,'studio-recording-wav',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
       gain=ac.createGain();gain.gain.value=0;
@@ -163,6 +165,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
       report('Impossible d’utiliser le microphone : '+failure);
       await release();
     }
+    cancelPendingOpen=null;
     starting=false;if(!running())onStateChange('idle');buttons();
     if(failure)onStage('error','⚠ MICROPHONE INDISPONIBLE — '+failure+'. Ferme les applications utilisant le micro.');
     return running();
@@ -217,7 +220,7 @@ function mount({isStudioRecording=()=>false,isProjectOpen=()=>true,onImportTake=
   // Release microphone when leaving the Studio. On Android a background tab
   // can otherwise monopolize the input needed by keyboard voice dictation.
   function leaveStudio(){
-    if(starting){captureGeneration++;return} // pending getUserMedia late results are stopped above
+    if(starting){captureGeneration++;cancelPendingOpen?.();return} // late getUserMedia results are stopped above
     if(running()&&!stopping){
       void stop();
       mic?.getTracks().forEach(track=>track.stop());
