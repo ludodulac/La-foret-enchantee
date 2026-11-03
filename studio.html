@@ -1,7 +1,33 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><meta name="theme-color" content="#0d0e11"><title>Studio — La Forêt Enchantée</title><style>
-*{box-sizing:border-box}body{margin:0;background:#0d0e11;color:#f8f8fa;font:15px system-ui,-apple-system,sans-serif;overscroll-behavior:none}button,input{font:inherit}button{border:0;color:inherit;touch-action:manipulation}.app{max-width:760px;margin:auto;min-height:100dvh;padding:env(safe-area-inset-top) 10px calc(128px + env(safe-area-inset-bottom))}header{height:52px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:20px;font-weight:850;min-width:0}.brand-main,.current-project-name{display:block}.current-project-name{font-size:9px;font-weight:700;color:#9fb4cb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.export{min-height:40px;padding:0 14px;border-radius:14px;background:#282a31;font-weight:800}.projectbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:0 0 8px}.projectbar button{min-height:44px;border-radius:13px;background:#292c33;font-size:11px;font-weight:850}.projectpanel{display:none;background:#1b1d22;border:1px solid #343740;border-radius:14px;padding:9px;margin-bottom:8px}.projectpanel.show{display:block}.projectrow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:7px;background:#24272e;border-radius:10px;margin-top:6px}.projectrow small{display:block;color:#969ca7}.projectrow button{min-height:38px;border-radius:9px;background:#343740}.time{text-align:center;font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin:1px 0 7px}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}.metro{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;margin-bottom:8px;align-items:center}.metro button,.bpm{min-height:44px;border-radius:13px;background:#23252b;color:#fff;border:0;font-weight:800}.metro button.on{background:#f3d56c;color:#171a34}.bpm{min-width:76px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;font-size:12px}.quick button{min-height:44px;border-radius:13px;background:#23252b;font-weight:750;font-size:12px}.quick button:disabled{opacity:.35}.timeline{position:relative;background:#16181d;border-radius:17px;padding:10px 8px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none}.timeline::-webkit-scrollbar{display:none}.canvas{position:relative;min-width:100%;width:100%}.ruler{height:25px;display:flex;justify-content:space-between;color:#888e99;font-size:10px;border-bottom:1px solid #30333b;user-select:none}.playhead{position:absolute;left:0;top:2px;bottom:3px;width:2px;background:#fff;z-index:15;transform:translateX(-1px);pointer-events:auto;touch-action:none}.playhead:after{content:"";position:absolute;left:-17px;top:0;width:36px;height:100%}.playhead:before{content:"";position:absolute;left:-7px;top:0;border:8px solid transparent;border-top-color:#fff}.track{margin-top:9px}.head{height:28px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800}.trackctrl{display:flex;gap:5px}.trackctrl button{min-width:42px;height:28px;border-radius:9px;background:#292c33;font-size:12px}.lane{height:76px;background:#24272e;border-radius:11px;position:relative;overflow:hidden}.clip{position:absolute;top:5px;height:66px;min-width:0;border-radius:10px;background:#785cff;display:flex;align-items:center;overflow:hidden;box-shadow:0 3px 12px #0005;touch-action:none;user-select:none}.clip.sound{background:var(--track-color,#16a97d)}.clip.sel{outline:3px solid #fff;outline-offset:-3px;z-index:5}.trimhandle{display:none;position:absolute;top:0;bottom:0;width:34px;background:#fff9;z-index:8;touch-action:none}.clip.sel .trimhandle{display:block}.trimhandle.left{left:0;border-radius:10px 0 0 10px}.trimhandle.right{right:0;border-radius:0 10px 10px 0}.trimhandle:after{content:"";position:absolute;top:15px;bottom:15px;left:15px;width:3px;border-radius:3px;background:#222}.wavecanvas{position:absolute;top:0;left:0;height:100%;pointer-events:none}.liveclip{position:absolute;top:5px;height:66px;border-radius:10px;background:#785cff;overflow:hidden;z-index:4;pointer-events:none}.liveclip canvas{width:100%;height:100%}.liveclip span{position:absolute;left:8px;top:5px;font-size:10px;font-weight:900}.clipname{position:absolute;left:8px;top:5px;font-size:10px;font-weight:850;text-shadow:0 1px 3px #000}.addtrack,.addsound{width:100%;min-height:50px;margin-top:10px;border:1px dashed #51555f;background:transparent;border-radius:13px;color:#d5d8df;font-weight:800}.addsound{height:76px;margin:0}.selection{position:absolute;top:25px;bottom:0;background:#fff2;border-left:2px solid #f3d56c;border-right:2px solid #f3d56c;z-index:12;pointer-events:none}.selectionmark{position:absolute;top:20px;bottom:0;width:4px;background:#f3d56c;z-index:13;pointer-events:none;box-shadow:0 0 0 2px #17191e,0 0 8px #f3d56c}.selectionmark::before{position:absolute;top:-18px;font-size:11px;font-weight:900;color:#f3d56c;background:#17191e;padding:1px 3px;border-radius:4px}.selectionmark.start::before{content:'DÉBUT';left:0}.selectionmark.end::before{content:'FIN';right:0}.selectionmark.end{display:none}.help{color:#8d929d;text-align:center;font-size:11px;margin-top:9px}.editor{display:none;position:fixed;left:0;right:0;bottom:91px;background:#1b1d22f7;backdrop-filter:blur(15px);border-top:1px solid #343740;padding:8px 10px;z-index:25}.editin{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.editor.show{display:block}.editor button{min-height:50px;background:#292c34;border-radius:12px;font-size:11px;font-weight:800}.editor button:disabled{opacity:.32}.volrow{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px}.volrow input{width:100%}.tools{position:fixed;bottom:0;left:0;right:0;background:#141519f5;backdrop-filter:blur(16px);border-top:1px solid #30323a;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:30}.toolsin{max-width:760px;margin:auto;display:grid;grid-template-columns:.75fr .75fr 1.25fr .75fr;gap:7px;align-items:center}.transport{height:56px;border-radius:16px;background:#292c33;font-size:17px;font-weight:800}.record{height:68px;border-radius:21px;background:#ff3c50;font-weight:900;font-size:12px}.record b{display:block;font-size:20px}.toast{display:none;position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#fff;color:#111;border-radius:20px;padding:10px 15px;font-weight:750;z-index:50;white-space:nowrap}.recording .quick,.recording .addtrack,.recording .addsound{pointer-events:none;opacity:.3}.recording .record{background:#fff;color:#111}#file,#library-files{display:none}.soundlib{margin:14px 0 0;background:#16181d;border:1px solid #2b2e36;border-radius:17px;padding:12px}.soundlib h2{font-size:15px;margin:0 0 8px}.libactions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.folderpicker{display:none;margin-top:8px;padding:10px;background:#1d2026;border-radius:13px}.folderpicker.show{display:block}.folderpicker b{display:block;margin-bottom:7px}.folderbuttons{display:flex;flex-wrap:wrap;gap:6px}.folderbuttons button{min-height:42px;padding:0 11px;border-radius:11px;background:#343740;font-weight:800}.libbtn,.libsearch{min-height:46px;border-radius:12px;background:#292c33;color:#fff;border:0;padding:0 12px;font-weight:800}.libsearch{width:100%;margin-top:8px;font-weight:600}.libstatus{margin:9px 0;padding:10px 12px;border-radius:12px;background:#1b1e24;font-size:12px;line-height:1.5}.liberrors{display:none;margin:8px 0;padding:10px 12px;border-radius:12px;background:#2a1d1d;font-size:11px;white-space:pre-wrap;max-height:180px;overflow:auto}.liblist{display:grid;gap:7px;margin-top:9px}.libitem{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;background:#22252b;border-radius:11px;padding:8px}.libname{min-width:0}.libname b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.libname small{color:#949aa6}.libitem button{height:38px;border-radius:10px;background:#343740;padding:0 10px}.libempty{color:#9298a4;text-align:center;padding:14px 5px;font-size:12px}
+*{box-sizing:border-box}body{margin:0;background:#0d0e11;color:#f8f8fa;font:15px system-ui,-apple-system,sans-serif;overscroll-behavior:none}button,input{font:inherit}button{border:0;color:inherit;touch-action:manipulation}.app{max-width:760px;margin:auto;min-height:100dvh;padding:env(safe-area-inset-top) 10px calc(128px + env(safe-area-inset-bottom))}header{height:52px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:20px;font-weight:850;min-width:0}.brand-main,.current-project-name{display:block}.current-project-name{font-size:9px;font-weight:700;color:#9fb4cb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.export{min-height:40px;padding:0 14px;border-radius:14px;background:#282a31;font-weight:800}.projectbar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:0 0 8px}.projectbar button{min-height:44px;border-radius:13px;background:#292c33;font-size:11px;font-weight:850}.projectpanel{display:none;background:#1b1d22;border:1px solid #343740;border-radius:14px;padding:9px;margin-bottom:8px}.projectpanel.show{display:block}.projectrow{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:7px;background:#24272e;border-radius:10px;margin-top:6px}.projectrow small{display:block;color:#969ca7}.projectrow button{min-height:38px;border-radius:9px;background:#343740}.time{text-align:center;font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;margin:1px 0 7px}.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}.metro{display:grid;grid-template-columns:1fr auto auto auto;gap:7px;margin-bottom:8px;align-items:center}.metro button,.bpm{min-height:44px;border-radius:13px;background:#23252b;color:#fff;border:0;font-weight:800}.metro button.on{background:#f3d56c;color:#171a34}.bpm{min-width:76px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;font-size:12px}.quick button{min-height:44px;border-radius:13px;background:#23252b;font-weight:750;font-size:12px}.quick button:disabled{opacity:.35}.timeline{position:relative;background:#16181d;border-radius:17px;padding:10px 8px;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none}.timeline::-webkit-scrollbar{display:none}.canvas{position:relative;min-width:100%;width:100%}.ruler{height:25px;display:flex;justify-content:space-between;color:#888e99;font-size:10px;border-bottom:1px solid #30333b;user-select:none}.playhead{position:absolute;left:0;top:2px;bottom:3px;width:2px;background:#fff;z-index:15;transform:translateX(-1px);pointer-events:auto;touch-action:none}.playhead:after{content:"";position:absolute;left:-17px;top:0;width:36px;height:100%}.playhead:before{content:"";position:absolute;left:-7px;top:0;border:8px solid transparent;border-top-color:#fff}.track{margin-top:9px}.head{height:28px;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:800}.trackctrl{display:flex;gap:5px}.trackctrl button{min-width:42px;height:28px;border-radius:9px;background:#292c33;font-size:12px}.lane{height:76px;background:#24272e;border-radius:11px;position:relative;overflow:hidden}.clip{position:absolute;top:5px;height:66px;min-width:0;border-radius:10px;background:#785cff;display:flex;align-items:center;overflow:hidden;box-shadow:0 3px 12px #0005;touch-action:none;user-select:none}.clip.sound{background:var(--track-color,#16a97d)}.clip.sel{outline:3px solid #fff;outline-offset:-3px;z-index:5}.trimhandle{display:none;position:absolute;top:0;bottom:0;width:34px;background:#fff9;z-index:8;touch-action:none}.clip.sel .trimhandle{display:block}.trimhandle.left{left:0;border-radius:10px 0 0 10px}.trimhandle.right{right:0;border-radius:0 10px 10px 0}.trimhandle:after{content:"";position:absolute;top:15px;bottom:15px;left:15px;width:3px;border-radius:3px;background:#222}.wavecanvas{position:absolute;top:0;left:0;height:100%;pointer-events:none}.liveclip{position:absolute;top:5px;height:66px;border-radius:10px;background:#785cff;overflow:hidden;z-index:4;pointer-events:none}.liveclip canvas{width:100%;height:100%}.liveclip span{position:absolute;left:8px;top:5px;font-size:10px;font-weight:900}
+.liveclip.secure-wav-live{background:#8b1733;border:1px solid #ff7992;box-shadow:inset 0 0 0 1px #e24c77}
+.liveclip.secure-wav-live canvas{display:block;width:100%;height:100%}
+.liveclip.secure-wav-live span{display:none}
+#record.is-recording:disabled{opacity:1!important;filter:none!important;background:#e82043!important;color:#fff!important}
+#stop.is-recording{border-color:#ffe66a!important;box-shadow:0 0 0 2px #ffe66a,0 0 10px #ffb540!important}
+#recording-state{position:relative;display:block;margin:3px 0;padding:5px 8px;background:#641322;border:1px solid #fb8594;border-radius:6px;color:#fff;font-weight:800;font-size:12px;text-align:center}
+#recording-state[hidden]{display:none!important}
+#recording-state.finalizing{background:#273f58;border-color:#6cb8ec}
+#recording-state.error{background:#703019;border-color:#ffad5a;color:#fff}
+#recording-state:before{content:'●';margin-right:6px;color:#ffcf69}
+.recording .track-arm,.recording .track-more{pointer-events:none;opacity:.55}.clipname{position:absolute;left:8px;top:5px;font-size:10px;font-weight:850;text-shadow:0 1px 3px #000}.addtrack,.addsound{width:100%;min-height:50px;margin-top:10px;border:1px dashed #51555f;background:transparent;border-radius:13px;color:#d5d8df;font-weight:800}.addsound{height:76px;margin:0}.selection{position:absolute;top:25px;bottom:0;background:#fff2;border-left:2px solid #f3d56c;border-right:2px solid #f3d56c;z-index:12;pointer-events:none}.selectionmark{position:absolute;top:20px;bottom:0;width:4px;background:#f3d56c;z-index:13;pointer-events:none;box-shadow:0 0 0 2px #17191e,0 0 8px #f3d56c}.selectionmark::before{position:absolute;top:-18px;font-size:11px;font-weight:900;color:#f3d56c;background:#17191e;padding:1px 3px;border-radius:4px}.selectionmark.start::before{content:'DÉBUT';left:0}.selectionmark.end::before{content:'FIN';right:0}.selectionmark.end{display:none}.help{color:#8d929d;text-align:center;font-size:11px;margin-top:9px}.editor{display:none;position:fixed;left:0;right:0;bottom:91px;background:#1b1d22f7;backdrop-filter:blur(15px);border-top:1px solid #343740;padding:8px 10px;z-index:25}.editin{max-width:760px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.editor.show{display:block}.editor button{min-height:50px;background:#292c34;border-radius:12px;font-size:11px;font-weight:800}.editor button:disabled{opacity:.32}.volrow{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px}.volrow input{width:100%}.tools{position:fixed;bottom:0;left:0;right:0;background:#141519f5;backdrop-filter:blur(16px);border-top:1px solid #30323a;padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:30}.toolsin{max-width:760px;margin:auto;display:grid;grid-template-columns:.75fr .75fr 1.25fr .75fr;gap:7px;align-items:center}.transport{height:56px;border-radius:16px;background:#292c33;font-size:17px;font-weight:800}.record{height:68px;border-radius:21px;background:#ff3c50;font-weight:900;font-size:12px}.record b{display:block;font-size:20px}.toast{display:none;position:fixed;left:50%;bottom:105px;transform:translateX(-50%);background:#fff;color:#111;border-radius:20px;padding:10px 15px;font-weight:750;z-index:50;white-space:nowrap}.recording .quick,.recording .addtrack,.recording .addsound{pointer-events:none;opacity:.3}.recording .record{background:#fff;color:#111}#file,#library-files{display:none}.soundlib{margin:14px 0 0;background:#16181d;border:1px solid #2b2e36;border-radius:17px;padding:12px}.soundlib h2{font-size:15px;margin:0 0 8px}.libactions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.folderpicker{display:none;margin-top:8px;padding:10px;background:#1d2026;border-radius:13px}.folderpicker.show{display:block}.folderpicker b{display:block;margin-bottom:7px}.folderbuttons{display:flex;flex-wrap:wrap;gap:6px}.folderbuttons button{min-height:42px;padding:0 11px;border-radius:11px;background:#343740;font-weight:800}.libbtn,.libsearch{min-height:46px;border-radius:12px;background:#292c33;color:#fff;border:0;padding:0 12px;font-weight:800}.libsearch{width:100%;margin-top:8px;font-weight:600}.libstatus{margin:9px 0;padding:10px 12px;border-radius:12px;background:#1b1e24;font-size:12px;line-height:1.5}.liberrors{display:none;margin:8px 0;padding:10px 12px;border-radius:12px;background:#2a1d1d;font-size:11px;white-space:pre-wrap;max-height:180px;overflow:auto}.liblist{display:grid;gap:7px;margin-top:9px}.libitem{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;background:#22252b;border-radius:11px;padding:8px}.libname{min-width:0}.libname b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.libname small{color:#949aa6}.libitem button{height:38px;border-radius:10px;background:#343740;padding:0 10px}.libempty{color:#9298a4;text-align:center;padding:14px 5px;font-size:12px}
 </style><style>
-/* PIXEL UI 009 — presentation only */
+.latency-tools{border:1px solid #16a78e;padding:5px 7px;background:#0c2434;color:#fff;line-height:1.2;font-size:12px}
+.latency-compact{display:flex;gap:6px;align-items:center;justify-content:space-between;min-height:36px}
+#latency-current{min-width:0;font-size:12px;font-weight:bold;white-space:normal}
+#latency-calibrate{min-height:34px;flex-shrink:0;padding:3px 9px;font-size:10px}
+#latency-status{margin:5px 0 0;color:#c9e7fa;font-size:11px}
+#latency-status[hidden]{display:none!important}
+.studio-tools-header{display:flex;align-items:center;justify-content:space-between;padding:0 2px 5px;font-size:12px}
+.studio-tools-header #tools-close{min-height:32px;font-size:10px;padding:2px 8px}
+.studio-advanced-tools{border:1px solid #24476c;padding:4px 6px;margin:6px 0;color:#cfe7ff}
+.studio-advanced-tools summary{cursor:pointer;padding:7px 2px;min-height:30px;font-size:11px;font-weight:800}
+.studio-advanced-tools .quick{margin-top:6px}
+.studio-project-advanced{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:6px 0}
+.studio-project-advanced button{min-height:36px;font-size:10px}
+.clip-latency{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10px;margin:4px 0}
+.clip-latency button{min-height:34px;font-size:10px;padding:5px 8px}
+ /* PIXEL UI 009 — presentation only */
 :root{--px-bg:#050914;--px-panel:#09142a;--px-panel2:#0c1d3d;--px-blue:#087cff;--px-blue2:#20a4ff;--px-yellow:#ffe23b;--px-red:#ff334f;--px-ink:#eaf4ff;--px-muted:#8fa8c7;--px-line:#174a85;--px-black:#02050b;--px-shadow:4px 4px 0 var(--px-black)}
 body{background:var(--px-bg);color:var(--px-ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;background-image:linear-gradient(rgba(8,124,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(8,124,255,.035) 1px,transparent 1px);background-size:16px 16px}
 header{border-bottom:2px solid var(--px-blue);margin-bottom:8px;box-shadow:0 3px 0 #03142b}.brand{color:var(--px-blue2);letter-spacing:2px;text-shadow:2px 2px 0 #003a79}.brand:before{content:"■ ";color:var(--px-yellow);font-size:10px}.brand:after{content:" ■";color:var(--px-red);font-size:10px}
@@ -58,7 +84,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .projectbar.menu-open{display:grid}
   .projectbar button{min-height:42px}
   .projectbar .projectpanel{grid-column:1/-1;margin:0}
-  .secondarytools{display:none;position:fixed;left:7px;right:7px;bottom:58px;z-index:45;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
+  .secondarytools{display:none;position:fixed;left:7px;right:7px;bottom:76px;z-index:48;padding:7px;background:#050b18f7;border:2px solid var(--px-blue);box-shadow:4px 4px 0 var(--px-black);max-height:65dvh;overflow:auto}
   .secondarytools.menu-open{display:block}
   .project-advanced{grid-column:1/-1;border-top:1px solid #24476c;padding-top:5px}
   .project-advanced summary{cursor:pointer;min-height:34px;display:flex;align-items:center;font-size:9px;font-weight:900;color:#9bb2cb}
@@ -107,7 +133,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   #tracks .head{display:none}
   .lane{min-height:88px;overflow:visible}
   .clip{height:66px;top:5px}
-  .clip.sel{overflow:visible;z-index:20}
+  .clip:not(.sel){touch-action:pan-x pan-y}
+  .clip.sel{overflow:visible;z-index:20;touch-action:none}
   .trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}
   .trimhandle.left{left:-22px}
   .trimhandle.right{right:-22px}
@@ -123,14 +150,15 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .editor.show{display:block}
   .editin{max-width:none;margin:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:24px 34px;gap:3px}
   .clip-context-name{display:block;grid-column:1/2;grid-row:1;min-height:24px;height:24px;padding:4px 5px;border-left:2px solid var(--px-blue2);font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .volrow{grid-column:2/5;grid-row:1;min-height:24px;height:24px;gap:4px;font-size:10px}
+  .volrow{grid-column:2/4;grid-row:1;min-height:24px;height:24px;gap:4px;font-size:10px}
+  .editor #clip-close{grid-column:4;grid-row:1;min-height:24px;height:24px;padding:1px 2px;font-size:8px}
   .editor button{min-height:34px;height:34px;font-size:8px}
   #cut{grid-column:1;grid-row:2}
   #duplicate{grid-column:2;grid-row:2}
   #del{grid-column:3;grid-row:2}
   #clipmute{grid-column:4;grid-row:2}
 
-  .bottomcmd{display:grid;position:relative;flex:0 0 auto;bottom:auto;z-index:35;grid-template-columns:repeat(5,1fr);gap:3px;margin:0 0 0;padding:4px;background:#050b18f5;border:2px solid var(--px-blue);box-shadow:0 -2px 0 #02050b}
+  .bottomcmd{display:grid;position:relative;flex:0 0 auto;bottom:auto;z-index:46;grid-template-columns:repeat(4,1fr);gap:3px;margin:0 0 0;padding:4px;background:#050b18f5;border:2px solid var(--px-blue);box-shadow:0 -2px 0 #02050b}
   .bottomcmd button{min-height:42px;padding:0 2px;font-size:8px}
   .bottomcmd #addtrack{width:auto;margin:0;min-height:42px}
   .mobile-menu-toggle{display:block}
@@ -254,11 +282,12 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 
 <nav class="tools" aria-label="Transport principal"><div class="toolsin">
   <button class="transport game-btn game-btn-standard" id="back">−5s</button>
-  <button class="record game-btn game-btn-primary game-btn-red" id="record"><b>●</b> REC</button>
+  <button class="record game-btn game-btn-primary game-btn-red" id="record" title="Enregistrement WAV sécurisé"><b>●</b> REC WAV</button>
   <button class="transport game-btn game-btn-primary game-btn-yellow" id="play">▶</button>
   <button class="transport game-btn game-btn-primary game-btn-dark" id="stop">■</button>
   <button class="transport game-btn game-btn-standard" id="forward">+5s</button>
 </div></nav>
+<div id="recording-state" role="status" aria-live="off" hidden></div>
 
 <section class="multitrack" id="multitrack">
   <div class="multitrack-body">
@@ -285,7 +314,14 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 
 <div class="editor" id="editor"><div class="editin">
   <div class="clip-context-name" id="clip-context-name"></div>
+  <button class="game-btn game-btn-compact game-btn-secondary" id="clip-close" type="button" aria-label="Fermer les commandes du clip">✕ FERMER</button>
   <div class="volrow">🔊 <input id="clipvol" type="range" min="0" max="150" value="100"></div>
+  <div class="clip-latency" aria-label="Synchroniser le son sélectionné">
+    <span>RECALER CETTE PRISE</span>
+    <button class="game-btn game-btn-compact game-btn-secondary" id="clip-early" type="button">◀ 25 ms</button>
+    <button class="game-btn game-btn-compact game-btn-secondary" id="clip-late" type="button">25 ms ▶</button>
+    <button class="game-btn game-btn-compact game-btn-green" id="clip-calibrated" type="button">🎯 CORRIGER</button>
+  </div>
   <button class="game-btn game-btn-compact" id="cut" title="Couper au curseur">✂ COUPER</button>
   <button class="game-btn game-btn-compact" id="duplicate" title="Dupliquer">⧉ DUPLIQUER</button>
   <button class="game-btn game-btn-compact game-btn-red" id="del" title="Supprimer">🗑 SUPPRIMER</button>
@@ -296,18 +332,20 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button class="libbtn game-btn game-btn-standard" id="import-phone">＋ IMPORTER</button>
   <button class="game-btn game-btn-standard game-btn-violet" id="sound-library-jump">🎧 SONS</button>
   <button class="addtrack game-btn game-btn-standard game-btn-green" id="addtrack">＋ PISTE</button>
-  <button class="mobile-menu-toggle game-btn game-btn-compact game-btn-dark game-btn-secondary" id="project-menu-toggle" type="button">PROJET</button>
   <button class="mobile-menu-toggle game-btn game-btn-compact game-btn-secondary" id="tools-menu-toggle" type="button">OUTILS</button>
 </nav>
 
-<div class="projectbar" id="project-menu-panel">
-  <button class="game-btn game-btn-standard game-btn-violet" id="editor-projects" type="button">← MES PROJETS</button>
-  <button class="game-btn game-btn-standard game-btn-green" id="editor-new-project" type="button">＋ NOUVEAU PROJET</button>
-  <details class="project-advanced"><summary>OPTIONS AVANCÉES</summary><button class="game-btn game-btn-compact game-btn-secondary" id="download-project">⬇ TÉLÉCHARGER UNE COPIE</button><button class="game-btn game-btn-compact game-btn-secondary" id="studio-wav-clean-temp" type="button">🧹 EFFACER LES WAV TEMPORAIRES</button></details>
-</div>
-
 <div class="secondarytools" id="tools-menu-panel">
-  <button class="game-btn game-btn-standard game-btn-green" id="studio-wav-open" type="button">🎙 PRISES WAV SÉCURISÉES</button>
+  <div class="studio-tools-header"><strong>OUTILS</strong><button type="button" class="game-btn game-btn-compact game-btn-secondary" id="tools-close" aria-label="Fermer les outils">✕ FERMER</button></div>
+  <button class="game-btn game-btn-standard game-btn-green" id="studio-wav-open" type="button">📁 MES PRISES WAV</button>
+  <div class="latency-tools" role="group" aria-label="Synchronisation des enregistrements">
+    <div class="latency-compact">
+      <span id="latency-current" aria-live="polite">🎯 Synchronisation : à calibrer</span>
+      <button class="game-btn game-btn-compact game-btn-violet" id="latency-calibrate" type="button">Recalibrer</button>
+    </div>
+    <p id="latency-status" role="status" hidden></p>
+  </div>
+  <details class="studio-advanced-tools"><summary>ÉDITION ET OPTIONS OCCASIONNELLES</summary>
   <div class="quick">
     <button class="game-btn game-btn-compact game-btn-secondary" id="undo">↶ ANNULER</button>
     <button class="game-btn game-btn-compact game-btn-secondary" id="redo">↷ RÉTABLIR</button>
@@ -317,6 +355,11 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-compact" id="export-selection">⬇ EXPORT SÉLECTION</button>
   </div>
   <div class="exportdiag" id="selection-diagnostic" aria-live="polite"></div>
+  <div class="studio-project-advanced">
+    <button class="game-btn game-btn-compact game-btn-secondary" id="download-project" type="button">⬇ TÉLÉCHARGER UNE COPIE</button>
+    <button class="game-btn game-btn-compact game-btn-secondary" id="studio-wav-clean-temp" type="button">🧹 EFFACER LES WAV TEMPORAIRES</button>
+  </div>
+  </details>
   <div class="metro">
     <button class="game-btn game-btn-compact game-btn-violet" id="metro">🎵 CLIC : NON</button>
     <button class="game-btn game-btn-compact" id="bpm-minus">−</button>
@@ -348,14 +391,14 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 </main>
 <section class="studio-wav-overlay" id="studio-wav-panel" hidden>
   <div class="studio-wav-box" role="dialog" aria-modal="true" aria-labelledby="studio-wav-title">
-    <h2 id="studio-wav-title">🎙 Prises WAV sécurisées — Studio Audio</h2>
-    <p>Enregistre et retrouve tes prises WAV sans remplacer l’ancien moteur. Dans cette version d’essai, les prises jusqu’à 5 minutes peuvent être ajoutées sur la piste active. Le WAV original reste récupérable.</p>
+    <h2 id="studio-wav-title">📁 Mes prises enregistrées</h2>
+    <p>Pour enregistrer, utilise directement <strong>REC WAV</strong> puis <strong>■</strong> dans le Studio. Ici, retrouve et télécharge tes prises si nécessaire.</p>
     <div id="studio-wav-time">⏱ 00:00</div>
     <div id="studio-wav-status" role="status" aria-live="polite">Prêt.</div>
-    <div class="studio-wav-actions">
+    <details><summary>Enregistrement manuel de secours</summary><div class="studio-wav-actions">
       <button id="studio-wav-start" type="button">● ENREGISTRER WAV</button>
       <button id="studio-wav-stop" type="button" disabled>■ ARRÊTER</button>
-    </div>
+    </div></details>
     <p><label for="studio-wav-saved">Prises conservées sur ce téléphone :</label></p>
     <select id="studio-wav-saved" aria-label="Prises WAV locales"></select>
     <div class="studio-wav-actions">
@@ -366,7 +409,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
       <a id="studio-wav-download" hidden>⬇ TÉLÉCHARGER LE WAV</a>
     </div>
     <audio id="studio-wav-player" controls hidden></audio>
-    <p>Les prises jusqu’à 5 minutes peuvent être ajoutées sur la piste active après ARRÊTER. Pour les prises de plus de 30 secondes, le son est lu par petits fragments, sans décodage complet. <strong>L’export du montage contenant une longue prise reste désactivé pendant cette phase de test.</strong> Le WAV original peut être téléchargé (5 minutes / 32 Mio maximum). Les fragments locaux peuvent disparaître si les données du navigateur sont effacées.</p>
+    <p>Les prises jusqu’à 5 minutes peuvent être ajoutées à une piste. Une prise de plus de 30 secondes est lue progressivement ; l’export du montage long reste en test. <strong>Ne vide pas les données du navigateur</strong> sans exporter les sons que tu souhaites conserver.</p>
     <div class="studio-wav-actions"><button id="studio-wav-close" type="button">FERMER ET RETOURNER AU STUDIO</button></div>
   </div>
 </section>
@@ -377,10 +420,14 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <input id="export-title-input" type="text" maxlength="160" autocomplete="off">
     <div class="export-destination-note" id="export-destination-note"></div>
     <div class="export-destination-actions">
-      <button class="game-btn game-btn-standard" id="export-download-ready" type="button">⬇ TÉLÉCHARGER</button>
+      <button class="game-btn game-btn-standard" id="export-download-ready" type="button">⬇ TÉLÉCHARGER WAV</button>
+      <button class="game-btn game-btn-standard game-btn-green" id="export-compress-opus" type="button" disabled>🎧 FICHIER LÉGER (OPUS) · ESSAI</button>
+      <button class="game-btn game-btn-compact game-btn-secondary" id="export-opus-cancel" type="button" hidden>✕ ANNULER LA COMPRESSION</button>
+      <a class="game-btn game-btn-standard" id="export-opus-download" type="button" hidden>⬇ TÉLÉCHARGER OGG OPUS</a>
       <button class="game-btn game-btn-standard game-btn-green" id="export-forest-ready" type="button">🌲 EXPORTER DANS LA FORÊT ENCHANTÉE</button>
       <button class="game-btn game-btn-compact game-btn-secondary" id="export-destination-cancel" type="button">ANNULER</button>
     </div>
+    <div class="export-destination-note" id="export-opus-status" role="status" aria-live="polite">Le format léger Opus est expérimental ; le WAV original est conservé.</div>
   </div>
 </div>
 <div class="project-dialog-panel" id="export-error-panel" hidden>
@@ -390,13 +437,54 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-bridge.js"></script><script src="js/studio-wav-long-source.js"></script><script src="js/studio-wav-long-playback.js"></script><script src="js/studio-wav-long-mix.js"></script><script src="js/studio-wav-panel.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/audio-publish.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-recording-wav-core.js"></script><script src="js/studio-wav-bridge.js"></script><script src="js/studio-wav-long-source.js"></script><script src="js/studio-wav-long-playback.js"></script><script src="js/studio-wav-long-mix.js"></script><script src="js/studio-ogg-opus.js"></script><script src="js/studio-opus-compact.js"></script><script src="js/studio-wav-panel.js"></script><script src="js/studio-latency-compensation.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
-const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
+const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();
+let wavController=null,secureCaptureState='idle',secureCaptureInfo=null,secureWavePeaks=[],secureLastWaveDraw=0,secureMicroStage=null;
+let secureOverdubPreparing=false,secureOverdubGeneration=0,secureOverdubSync=null;
+let measuredLatencyMs=StudioLatencyCompensation.load(localStorage),calibrationSession=null;let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
-function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
+function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){$('#undo').disabled=!undo.length;$('#redo').disabled=!redo.length;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;$('#clip-early').disabled=!has;$('#clip-late').disabled=!has;$('#clip-calibrated').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
 function recordTrackIdFor(id=selectedRecordTrackId){return tracks.some(t=>t.id===id)?id:(tracks.find(t=>t.type==='voice')?.id||tracks[0]?.id||null)}
+function syncLatencyDisplay(message=''){
+  $('#latency-current').textContent=measuredLatencyMs>0
+    ?'🎯 Synchronisation : '+measuredLatencyMs+' ms ✅'
+    :'🎯 Synchronisation : à calibrer';
+  $('#clip-calibrated').textContent=measuredLatencyMs>0?'🎯 −'+measuredLatencyMs+' ms':'🎯 CALIBRER';
+  const status=$('#latency-status');
+  status.hidden=!message;
+  status.textContent=message||'';
+}
+function setLatency(ms,description=''){
+  measuredLatencyMs=StudioLatencyCompensation.save(localStorage,ms);
+  syncLatencyDisplay(description||'Correction des futurs doublages : '+measuredLatencyMs+' ms. Valeur conservée sur ce navigateur.');
+}
+function applyClipTiming(clip,shiftMs,automatic=false){
+  if(!shiftMs)return clip;
+  const adjusted=StudioLatencyCompensation.shiftClip(clip,shiftMs);
+  if(automatic)adjusted.latencyCorrectionMs=shiftMs;
+  return adjusted
+}
+function adjustSelectedClip(shiftMs){
+  if(!selected||secureOverdubPreparing||secureCaptureState!=='idle')return;
+  try{
+    const next=applyClipTiming(selected,shiftMs);
+    checkpoint();Object.assign(selected,next);
+    selected.latencyCorrectionMs=(Number(selected.latencyCorrectionMs)||0)+shiftMs;
+    render();markProjectDirty();
+    msg('Prise recalée de '+Math.abs(shiftMs)+' ms vers '+(shiftMs>0?'la gauche':'la droite')+' ✓');
+  }catch(e){msg('Décalage impossible : '+e.message)}
+}
+$('#clip-close').onclick=closeClipEditor;
+$('#clip-early').onclick=()=>adjustSelectedClip(25);
+$('#clip-late').onclick=()=>adjustSelectedClip(-25);
+$('#clip-calibrated').onclick=()=>{
+  if(measuredLatencyMs<=0){msg('Calibre d’abord le téléphone dans OUTILS');return}
+  if(!selected)return;
+  adjustSelectedClip(measuredLatencyMs-(Number(selected.latencyCorrectionMs)||0));
+};
+syncLatencyDisplay();
 function selectRecordTrack(id,dirty=true){let next=recordTrackIdFor(id);if(!next)return false;let changed=selectedRecordTrackId!==next;selectedRecordTrackId=next;document.querySelectorAll('.track-control').forEach(el=>{let armed=el.dataset.trackId===next;el.classList.toggle('record-armed',armed);let arm=el.querySelector('[data-arm]');if(arm){arm.classList.toggle('is-active',armed);arm.setAttribute('aria-pressed',armed?'true':'false')}});if(changed&&dirty)markProjectDirty();return true}
 function deleteClipById(id){let c=clips.find(x=>x.id===id);if(!c)return false;checkpoint();clips=clips.filter(x=>x.id!==id);if(selected?.id===id){selected=null;$('#editor').classList.remove('show')}render();return true}
 function deleteTrackById(id,confirmFn=window.confirm){let index=tracks.findIndex(t=>t.id===id);if(index<0)return false;if(tracks.length<=1){msg('Impossible de supprimer la dernière piste');return false}let track=tracks[index],owned=clips.filter(c=>c.track===id);if(owned.length){let label=owned.length===1?'1 morceau':owned.length+' morceaux';if(!confirmFn('Supprimer cette piste et ses '+label+' ?'))return false}checkpoint();tracks=tracks.filter(t=>t.id!==id);clips=clips.filter(c=>c.track!==id);if(selected&&selected.track===id){selected=null;$('#editor').classList.remove('show')}if(selectedRecordTrackId===id)selectedRecordTrackId=tracks[0]?.id||null;selectedRecordTrackId=recordTrackIdFor();render();return true}
@@ -413,10 +501,7 @@ $('#track-delete-action').onclick=()=>{let id=trackMenuTargetId;closeTrackPanels
 function syncStudioViewport(){let v=window.visualViewport,h=Math.max(1,Math.round(v?.height||window.innerHeight||document.documentElement.clientHeight||1)),top=Math.max(0,Math.round(v?.offsetTop||0));document.documentElement.style.setProperty('--studio-vh',h+'px');document.documentElement.style.setProperty('--studio-vv-top',top+'px')}
 syncStudioViewport();window.addEventListener('resize',syncStudioViewport,{passive:true});if(window.visualViewport){visualViewport.addEventListener('resize',syncStudioViewport,{passive:true});visualViewport.addEventListener('scroll',syncStudioViewport,{passive:true})}
 function toggleMobileMenu(panel,other){closeTrackPanels();let p=$(panel),o=$(other);if(o)o.classList.remove('menu-open');if(p)p.classList.toggle('menu-open')}
-$('#project-menu-toggle').onclick=()=>toggleMobileMenu('#project-menu-panel','#tools-menu-panel');
 $('#back-projects').onclick=returnToProjectLibrary;
-$('#editor-projects').onclick=returnToProjectLibrary;
-$('#editor-new-project').onclick=createLocalProject;
 $('#create-local-project').onclick=createLocalProject;
 $('#project-options-close').onclick=closeProjectOptions;
 $('#project-option-rename').onclick=()=>{let p=projectOptionsTarget;if(p)openProjectRename(p)};
@@ -427,18 +512,121 @@ $('#project-rename-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();
 $('#project-delete-cancel').onclick=closeProjectDelete;
 $('#project-delete-confirm').onclick=commitProjectDelete;
 if(window.visualViewport){visualViewport.addEventListener('resize',keepProjectRenameVisible,{passive:true});visualViewport.addEventListener('scroll',keepProjectRenameVisible,{passive:true})}
-$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel','#project-menu-panel');$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
+$('#tools-menu-toggle').onclick=()=>toggleMobileMenu('#tools-menu-panel',null);
+$('#tools-close').onclick=()=>$('#tools-menu-panel').classList.remove('menu-open');$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView({behavior:'smooth',block:'start'})};
 function xToTime(clientX){let r=$('#canvas').getBoundingClientRect();return Math.max(0,Math.min(projectDuration(),(clientX-r.left)/pixelsPerSecond()))}function setCursor(t,scroll=false){cursor=Math.max(0,Math.min(projectDuration(),t));let pps=pixelsPerSecond();$('#playhead').style.left=(cursor*pps)+'px';$('#clock').textContent=fmt(cursor);if(scroll){let x=cursor*pps+TRIM_GUTTER_PX,tl=$('#timeline'),target=x-tl.clientWidth*.72;tl.scrollLeft=Math.max(0,target)}}
 function waveform(canvas,c){let cached=waveformCache.get(c.sourceId);if(!cached){canvas.style.display='none';return}let tl=$('#timeline'),pps=pixelsPerSecond(),h=Math.max(1,canvas.parentElement?.clientHeight||66),dpr=devicePixelRatio||1,plan=StudioWaveform.visiblePlan({clipStart:c.start,clipDuration:c.len,sourceOffset:c.trim,pps,scrollLeft:Math.max(0,tl.scrollLeft-TRIM_GUTTER_PX),viewportWidth:tl.clientWidth,sourceDuration:cached.duration,peakRate:cached.peakRate,dpr});if(!plan.visible){canvas.style.display='none';return}canvas.style.display='block';canvas.style.left=plan.canvasLeft+'px';canvas.style.width=plan.cssWidth+'px';canvas.style.height=h+'px';canvas.width=plan.bitmapWidth;canvas.height=Math.max(1,Math.ceil(h*dpr));let g=canvas.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,plan.cssWidth,h);g.strokeStyle='rgba(255,255,255,.78)';g.lineWidth=1;g.beginPath();for(let i=0;i<plan.columns;i++){let m=StudioWaveform.peakForColumn(cached,plan,i,plan.columns),x=i*StudioWaveform.DRAW_STEP_PX,y=m*h*.46;g.moveTo(x,h/2-y);g.lineTo(x,h/2+y)}g.stroke()}
 let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;document.querySelectorAll('.wavecanvas').forEach(cv=>{if(cv._clip)waveform(cv,cv._clip)})}$('#timeline').addEventListener('scroll',()=>{if(!waveformScrollRaf)waveformScrollRaf=requestAnimationFrame(refreshVisibleWaveforms)},{passive:true});
-function pixelsPerSecond(){return Math.max(1,$('#timeline').clientWidth/15)*zoom}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){selectedRecordTrackId=recordTrackIdFor();let d=projectDuration(),pps=pixelsPerSecond(),w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let marks=Math.max(5,Math.floor(d/5)+1),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let i=0;i<marks;i++){let tm=Math.min(d,i*5),s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(88,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(selectedRecordTrackId===t.id)lane.classList.add('active-destination');placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'');ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-top"><button class="track-arm game-btn game-btn-compact game-btn-dark '+(selectedRecordTrackId===t.id?'is-active':'')+'" data-arm type="button" aria-pressed="'+(selectedRecordTrackId===t.id?'true':'false')+'" aria-label="Destination '+t.name+'"><span class="track-arm-name">'+t.name+'</span><span class="track-arm-rec">● REC</span></button><button class="track-more game-btn game-btn-compact game-btn-secondary" data-track-menu type="button" aria-label="Menu '+t.name+'">⋯</button></div><div class="track-control-buttons"><button class="game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')+'" data-mute title="Muet">'+(t.muted?'🔇':'🔊')+' MUET</button><button class="game-btn game-btn-compact game-btn-secondary" data-vol title="Volume">🔊 '+Math.round(t.gain*100)+'%</button></div>';bindRecordTrackControl(ctrl,t);controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
+function pixelsPerSecond(){return Math.max(1,$('#timeline').clientWidth/15)*zoom}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){selectedRecordTrackId=recordTrackIdFor();let d=projectDuration(),pps=pixelsPerSecond(),w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let marks=Math.max(5,Math.floor(d/5)+1),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let i=0;i<marks;i++){let tm=Math.min(d,i*5),s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(88,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(selectedRecordTrackId===t.id)lane.classList.add('active-destination');placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'');ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-top"><button class="track-arm game-btn game-btn-compact game-btn-dark '+(selectedRecordTrackId===t.id?'is-active':'')+'" data-arm type="button" aria-pressed="'+(selectedRecordTrackId===t.id?'true':'false')+'" aria-label="Destination '+t.name+'"><span class="track-arm-name">'+t.name+'</span><span class="track-arm-rec">● REC</span></button><button class="track-more game-btn game-btn-compact game-btn-secondary" data-track-menu type="button" aria-label="Menu '+t.name+'">⋯</button></div><div class="track-control-buttons"><button class="game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')+'" data-mute title="Muet">'+(t.muted?'🔇':'🔊')+' MUET</button><button class="game-btn game-btn-compact game-btn-secondary" data-vol title="Volume">🔊 '+Math.round(t.gain*100)+'%</button></div>';bindRecordTrackControl(ctrl,t);controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';if(secureCaptureState!=='idle')e.classList.add('secure-wav-live');lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
 function dragLaneAt(clientY){for(const lane of document.querySelectorAll('#tracks .lane[data-track-id]')){let r=lane.getBoundingClientRect();if(clientY>=r.top&&clientY<=r.bottom)return{lane,trackId:lane.dataset.trackId}}return null}
 function setDragLaneFeedback(lane){document.querySelectorAll('#tracks .lane.drag-target').forEach(x=>x.classList.remove('drag-target'));if(lane)lane.classList.add('drag-target')}
-function clipGesture(el,c,d){let sx=null,sy=null,startState=null,moved=false,pointerId=null;function releasePointer(){if(pointerId===null)return;try{if(!el.hasPointerCapture||el.hasPointerCapture(pointerId))el.releasePointerCapture(pointerId)}catch{}pointerId=null}function finish(e,cancelled){if(sx===null)return;e.preventDefault();e.stopPropagation();releasePointer();setDragLaneFeedback(null);if(cancelled){c.start=startState.start;c.track=startState.track}else if(moved){let after=snapshot();undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,start:startState.start,track:startState.track}:x)});redo=[];buttons();markProjectDirty()}else{selected=c;document.querySelector('.soundlib')?.classList.remove('mobile-open');$('#editor').classList.add('show');$('#clipvol').value=c.gain*100;$('#clipmute').textContent=c.muted?'🔇 RÉACTIVER':'🔊 MUET';$('#clipmute').classList.toggle('is-active',c.muted)}sx=sy=null;startState=null;moved=false;render()}el.onpointerdown=e=>{if(e.pointerType==='touch'&&e.isPrimary===false)return;sx=e.clientX;sy=e.clientY;startState={start:c.start,track:c.track};moved=false;pointerId=e.pointerId;el.setPointerCapture(e.pointerId);e.preventDefault()};el.onpointermove=e=>{if(sx===null)return;let dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)>5)moved=true;if(!moved)return;e.preventDefault();e.stopPropagation();c.start=Math.max(0,startState.start+dx/pixelsPerSecond());let hit=dragLaneAt(e.clientY);if(hit){c.track=hit.trackId;if(el.parentElement!==hit.lane){hit.lane.appendChild(el);el.style.top='5px'}setDragLaneFeedback(hit.lane)}el.style.left=(c.start*pixelsPerSecond())+'px'};el.onpointerup=e=>finish(e,false);el.onpointercancel=e=>finish(e,true)}
+function closeClipEditor(){
+  if(!selected&&!$('#editor').classList.contains('show'))return;
+  selected=null;
+  $('#editor').classList.remove('show');
+  render();
+}
+// A tap selects one clip; a second tap deselects it. Unselected clips are
+// never draggable. Touch swipes on them belong to the native timeline pan.
+function clipGesture(el,c,d){
+  let gesture=null;
+  const tl=$('#timeline');
+  function release(){
+    if(gesture?.captured){
+      try{if(!el.hasPointerCapture||el.hasPointerCapture(gesture.id))el.releasePointerCapture(gesture.id)}catch{}
+    }
+  }
+  function end(e,cancelled=false){
+    const g=gesture;
+    if(!g||e.pointerId!==g.id)return;
+    release();gesture=null;setDragLaneFeedback(null);
+    if(g.mode==='move'){
+      e.preventDefault();e.stopPropagation();
+      if(cancelled){
+        c.start=g.start;c.track=g.track;
+      }else if(g.moved&&(c.start!==g.start||c.track!==g.track)){
+        const after=snapshot();
+        undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,start:g.start,track:g.track}:x)});
+        if(undo.length>30)undo.shift();
+        redo=[];buttons();markProjectDirty();
+      }else if(!g.moved){
+        closeClipEditor();return;
+      }
+      render();return;
+    }
+    // A finger dragging an UNSELECTED clip only scrolls the timeline:
+    // native pan-x handles touch, explicit scrollLeft handles desktop mouse.
+    if(!cancelled&&!g.moved){
+      selected=c;
+      document.querySelector('.soundlib')?.classList.remove('mobile-open');
+      $('#editor').classList.add('show');
+      $('#clipvol').value=c.gain*100;
+      $('#clipmute').textContent=c.muted?'🔇 RÉACTIVER':'🔊 MUET';
+      $('#clipmute').classList.toggle('is-active',c.muted);
+      render();
+    }
+  }
+  el.onpointerdown=e=>{
+    if(e.pointerType==='touch'&&e.isPrimary===false)return;
+    const moving=selected===c;
+    gesture={id:e.pointerId,x:e.clientX,y:e.clientY,start:c.start,track:c.track,
+      mode:moving?'move':'pan',scroll:tl.scrollLeft,moved:false,captured:false,pointerType:e.pointerType};
+    if(moving||e.pointerType==='mouse'){
+      gesture.captured=true;
+      try{el.setPointerCapture(e.pointerId)}catch{gesture.captured=false}
+    }
+    if(moving)e.preventDefault();
+  };
+  el.onpointermove=e=>{
+    const g=gesture;if(!g||e.pointerId!==g.id)return;
+    const dx=e.clientX-g.x,dy=e.clientY-g.y;
+    if(Math.hypot(dx,dy)>7)g.moved=true;
+    if(!g.moved)return;
+    if(g.mode==='pan'){
+      if(g.pointerType==='mouse')tl.scrollLeft=g.scroll-dx;
+      return;
+    }
+    e.preventDefault();e.stopPropagation();
+    c.start=Math.max(0,g.start+dx/pixelsPerSecond());
+    const hit=dragLaneAt(e.clientY);
+    if(hit){
+      c.track=hit.trackId;
+      if(el.parentElement!==hit.lane){hit.lane.appendChild(el);el.style.top='5px'}
+      setDragLaneFeedback(hit.lane);
+    }
+    el.style.left=(c.start*pixelsPerSecond())+'px';
+  };
+  el.onpointerup=e=>end(e,false);
+  el.onpointercancel=e=>end(e,true);
+}
 function trimGesture(handle,c,side){let active=false,sx=0,startState=null,clipEl=handle.closest('.clip');handle.addEventListener('pointerdown',e=>{active=true;sx=e.clientX;startState={start:c.start,trim:c.trim,len:c.len};e.stopPropagation();e.preventDefault();handle.setPointerCapture(e.pointerId)});handle.addEventListener('pointermove',e=>{if(!active)return;e.stopPropagation();e.preventDefault();let delta=(e.clientX-sx)/pixelsPerSecond();if(side==='left'){let change=Math.max(-startState.trim,Math.min(startState.len-.08,delta));c.start=startState.start+change;c.trim=startState.trim+change;c.len=startState.len-change}else{let maxLen=Math.max(.08,sourceDurationFor(c)-startState.trim);c.len=Math.max(.08,Math.min(maxLen,startState.len+delta))}clipEl.style.left=(c.start*pixelsPerSecond())+'px';clipEl.style.width=(c.len*pixelsPerSecond())+'px';let wave=clipEl.querySelector('.wavecanvas');if(wave)waveform(wave,c)});let finish=e=>{if(!active)return;active=false;e.stopPropagation();e.preventDefault();let changed=Math.abs(c.start-startState.start)>.001||Math.abs(c.len-startState.len)>.001;if(changed){let after=snapshot();undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,...startState}:x)});redo=[];buttons();markProjectDirty();msg('Rognage ✓')}selected=c;render()};handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish)}
 function chooseFile(track=recordTrackIdFor(),start=cursor){let input=$('#file'),target=recordTrackIdFor(track);if(!target)return msg('Aucune piste active');input.dataset.track=target;input.dataset.start=String(start);input.click()}function addTrack(kind='sound'){checkpoint();let n=tracks.length,colors=['#18a77b','#e09b32','#2997d6','#d65b9d'];let t={id:(kind==='voice'?'voice':'sound')+Date.now(),name:(kind==='voice'?'🎙️ VOIX ':'🎵 SON ')+(tracks.filter(x=>x.type===kind).length+1),type:kind,gain:1,muted:false,color:colors[(n-1)%colors.length]};tracks.push(t);render();return t}$('#addtrack').onclick=()=>{if(tracks.length>=4)return;addTrack('sound')};
 $('#file').onchange=async e=>{let f=e.target.files[0],track=recordTrackIdFor(e.target.dataset.track),start=Number.isFinite(+e.target.dataset.start)?+e.target.dataset.start:cursor;if(!f)return;if(!track){e.target.value='';return msg('Aucune piste active')}try{let b=await ctx.decodeAudioData(await f.arrayBuffer()),sourceId=await registerSourceBlob(f,b,{origin:'phone-import',originalName:f.name,mimeType:f.type||''});checkpoint();clips.push({id:crypto.randomUUID(),track,name:f.name,sourceId,start,trim:0,len:b.duration,gain:1,muted:false});render();msg('Audio importé sur la piste active ✓')}catch{msg('Format audio non reconnu')}e.target.value='';delete e.target.dataset.start};
-$('#timeline').onpointerdown=e=>{if(e.target.closest('.clip,button')||e.target===$('#playhead'))return;if(e.pointerType==='touch'&&e.isPrimary===false)return;setCursor(xToTime(e.clientX))};
+// An empty-space tap seeks and dismisses the editor. An empty-space swipe
+// scrolls instead (native on touch, scrollLeft on desktop), never moving clips.
+let emptyTimelineGesture=null;
+$('#timeline').onpointerdown=e=>{
+  if(e.target.closest('.clip,button')||e.target===$('#playhead'))return;
+  if(e.pointerType==='touch'&&e.isPrimary===false)return;
+  emptyTimelineGesture={id:e.pointerId,x:e.clientX,y:e.clientY,
+    scroll:$('#timeline').scrollLeft,moved:false,pointerType:e.pointerType};
+  if(e.pointerType==='mouse')try{$('#timeline').setPointerCapture(e.pointerId)}catch{}
+};
+$('#timeline').onpointermove=e=>{
+  const g=emptyTimelineGesture;if(!g||g.id!==e.pointerId)return;
+  const dx=e.clientX-g.x,dy=e.clientY-g.y;
+  if(Math.hypot(dx,dy)>7)g.moved=true;
+  if(g.moved&&g.pointerType==='mouse')$('#timeline').scrollLeft=g.scroll-dx;
+};
+$('#timeline').onpointerup=e=>{
+  const g=emptyTimelineGesture;if(!g||g.id!==e.pointerId)return;
+  emptyTimelineGesture=null;
+  if(!g.moved){
+    setCursor(xToTime(e.clientX));
+    closeClipEditor();
+  }
+};
+$('#timeline').onpointercancel=()=>{emptyTimelineGesture=null};
 let ph=$('#playhead');
 function beginPlayheadSeek(e){draggingHead=true;seekResumePlayback=playing||playPreparing;if(seekResumePlayback)stopPlay(false);ph.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()}
 function movePlayheadSeek(e){if(!draggingHead)return;e.preventDefault();e.stopPropagation();setCursor(xToTime(e.clientX),false)}
@@ -451,6 +639,37 @@ const longIndexCache=new Map();
 function stopPlay(keep=true){playGeneration++;playPreparing=false;playing=false;clearInterval(tick);tick=null;stopMetro();longPlaybackControllers.forEach(p=>p.stop());longPlaybackControllers=[];sources.forEach(s=>{try{s.stop()}catch{}});sources=[];$('#play').textContent='▶';if(keep)setCursor(cursor)}
 let longPlaybackControllers=[];
 function updateLiveRecordingVisual(t){liveDuration=Math.max(liveDuration,t+5);if(liveRec)liveRec.len=Math.max(.03,t-liveRec.start);let pps=pixelsPerSecond(),tl=$('#timeline'),canvas=$('#canvas'),needed=Math.max(tl.clientWidth,projectDuration()*pps),current=parseFloat(canvas.style.width)||0;if(needed>current)canvas.style.width=needed+'px';let e=$('#liveclip');if(e&&liveRec){e.style.left=(liveRec.start*pps)+'px';e.style.width=(liveRec.len*pps)+'px'}}
+function drawSecureLiveWave(){
+  const cv=$('#livewave');if(!cv||!liveRec)return;
+  const w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight),dpr=Math.min(2,devicePixelRatio||1);
+  const targetW=Math.max(1,Math.ceil(w*dpr)),targetH=Math.max(1,Math.ceil(h*dpr));
+  if(cv.width!==targetW||cv.height!==targetH){cv.width=targetW;cv.height=targetH}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  g.strokeStyle='rgba(255,238,198,.91)';g.lineWidth=1.8;g.beginPath();
+  const count=secureWavePeaks.length,expected=Math.max(count,Math.ceil(liveRec.len*35));
+  // One peak per 3 CSS pixels, not every 35-Hz PCM bucket; prevents the
+  // solid white rectangle seen when recording on a narrow mobile timeline.
+  for(let x=2;x<w-2;x+=3){
+    const first=Math.floor(x/w*expected),last=Math.min(count,Math.ceil((x+3)/w*expected));
+    if(first>=count)break;
+    let peak=0;for(let i=first;i<Math.max(first+1,last);i++)peak=Math.max(peak,secureWavePeaks[i]||0);
+    const amplitude=Math.max(1,Math.min(.9,peak)*h*.35);
+    g.moveTo(x,h/2-amplitude);g.lineTo(x,h/2+amplitude)
+  }
+  g.stroke()
+}
+function updateSecureRecordingProgress(seconds){
+  if(secureCaptureState!=='recording'||!secureCaptureInfo||!liveRec)return;
+  const elapsed=Math.max(.03,seconds),at=secureCaptureInfo.start+elapsed;
+  liveRec.len=elapsed;
+  updateLiveRecordingVisual(at);
+  setCursor(at,true);
+  const tag=$('#recording-state');
+  tag.textContent=(secureMicroStage?'⚠ '+secureMicroStage:'● ENREGISTREMENT WAV')+' · '+fmt(seconds)+' · ■ POUR ARRÊTER'+(secureOverdubSync?' · 🎧 CASQUE CONSEILLÉ':'');
+  if(performance.now()-secureLastWaveDraw>130){
+    drawSecureLiveWave();secureLastWaveDraw=performance.now()
+  }
+}
 function isLongSourceId(id){return typeof localSources!=='undefined'&&localSources.get(id)?.origin==='opfs-wav-long'}
 async function longIndexForSource(id){
   if(longIndexCache.has(id))return longIndexCache.get(id);
@@ -514,6 +733,7 @@ function startPreparedPlayback(from,monitor,prepared){
   t0=performance.now()+(now-ctx.currentTime)*1000-from*1000;
   tick=setInterval(()=>{
     let t=(performance.now()-t0)/1000;
+    if(secureCaptureState==='recording')return; // WAV has its own real capture clock
     if(recording){updateLiveRecordingVisual(t);setCursor(t,true);return}
     if(t>=projectDuration()){cursor=projectDuration();stopPlay();return}
     setCursor(Math.max(from,t),true)
@@ -538,7 +758,107 @@ function renderSelection(){let e=$('#selection'),a=$('#selection-start-mark'),b=
 $('#sel-start').onclick=()=>{selectionStart=cursor;if(selectionEnd!==null&&selectionEnd<=selectionStart)selectionEnd=null;renderSelection();selectionDiagnostic('SÉLECTION DÉBUT = '+selectionSeconds(selectionStart)+' s');markProjectDirty();msg('Début de sélection posé')};
 $('#sel-end').onclick=()=>{if(selectionStart===null){selectionDiagnostic('SÉLECTION INVALIDE — pose d’abord le DÉBUT');return msg('Pose d’abord le début')}if(cursor<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — FIN = '+selectionSeconds(cursor)+' s, DÉBUT = '+selectionSeconds(selectionStart)+' s');return msg('Place le curseur après le début')}selectionEnd=cursor;renderSelection();selectionDiagnostic('SÉLECTION = '+selectionSeconds(selectionStart)+' → '+selectionSeconds(selectionEnd)+' s\nDURÉE = '+selectionSeconds(selectionEnd-selectionStart)+' s');markProjectDirty();msg('Fin de sélection posée')};
 $('#sel-clear').onclick=()=>{selectionStart=selectionEnd=null;renderSelection();markProjectDirty();msg('Sélection effacée')};
-$('#record').onclick=record;$('#play').onclick=()=>playing||playPreparing?stopPlay():play();$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()};$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
+function setOverdubPreparing(active){
+  secureOverdubPreparing=active;
+  // The microphone has not been requested yet. Preparing/decompressing an
+  // existing take must never be counted as WAV capture or shift the timeline.
+  if(active){
+    $('#recording-state').hidden=false;
+    $('#recording-state').classList.remove('finalizing','error');
+    $('#recording-state').textContent='🎧 PRÉPARATION DES PISTES (CASQUE CONSEILLÉ) · MICROPHONE EN ATTENTE…';
+  }else if(secureCaptureState==='idle'){
+    $('#recording-state').hidden=true;
+  }
+  $('#app').classList.toggle('recording',active||secureCaptureState!=='idle'||recording);
+  $('#record').disabled=active||secureCaptureState!=='idle';
+  $('#play').disabled=active||secureCaptureState!=='idle';
+  $('#back').disabled=active||secureCaptureState!=='idle';
+  $('#forward').disabled=active||secureCaptureState!=='idle';
+}
+async function recordSecurelyFromStudio(){
+  if(!wavController||secureCaptureState!=='idle'||secureOverdubPreparing||!currentProjectId)return;
+  const trackId=recordTrackIdFor();
+  if(!trackId)return msg('Choisis une piste avant d’enregistrer');
+  const snapshot={projectId:currentProjectId,trackId,start:cursor};
+  const token=++secureOverdubGeneration;
+  secureCaptureInfo=snapshot;
+  secureOverdubSync=null;
+  // Stop unrelated playback immediately, BEFORE requesting the microphone.
+  if(playing||playPreparing)stopPlay(false);
+  // Resume on the REC gesture. Existing sources are decoded and cached before
+  // opening the Android microphone, rather than after WAV capture starts.
+  const guideAudible=clips.some(c=>{
+    const track=tracks.find(t=>t.id===c.track);
+    return !c.muted&&!track?.muted&&c.start+c.len>snapshot.start;
+  });
+  let prepared=null;
+  if(guideAudible){
+    setOverdubPreparing(true);
+    try{
+      const primed=ctx.resume();
+      await Promise.race([
+        (async()=>{await primed;return preparePlayback(snapshot.start)})()
+          .then(p=>{prepared=p;return p}),
+        new Promise((_,reject)=>setTimeout(()=>reject(Error('Préparation des pistes trop longue')),9000))
+      ]);
+    }catch(e){
+      if(token===secureOverdubGeneration){
+        secureCaptureInfo=null;setOverdubPreparing(false);
+        msg('Enregistrement annulé : accompagnement indisponible');
+        console.warn('OVERDUB PRÉPARATION',e);
+      }
+      return;
+    }
+    if(token!==secureOverdubGeneration||currentProjectId!==snapshot.projectId){
+      secureCaptureInfo=null;return;
+    }
+    // At this point no hardware microphone has been opened yet.
+    setOverdubPreparing(false);
+  }
+  const success=await wavController.start({
+    onCaptureStart:({performanceTime,sampleRate})=>{
+      if(currentProjectId!==snapshot.projectId||token!==secureOverdubGeneration)
+        throw Error('Projet changé pendant la préparation du doublage');
+      if(prepared){
+        // Synchronous (no awaiting decode!) same-turn start of guide and WAV.
+        const start=performance.now();
+        startPreparedPlayback(snapshot.start,true,prepared);
+        secureOverdubSync={
+          captureActivationAt:performanceTime,
+          monitorStartAt:start,
+          monitorStartDelayMs:Math.round((start-performanceTime)*1000)/1000,
+          estimatedOutputLatencyMs:Math.round((Number(ctx.outputLatency)||0)*1000),
+          estimatedBaseLatencyMs:Math.round((Number(ctx.baseLatency)||0)*1000),
+          captureRate:sampleRate,
+          guidePreparedBeforeMic:true
+        };
+      }
+    }
+  });
+  if(!success&&token===secureOverdubGeneration){
+    secureCaptureInfo=null;
+    // No playback should remain active on a failed capture.
+    if(playing||playPreparing)stopPlay(false);
+  }
+}
+$('#record').onclick=recordSecurelyFromStudio;
+$('#play').onclick=()=>{if(secureCaptureState!=='idle')return;return playing||playPreparing?stopPlay():play()};
+$('#stop').onclick=()=>{
+  if(secureOverdubPreparing){
+    secureOverdubGeneration++;
+    secureCaptureInfo=null;
+    setOverdubPreparing(false);
+    msg('Préparation annulée · microphone non ouvert');
+    return;
+  }
+  if(secureCaptureState!=='idle'){
+    if(secureCaptureState==='starting'){wavController.cancelStart();return}
+    if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}
+    return;
+  }
+  if(recording&&recorder?.state!=='inactive'){recorder.stop();return}
+  stopPlay()
+};$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
 $('#undo').onclick=()=>{if(!undo.length)return;redo.push(snapshot());restore(undo.pop())};$('#redo').onclick=()=>{if(!redo.length)return;undo.push(snapshot());restore(redo.pop())};
 $('#cut').onclick=()=>{if(!selected)return;let rel=cursor-selected.start;if(rel<=.05||rel>=selected.len-.05)return msg('Place le curseur à l’intérieur du morceau');checkpoint();let right={...selected,id:crypto.randomUUID(),start:cursor,trim:selected.trim+rel,len:selected.len-rel};selected.len=rel;clips.push(right);selected=right;render();msg('Morceau coupé ✓')};$('#duplicate').onclick=()=>{if(!selected)return;checkpoint();let c={...selected,id:crypto.randomUUID(),start:selected.start+selected.len+.1};clips.push(c);selected=c;render()};$('#del').onclick=()=>{if(!selected)return;deleteClipById(selected.id)};$('#clipmute').onclick=()=>{if(!selected)return;checkpoint();selected.muted=!selected.muted;$('#clipmute').textContent=selected.muted?'🔇 RÉACTIVER':'🔊 MUET';$('#clipmute').classList.toggle('is-active',selected.muted);render();msg(selected.muted?'Morceau coupé du son':'Morceau réactivé')};let volStart=null;$('#clipvol').onpointerdown=()=>{volStart=snapshot()};$('#clipvol').oninput=e=>{if(selected)selected.gain=e.target.value/100};$('#clipvol').onchange=()=>{if(volStart){undo.push(volStart);redo=[];volStart=null;buttons();markProjectDirty()}};
 function wav(ab){let n=ab.length,ch=ab.numberOfChannels,sr=ab.sampleRate,b=new ArrayBuffer(44+n*ch*2),v=new DataView(b),p=0,str=s=>{for(let x of s)v.setUint8(p++,x.charCodeAt(0))},u16=x=>{v.setUint16(p,x,true);p+=2},u32=x=>{v.setUint32(p,x,true);p+=4};str('RIFF');u32(36+n*ch*2);str('WAVEfmt ');u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);str('data');u32(n*ch*2);for(let i=0;i<n;i++)for(let c=0;c<ch;c++){let x=Math.max(-1,Math.min(1,ab.getChannelData(c)[i]));v.setInt16(p,x<0?x*32768:x*32767,true);p+=2}return new Blob([b],{type:'audio/wav'})}
@@ -554,7 +874,7 @@ function sourceDurationFor(c){let w=waveformCache.get(c.sourceId),b=decodedSourc
 function autosaveStatus(text,error=false){let e=$('#autosave-status');if(!e)return;e.textContent=text;e.style.color=error?'#ff8d8d':'#b9bec8'}
 async function registerSourceBlob(blob,buffer,meta={}){if(!(blob instanceof Blob))throw Error('Source audio originale invalide');let id=meta.id||crypto.randomUUID(),row={id,blob,sourceSchema:meta.sourceSchema||StudioAutosave.SOURCE_SCHEMA_VERSION,mimeType:meta.mimeType||blob.type||'',originalName:meta.originalName||'',origin:meta.origin||'',size:blob.size,createdAt:meta.createdAt||new Date().toISOString()};localSources.set(id,row);if(meta.waveform)waveformCache.seed(id,meta.waveform);if(buffer){localSourceIds.set(buffer,id);decodedSourceCache.inject(id,buffer);await ensureWaveformForSource(id,buffer)}return id}
 function sourceIdFor(c){let id=c.sourceId||c.source_id||localSourceIds.get(c.buffer);if(!id)throw Error('Source audio locale non enregistrée');c.sourceId=id;return id}
-function localSnapshot(){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:currentProjectId||null,name:currentProjectName||'',remoteProjectId:null,cursor,zoom,selectionStart,selectionEnd,selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map(t=>({...t})),clips:clips.map(c=>({id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,sourceId:sourceIdFor(c)}))}}
+function localSnapshot(){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:currentProjectId||null,name:currentProjectName||'',remoteProjectId:null,cursor,zoom,selectionStart,selectionEnd,selectedRecordTrackId:recordTrackIdFor(),tracks:tracks.map(t=>({...t})),clips:clips.map(c=>({id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,latencyCorrectionMs:Number(c.latencyCorrectionMs)||0,sourceId:sourceIdFor(c)}))}}
 async function runAutosave(){if(restoringLocal||!currentProjectId)return;if(autosaveBusy){autosaveAgain=true;return autosaveCurrentPromise}autosaveBusy=true;autosavePending=false;autosaveStatus('Sauvegarde automatique…');autosaveCurrentPromise=(async()=>{let snap=localSnapshot(),fresh=[],freshIds=new Set();for(const c of clips){let id=sourceIdFor(c);if(!persistedLocalSources.has(id)&&!freshIds.has(id)){let source=localSources.get(id);if(!source)throw Error('Source audio originale absente : '+id);fresh.push(source);freshIds.add(id)}}let saved=await localStore.saveProject(currentProjectId,snap,fresh);fresh.forEach(x=>persistedLocalSources.add(x.id));currentProjectName=saved.card.name;autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')})();
 try{await autosaveCurrentPromise}catch(e){console.error('AUTOSAVE STUDIO',e);autosavePending=true;let quota=e?.name==='QuotaExceededError'||/quota/i.test(e?.message||'');autosaveStatus(quota?'SAUVEGARDE LOCALE IMPOSSIBLE — espace insuffisant':'SAUVEGARDE LOCALE IMPOSSIBLE — '+(e?.message||'erreur'),true)}finally{autosaveBusy=false;autosaveCurrentPromise=null;if(autosaveAgain){autosaveAgain=false;autosavePending=true;return runAutosave()}}}
 function markProjectDirty(){if(restoringLocal||!currentProjectId)return;autosavePending=true;autosaveStatus('Sauvegarde automatique : modifications en attente…');clearTimeout(autosaveTimer);autosaveTimer=setTimeout(runAutosave,1500)}
@@ -563,7 +883,7 @@ function blankTrack(){return{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:
 function autoProjectName(now=new Date()){let date=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long'}).format(now),time=new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit',hour12:false}).format(now);return'Projet '+date+' - '+time}
 function emptyProjectSnapshot(name,id){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:id,name,remoteProjectId:null,cursor:0,zoom:1,selectionStart:null,selectionEnd:null,selectedRecordTrackId:'voice',tracks:[blankTrack()],clips:[]}}
 function resetEditorRuntime(){stopPlay();longIndexCache.clear();clips=[];tracks=[blankTrack()];selectedRecordTrackId='voice';cursor=0;zoom=1;selectionStart=selectionEnd=null;selected=null;undo=[];redo=[];localSources.clear();persistedLocalSources.clear();waveformCache.clear();waveformBuilds.clear();decodedSourceCache.clear();$('#editor').classList.remove('show');closeTrackPanels()}
-async function applyLocalProject(saved){restoringLocal=true;try{longIndexCache.clear();decodedSourceCache.clear();waveformCache.clear();waveformBuilds.clear();localSources.clear();persistedLocalSources.clear();for(const [id,waveform] of saved.waveforms||[])waveformCache.seed(id,waveform);for(const [id,blob] of saved.audio){let row=saved.sources?.get(id)||{id,blob};await registerSourceBlob(blob,null,{...row,id,waveform:saved.waveforms?.get(id)||null});persistedLocalSources.add(id)}let snap=saved.snapshot,rebuilt=snap.clips.map(c=>{if(!localSources.has(c.sourceId))throw Error('Audio local manquant');return{id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,sourceId:c.sourceId}});clips=rebuilt;tracks=snap.tracks;selectedRecordTrackId=recordTrackIdFor(snap.selectedRecordTrackId);cursor=Number.isFinite(snap.cursor)?snap.cursor:0;zoom=Number.isFinite(snap.zoom)?snap.zoom:1;selectionStart=Number.isFinite(snap.selectionStart)?snap.selectionStart:null;selectionEnd=Number.isFinite(snap.selectionEnd)?snap.selectionEnd:null;currentProjectId=saved.card.id;currentProjectName=saved.card.name;syncCurrentProjectName();selected=null;undo=[];redo=[];autosavePending=false;render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')}finally{restoringLocal=false}}
+async function applyLocalProject(saved){restoringLocal=true;try{longIndexCache.clear();decodedSourceCache.clear();waveformCache.clear();waveformBuilds.clear();localSources.clear();persistedLocalSources.clear();for(const [id,waveform] of saved.waveforms||[])waveformCache.seed(id,waveform);for(const [id,blob] of saved.audio){let row=saved.sources?.get(id)||{id,blob};await registerSourceBlob(blob,null,{...row,id,waveform:saved.waveforms?.get(id)||null});persistedLocalSources.add(id)}let snap=saved.snapshot,rebuilt=snap.clips.map(c=>{if(!localSources.has(c.sourceId))throw Error('Audio local manquant');return{id:c.id,track:c.track,name:c.name,start:c.start,trim:c.trim,len:c.len,gain:c.gain,muted:c.muted,latencyCorrectionMs:Number(c.latencyCorrectionMs)||0,sourceId:c.sourceId}});clips=rebuilt;tracks=snap.tracks;selectedRecordTrackId=recordTrackIdFor(snap.selectedRecordTrackId);cursor=Number.isFinite(snap.cursor)?snap.cursor:0;zoom=Number.isFinite(snap.zoom)?snap.zoom:1;selectionStart=Number.isFinite(snap.selectionStart)?snap.selectionStart:null;selectionEnd=Number.isFinite(snap.selectionEnd)?snap.selectionEnd:null;currentProjectId=saved.card.id;currentProjectName=saved.card.name;syncCurrentProjectName();selected=null;undo=[];redo=[];autosavePending=false;render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE')}finally{restoringLocal=false}}
 function showEditorScreen(){$('#project-library-screen').hidden=true;$('#app').hidden=false;requestAnimationFrame(()=>render())}
 function showProjectLibraryScreen(){$('#app').hidden=true;$('#project-library-screen').hidden=false}
 function formatProjectUpdated(at){let d=new Date(at);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(d)}
@@ -578,11 +898,11 @@ function openProjectRename(p){closeProjectOptions();renameProjectTargetId=p.id;$
 async function commitProjectRename(){let id=renameProjectTargetId;if(!id)return;let projects=await localStore.listProjects(),before=projects.find(p=>p.id===id);if(!before)return closeProjectRename();let next=await localStore.renameProject(id,$('#project-rename-input').value);if(currentProjectId===id){currentProjectName=next.name;syncCurrentProjectName()}closeProjectRename();await renderLocalProjectLibrary();return next}
 function closeProjectDelete(){deleteProjectTarget=null;hideProjectDialog('#project-delete-panel');$('#project-delete-copy').textContent=''}
 function openProjectDelete(p){closeProjectOptions();deleteProjectTarget={id:p.id,name:p.name};$('#project-delete-copy').textContent='Supprimer « '+p.name+' » ?';$('#project-delete-panel').hidden=false}
-async function commitProjectDelete(){let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
+async function commitProjectDelete(){if(secureOverdubPreparing||secureCaptureState!=='idle')return msg('Termine la prise WAV avant de supprimer un projet');let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
 async function renderLocalProjectLibrary(){let list=$('#local-project-list'),status=$('#project-library-status'),projects=await localStore.listProjects();list.innerHTML='';for(const p of projects){let row=document.createElement('div');row.className='local-project-row';row.dataset.projectId=p.id;let card=document.createElement('button');card.type='button';card.className='local-project-card game-btn game-btn-standard game-btn-dark';card.dataset.projectId=p.id;card.innerHTML='<b></b><small></small>';card.querySelector('b').textContent=p.name;card.querySelector('small').textContent='Modifié '+formatProjectUpdated(p.updatedAt);card.onclick=()=>openLocalProject(p.id);let more=document.createElement('button');more.type='button';more.className='local-project-more game-btn game-btn-compact game-btn-secondary';more.textContent='⋯';more.setAttribute('aria-label','Options de '+p.name);more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectOptions(p)};row.append(card,more);list.appendChild(row)}if(!projects.length)list.innerHTML='<div class="project-library-empty">Aucun projet pour le moment.</div>';status.textContent=projects.length?projects.length+' projet'+(projects.length>1?'s':''):'Crée ton premier projet.';return projects}
-async function createLocalProject(){if(recording)return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
-async function openLocalProject(id){if(recording)return msg('Arrête l’enregistrement avant de changer de projet');await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();msg('Projet ouvert ✓');return saved.card}
-async function returnToProjectLibrary(){if(recording)return msg('Arrête l’enregistrement avant de quitter le projet');await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
+async function createLocalProject(){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
+async function openLocalProject(id){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de changer de projet');await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();msg('Projet ouvert ✓');return saved.card}
+async function returnToProjectLibrary(){if(recording||secureOverdubPreparing||secureCaptureState!=='idle')return msg('Arrête l’enregistrement avant de quitter le projet');await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
 async function initializeProjectLibraryEntry(){let migration=await localStore.initializeLibrary();showProjectLibraryScreen();let projects=await renderLocalProjectLibrary();if(migration.migrated)$('#project-library-status').textContent='Projet précédent récupéré ✓ · '+projects.length+' projet'+(projects.length>1?'s':'');return migration}
 let librarySounds=[],libraryPreview=null,libraryPreviewButton=null,currentProjectId=null,currentProjectName='';
 function cleanFrenchName(name){return name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()}
@@ -605,11 +925,13 @@ $('#studio-wav-clean-temp').onclick=async()=>{
   try{
     const dir=await navigator.storage.getDirectory();
     const old=await StudioWavLongMix.listTemporaryExports(dir);
-    if(!old.length)return msg('Aucun WAV temporaire à effacer');
-    const size=old.reduce((n,x)=>n+x.size,0)/1048576;
-    if(!confirm('Effacer '+old.length+' fichier(s) WAV de mixage temporaire(s) ('+size.toFixed(1)+' Mio) ?\\n\\nVérifie d’abord que les téléchargements sont bien enregistrés sur le téléphone.\\nLes prises originales et les projets ne seront pas touchés.'))return;
-    const deleted=await StudioWavLongMix.removeTemporaryExports(dir,old.map(x=>x.name));
-    msg('Espace libéré : '+deleted+' export(s) temporaire(s) effacé(s)');
+    const compact=await StudioOpusCompact.listTemporaryExports(dir);
+    if(!old.length&&!compact.length)return msg('Aucun export temporaire à effacer');
+    const size=[...old,...compact].reduce((n,x)=>n+x.size,0)/1048576;
+    if(!confirm('Effacer '+(old.length+compact.length)+' export(s) WAV/Opus temporaires ('+size.toFixed(1)+' Mio) ?\\n\\nVérifie d’abord que les téléchargements sont bien enregistrés sur le téléphone.\\nLes prises originales et les projets ne seront pas touchés.'))return;
+    const a=await StudioWavLongMix.removeTemporaryExports(dir,old.map(x=>x.name));
+    const b=await StudioOpusCompact.removeTemporaryExports(dir,compact.map(x=>x.name));
+    msg('Espace libéré : '+(a+b)+' export(s) temporaire(s) effacé(s)');
   }catch(e){msg('Nettoyage impossible : '+(e?.message||String(e)))}
 };
 let exportDiagnosticStep='repos',exportBusy=false,forestPublishBusy=false,pendingExport=null,exportAbortController=null;
@@ -621,11 +943,74 @@ function showExportTooLargeDiagnostic(start,end){let p=$('#export-error-panel'),
 $('#export-error-close').onclick=closeExportError;
 function setExportBusy(b){exportBusy=b;$('#export').disabled=b;$('#export-selection').disabled=b}
 function cleanupPreparedExport(x){if(!x?.opfsCleanup)return;let fn=x.opfsCleanup;x.opfsCleanup=null;Promise.resolve(fn()).catch(e=>console.warn('OPFS cleanup',e))}
-function closeExportDestination(){let x=pendingExport;pendingExport=null;$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;cleanupPreparedExport(x)}
-function openExportDestination(artifact){pendingExport=artifact;$('#export-title-input').value=currentProjectName||'';$('#export-destination-note').textContent='WAV '+artifact.wavInfo.bits+' bits · '+artifact.wavInfo.channels+' canal'+(artifact.wavInfo.channels>1?'aux':'')+' · '+Math.round(artifact.wavInfo.duration)+' s · '+(artifact.blob.size/1048576).toFixed(1)+' Mio'+(artifact.opfsBacked?' · fichier lourd conservé localement · format compressé à venir':'');$('#export-forest-ready').disabled=!!artifact.opfsBacked;$('#export-destination-panel').hidden=false}
-function downloadPreparedExport(){let x=pendingExport;if(!x)return;let url=URL.createObjectURL(x.blob),a=document.createElement('a'),cleanup=x.opfsCleanup;x.opfsCleanup=null;a.href=url;a.download=x.filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>{URL.revokeObjectURL(url);if(cleanup&&!x.opfsBacked)Promise.resolve(cleanup()).catch(e=>console.warn('OPFS cleanup',e))},30000);if(x.diagnostic)selectionDiagnostic('TÉLÉCHARGEMENT DÉCLENCHÉ\n'+x.filename+'\nsélection '+selectionSeconds(x.requestedStart)+' → '+selectionSeconds(x.requestedEnd)+' s\nframes WAV = '+x.wavInfo.frames+'\ndurée WAV = '+selectionSeconds(x.wavInfo.duration)+' s\ntaille = '+x.blob.size+' octets');pendingExport=null;$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;msg('TÉLÉCHARGEMENT DEMANDÉ · '+(x.blob.size/1048576).toFixed(2)+' Mio · vérifie dans Fichiers')}
+let compactBusy=false,compactExport=null,compactUrl=null,compactGate=0,compactAbort=null;
+function clearCompactUi(){
+  if(compactUrl)URL.revokeObjectURL(compactUrl);
+  compactUrl=null;compactExport=null;compactGate++;
+  $('#export-opus-download').hidden=true;$('#export-opus-download').removeAttribute('href');
+  $('#export-opus-cancel').hidden=true;
+  $('#export-compress-opus').disabled=true;
+  $('#export-opus-status').textContent='Opus Ogg expérimental · le WAV original reste disponible.';
+}
+function closeExportDestination(){
+  if(compactBusy)return msg('Compression en cours : export conservé');
+  let x=pendingExport;pendingExport=null;clearCompactUi();
+  $('#export-destination-panel').hidden=true;$('#export-title-input').value='';
+  $('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;
+  cleanupPreparedExport(x);
+}
+async function checkOpusAvailability(artifact,token){
+  try{
+    await StudioOpusCompact.encoderConfig(window.AudioEncoder);
+    if(pendingExport!==artifact||compactGate!==token)return;
+    $('#export-compress-opus').disabled=false;
+    $('#export-opus-status').textContent='Opus disponible : bouton expérimental. Le résultat devra être écouté sur le Redmi.';
+  }catch(e){
+    if(pendingExport===artifact&&compactGate===token)
+      $('#export-opus-status').textContent='Format Opus indisponible sur ce navigateur. Tu peux toujours télécharger le WAV.';
+  }
+}
+function openExportDestination(artifact){
+  pendingExport=artifact;clearCompactUi();
+  $('#export-title-input').value=currentProjectName||'';
+  $('#export-destination-note').textContent='WAV '+artifact.wavInfo.bits+' bits · '+artifact.wavInfo.channels+' canal'+(artifact.wavInfo.channels>1?'aux':'')+' · '+Math.round(artifact.wavInfo.duration)+' s · '+(artifact.blob.size/1048576).toFixed(1)+' Mio'+(artifact.opfsBacked?' · fichier lourd conservé localement':'');
+  $('#export-forest-ready').disabled=!!artifact.opfsBacked;
+  $('#export-destination-panel').hidden=false;
+  void checkOpusAvailability(artifact,compactGate);
+}
+async function compressPreparedExport(){
+  if(!pendingExport||compactBusy||compactExport)return;
+  const item=pendingExport;compactBusy=true;compactAbort=new AbortController();
+  $('#export-opus-cancel').hidden=false;
+  $('#export-compress-opus').disabled=true;
+  $('#export-download-ready').disabled=true;
+  $('#export-destination-cancel').disabled=true;
+  $('#export-opus-status').textContent='Compression Opus : préparation…';
+  try{
+    const compact=await StudioOpusCompact.encodeWav(item.blob,{navigator,signal:compactAbort.signal,
+      onProgress:p=>{$('#export-opus-status').textContent='Compression Opus '+Math.round(p*100)+' %…'}});
+    if(pendingExport!==item)throw Error('Export changé pendant la compression');
+    compactExport=compact;
+    compactUrl=URL.createObjectURL(compact.file);
+    const a=$('#export-opus-download');a.href=compactUrl;
+    a.download=(item.filename||'montage-son.wav').replace(/\.wav$/i,'')+'.ogg';
+    a.hidden=false;
+    $('#export-opus-status').textContent='OGG Opus prêt : '+(compact.bytes/1048576).toFixed(2)+' Mio. Télécharge puis vérifie le début et la fin dans Fichiers. Le WAV original est conservé.';
+  }catch(e){
+    console.error('COMPRESSION OPUS',e);
+    $('#export-opus-status').textContent='Compression indisponible : '+(e?.message||String(e))+' · le WAV original est conservé.';
+  }finally{
+    compactBusy=false;compactAbort=null;$('#export-opus-cancel').hidden=true;
+    $('#export-download-ready').disabled=false;$('#export-destination-cancel').disabled=false;
+    if(!compactExport)$('#export-compress-opus').disabled=false;
+  }
+}
+function downloadPreparedExport(){let x=pendingExport;if(!x||compactBusy)return;let url=URL.createObjectURL(x.blob),a=document.createElement('a'),cleanup=x.opfsCleanup;x.opfsCleanup=null;a.href=url;a.download=x.filename;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>{URL.revokeObjectURL(url);if(cleanup&&!x.opfsBacked)Promise.resolve(cleanup()).catch(e=>console.warn('OPFS cleanup',e))},30000);if(x.diagnostic)selectionDiagnostic('TÉLÉCHARGEMENT DÉCLENCHÉ\n'+x.filename+'\nsélection '+selectionSeconds(x.requestedStart)+' → '+selectionSeconds(x.requestedEnd)+' s\nframes WAV = '+x.wavInfo.frames+'\ndurée WAV = '+selectionSeconds(x.wavInfo.duration)+' s\ntaille = '+x.blob.size+' octets');pendingExport=null;clearCompactUi();$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;msg('TÉLÉCHARGEMENT DEMANDÉ · '+(x.blob.size/1048576).toFixed(2)+' Mio · vérifie dans Fichiers')}
 async function publishPreparedExport(){if(forestPublishBusy||!pendingExport)return;let x=pendingExport;if(x.opfsBacked)return msg('Upload long non activé dans cette mission · télécharge le WAV');let btn=$('#export-forest-ready');forestPublishBusy=true;btn.disabled=true;btn.textContent='PUBLICATION…';try{let explicitTitle=$('#export-title-input').value,result=await ForestAudioPublish.publishNormalAudio({dbClient,blob:x.blob,title:explicitTitle,projectName:currentProjectName,duration:x.wavInfo.duration});closeExportDestination();msg('Audio ajouté à La Forêt Enchantée ✓');return result}catch(e){console.error('FOREST EXPORT',e);msg(e?.rollbackError?'Erreur publication · nettoyage Storage incomplet':'Erreur publication · aucun audio ajouté')}finally{forestPublishBusy=false;btn.disabled=false;btn.textContent='🌲 EXPORTER DANS LA FORÊT ENCHANTÉE'}}
 $('#export-download-ready').onclick=downloadPreparedExport;
+$('#export-compress-opus').onclick=compressPreparedExport;
+$('#export-opus-cancel').onclick=()=>compactAbort?.abort();
+$('#export-opus-download').onclick=()=>{msg('Téléchargement OGG Opus demandé · vérifie le fichier dans Fichiers');};
 $('#export-forest-ready').onclick=publishPreparedExport;
 $('#export-destination-cancel').onclick=closeExportDestination;
 async function inspectWavBlob(blob){if(!(blob instanceof Blob)||blob.size<44)throw Error('WAV trop court');let h=await blob.slice(0,44).arrayBuffer(),v=new DataView(h),tag=(o,n)=>String.fromCharCode(...new Uint8Array(h,o,n));if(tag(0,4)!=='RIFF'||tag(8,4)!=='WAVE'||tag(12,4)!=='fmt '||tag(36,4)!=='data')throw Error('header WAV invalide');let channels=v.getUint16(22,true),sampleRate=v.getUint32(24,true),bits=v.getUint16(34,true),dataSize=v.getUint32(40,true),bytesPerFrame=channels*bits/8;if(!channels||!sampleRate||bits!==16||!Number.isInteger(bytesPerFrame)||dataSize%bytesPerFrame!==0||44+dataSize!==blob.size)throw Error('structure WAV incohérente');let frames=dataSize/bytesPerFrame;return{headerSize:44,channels,sampleRate,bits,dataSize,frames,duration:frames/sampleRate}}
@@ -678,15 +1063,149 @@ async function exportRange(start,end,label='montage-son',diagnostic=false){if(ex
 if(clips.some(c=>{const t=tracks.find(x=>x.id===c.track);return c.start+c.len>start&&c.start<end&&!c.muted&&!t?.muted&&isLongSourceId(sourceIdFor(c))}))
   return exportLongRange(start,end,label,diagnostic);if(!clips.length)return msg('Rien à exporter');let requestedStart=start,requestedEnd=end,requestedDuration=end-start,filename=diagnostic?'selection-'+selectionSeconds(start)+'-'+selectionSeconds(end)+'.wav':label+'.wav';if(diagnostic)selectionDiagnostic('EXPORT SÉLECTION DEMANDÉ\ndébut = '+selectionSeconds(start)+' s\nfin = '+selectionSeconds(end)+' s\ndurée = '+selectionSeconds(requestedDuration)+' s\nfichier = '+filename);let audible=clips.some(c=>{let t=tracks.find(x=>x.id===c.track);return !c.muted&&!t?.muted&&c.start+c.len>start&&c.start<end});if(!audible)return msg('Aucun son dans cette partie');setExportBusy(true);let controller=new AbortController(),opfsResult=null;exportAbortController=controller;try{exportDiag('préparation');let output='memory',preflight;try{preflight=StudioExportCore.planExport(start,end,{output:'memory'})}catch(memoryError){if(!/export trop volumineux/i.test(memoryError?.message||''))throw memoryError;let opfsReady=false;try{opfsReady=await StudioExportCore.probeOpfs({navigator})}catch(e){if(e?.name==='QuotaExceededError')throw e}if(!opfsReady)throw memoryError;output='opfs';preflight=StudioExportCore.planExport(start,end,{output:'opfs'})}exportDiag('préparation · '+preflight.duration.toFixed(1)+' s · '+preflight.frames+' frames · '+(preflight.estimatedPeakBytes/1048576).toFixed(2)+' Mo max hors sources · '+output.toUpperCase());await StudioExportCore.yieldToEventLoop();let xs=await Promise.all(clips.map(async c=>{let t=tracks.find(x=>x.id===c.track);return{...c,buffer:await getDecodedSource(sourceIdFor(c)),trackMuted:!!t?.muted,trackGain:t?.gain??1}})),plan=StudioExportCore.validatePlan(xs,start,end,{output});if(diagnostic)selectionDiagnostic('PLAN EXPORT\ndébut transmis = '+selectionSeconds(plan.start)+' s\nfin transmise = '+selectionSeconds(plan.end)+' s\nframes = '+plan.frames+'\ndurée = '+selectionSeconds(plan.frames/plan.sampleRate)+' s\nfichier = '+filename);exportDiag('mixage/encodage 0 %');await StudioExportCore.yieldToEventLoop();let blob;if(output==='opfs'){opfsResult=await StudioExportCore.streamWavToOpfs(xs,plan,{navigator,signal:controller.signal,onProgress:(n,total)=>exportDiag('mixage/encodage '+Math.round(n/total*100)+' %')});blob=opfsResult.file}else blob=await StudioExportCore.streamWavCooperative(xs,plan,(n,total)=>exportDiag('mixage/encodage '+Math.round(n/total*100)+' %'));let wavInfo=await inspectWavBlob(blob),expectedFrames=plan.frames;if(wavInfo.frames!==expectedFrames||Math.abs(wavInfo.duration-requestedDuration)>1/plan.sampleRate+1e-9){let detail='ERREUR EXPORT — WAV DIFFÉRENT DE LA SÉLECTION\ndurée sélection = '+selectionSeconds(requestedDuration)+' s\ndurée WAV = '+selectionSeconds(wavInfo.duration)+' s\nframes attendues = '+expectedFrames+'\nframes obtenues = '+wavInfo.frames;selectionDiagnostic(detail);throw Error('durée WAV incohérente')}if(diagnostic)selectionDiagnostic('FICHIER CRÉÉ\n'+filename+'\ntaille = '+blob.size+' octets\nheader = '+wavInfo.headerSize+' octets\ncanaux = '+wavInfo.channels+'\nsample rate = '+wavInfo.sampleRate+' Hz\ndata = '+wavInfo.dataSize+' octets\nframes = '+wavInfo.frames+'\ndurée WAV = '+selectionSeconds(wavInfo.duration)+' s');openExportDestination({blob,wavInfo,filename,diagnostic,requestedStart,requestedEnd,opfsBacked:output==='opfs',opfsCleanup:opfsResult?.cleanup||null});opfsResult=null;msg('EXPORT PRÊT · choisis la destination')}catch(e){if(opfsResult?.cleanup)try{await opfsResult.cleanup()}catch{}console.error('EXPORT STUDIO',exportDiagnosticStep,e);let errorMessage=e?.message||String(e),oversize=/export trop volumineux/i.test(errorMessage),quota=e?.name==='QuotaExceededError';if(oversize)showExportTooLargeDiagnostic(start,end);if(diagnostic&&!$('#selection-diagnostic').textContent.startsWith('ERREUR EXPORT'))selectionDiagnostic('ERREUR EXPORT — '+exportDiagnosticStep+' — '+errorMessage);msg(quota?'ERREUR EXPORT — stockage local insuffisant':'ERREUR EXPORT — '+exportDiagnosticStep+' — '+errorMessage)}finally{if(exportAbortController===controller)exportAbortController=null;setExportBusy(false)}}
 window.addEventListener('pagehide',()=>exportAbortController?.abort());
+// When the Android user switches to ChatGPT/Gboard, suspend Studio playback
+// as well as stopping capture (handled by StudioWavPanel). Never auto-resume.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='hidden')return;
+  if(playing||playPreparing)stopPlay(false);
+  if(ctx.state==='running')void ctx.suspend().catch(e=>console.warn('Audio Studio suspend',e));
+});
 $('#export').onclick=()=>{let end=Math.max(0,...clips.map(c=>c.start+c.len));exportRange(0,end,'montage-son')};
 $('#export-selection').onclick=()=>{if(selectionStart===null||selectionEnd===null){selectionDiagnostic('SÉLECTION INVALIDE — début et fin requis');return msg('Choisis un début et une fin')}if(selectionEnd<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — DÉBUT = '+selectionSeconds(selectionStart)+' s, FIN = '+selectionSeconds(selectionEnd)+' s');return msg('La fin doit être après le début')}let start=selectionStart,end=selectionEnd;exportRange(start,end,'selection-son',true)};
 initializeProjectLibraryEntry().catch(e=>{console.error('PROJECT LIBRARY INIT',e);$('#project-library-status').textContent='Impossible de charger les projets locaux';msg('Bibliothèque projets indisponible')});
-StudioWavPanel.mount({isStudioRecording:()=>recording,isProjectOpen:()=>!!currentProjectId,onImportTake:async item=>{
+async function runLatencyCalibration(){
+  if(calibrationSession||secureOverdubPreparing||secureCaptureState!=='idle'||!currentProjectId){
+    msg('Ouvre un projet et arrête les enregistrements avant de calibrer');return;
+  }
+  const run={chunks:[],rate:0,stopRequested:false,source:null,done:false};
+  calibrationSession=run;
+  $('#latency-calibrate').disabled=true;
+  $('#latency-status').hidden=false;
+  $('#latency-status').textContent='🎧 Calibration : quatre clics vont sortir du téléphone. Laisse le micro les écouter, sans parler.';
+  try{
+    // User gesture resumes output before microphone permissions, as required
+    // by Chromium autoplay policy.
+    await ctx.resume();
+    const started=await wavController.start({
+      calibration:true,
+      onCaptureStart:()=>{
+        const source=ctx.createBufferSource();
+        source.buffer=StudioLatencyCompensation.createTestTone(ctx);
+        source.connect(ctx.destination);run.source=source;
+        source.start(ctx.currentTime+StudioLatencyCompensation.START_LEAD);
+      }
+    });
+    if(!started&&calibrationSession===run){
+      run.done=true;calibrationSession=null;
+      $('#latency-calibrate').disabled=false;
+      $('#latency-status').hidden=false;
+      $('#latency-status').textContent='⚠ Calibration interrompue. Vérifie l’accès au microphone puis réessaie.';
+    }
+  }catch(e){
+    calibrationSession=null;$('#latency-calibrate').disabled=false;
+    $('#latency-status').hidden=false;
+    $('#latency-status').textContent='⚠ Impossible de calibrer : '+(e?.message||e);
+  }
+}
+function completeLatencyCalibration(){
+  const session=calibrationSession;
+  if(!session||session.done)return;
+  session.done=true;calibrationSession=null;
+  $('#latency-calibrate').disabled=false;
+  try{session.source?.disconnect()}catch{}
+  try{
+    const m=StudioLatencyCompensation.measure(session.chunks,session.rate);
+    setLatency(m.ms,'✅ Retard mesuré : '+m.ms+' ms ('+m.clicks+' clics). Les prochains doublages seront corrigés automatiquement.');
+    msg('Synchronisation étalonnée : '+m.ms+' ms ✓');
+  }catch(e){
+    $('#latency-status').hidden=false;
+    $('#latency-status').textContent='⚠ Mesure non fiable : '+e.message+'. Réessaie dans le calme, volume audible, sans casque isolant le micro.';
+  }
+}
+$('#latency-calibrate').onclick=()=>{void runLatencyCalibration()};
+wavController=StudioWavPanel.mount({
+  isStudioRecording:()=>recording,
+  isProjectOpen:()=>!!currentProjectId,
+  onStateChange:state=>{
+    secureCaptureState=state;
+    const status=$('#recording-state');
+    if(state==='idle'&&calibrationSession&&!calibrationSession.done)
+      queueMicrotask(completeLatencyCalibration);
+    if(state==='recording'){
+      secureWavePeaks=[];secureLastWaveDraw=0;secureMicroStage=null;
+      const info=secureCaptureInfo;
+      if(info){
+        liveRec={start:info.start,len:.03,track:info.trackId};
+        liveDuration=Math.max(projectDuration(),info.start+5);
+        render();
+        updateSecureRecordingProgress(0);
+      }
+      status.hidden=false;status.classList.remove('finalizing','error');
+    }else if(state==='finalizing'){
+      stopPlay(false);status.hidden=false;status.classList.add('finalizing');
+      status.textContent=calibrationSession?'🎯 ANALYSE DES CLICS DE CALIBRATION…':'■ ARRÊT · SAUVEGARDE ET AJOUT DE LA PRISE…';
+    }else if(state==='starting'){
+      status.hidden=false;status.classList.remove('finalizing','error');
+      status.textContent='🎙 PRÉPARATION DE L’ENREGISTREMENT…';
+    }else if(state==='idle'){
+      liveRec=null;liveDuration=0;
+      status.hidden=true;status.classList.remove('finalizing');
+      secureCaptureInfo=null;secureWavePeaks=[];
+      render();
+    }
+    $('#app').classList.toggle('recording',state!=='idle'||recording);
+    $('#record').classList.toggle('is-recording',state==='recording');
+    $('#record').disabled=state!=='idle';
+    $('#stop').classList.toggle('is-recording',state==='recording');
+    $('#stop').disabled=state==='finalizing'; // STOP cancels a pending microphone request
+    $('#play').disabled=state!=='idle';
+    $('#back').disabled=state!=='idle';$('#forward').disabled=state!=='idle';
+  },
+  onProgress:seconds=>{
+    const run=calibrationSession;
+    if(run){
+      if(seconds>=3.55&&!run.stopRequested){
+        run.stopRequested=true;
+        void wavController.stop();
+      }
+      return
+    }
+    updateSecureRecordingProgress(seconds);
+  },
+  onPcm:(pcm,rate)=>{
+    const run=calibrationSession;
+    if(!run||run.done||run.chunks.length>=10)return;
+    run.rate=rate;run.chunks.push(pcm);
+  },
+  onPeaks:peaks=>{
+    if(secureCaptureState!=='recording')return;
+    for(const peak of peaks)if(secureWavePeaks.length<35000)secureWavePeaks.push(peak);
+    drawSecureLiveWave();
+  },
+  onStatus:message=>msg(message),
+  onStage:(kind,message)=>{
+    const banner=$('#recording-state');
+    if(kind==='warning'){
+      secureMicroStage='AUCUN SIGNAL MICRO — vérifie les autres applications';
+      banner.hidden=false;banner.classList.add('error');
+      banner.textContent=message;
+    }else if(kind==='recording'){
+      secureMicroStage=null;banner.classList.remove('error');
+    }else if(kind==='starting'){
+      banner.hidden=false;banner.classList.remove('error','finalizing');
+      banner.textContent='🎙 '+message;
+    }else if(kind==='error'||kind==='silence'){
+      secureMicroStage=null;banner.hidden=false;banner.classList.add('error');
+      banner.textContent=message;
+    }
+  },
+  onImportTake:async item=>{
   if(!currentProjectId||recording)throw Error('Aucun projet actif ou enregistrement normal en cours');
   const isLong=item.kind==='opfs-long';
   if(item.seconds>300||!item.waveform||(!isLong&&!(item.blob instanceof Blob))||isLong&&(!item.index||!Number.isSafeInteger(item.index.frames)))
     throw Error('Prise non prise en charge par le montage pilote');
   const projectAtStart=currentProjectId;
+  if(secureCaptureInfo&&secureCaptureInfo.projectId!==projectAtStart)throw Error('Projet changé pendant la prise WAV');
   const original='studio-'+item.takeId+'.wav';
   for(const c of clips){
     const source=localSources.get(c.sourceId);
@@ -697,12 +1216,15 @@ StudioWavPanel.mount({isStudioRecording:()=>recording,isProjectOpen:()=>!!curren
   const sourceId=await registerSourceBlob(pointer,null,{origin:isLong?'opfs-wav-long':'opfs-wav-short',originalName:original,mimeType:isLong?pointer.type:'audio/wav',waveform:item.waveform});
   if(isLong)await localStore.saveWaveform(sourceId,item.waveform);
   if(currentProjectId!==projectAtStart)throw Error('Le projet a changé pendant l’ajout');
-  const target=tracks.find(t=>t.id===recordTrackIdFor());
-  if(!target)throw Error('Piste active introuvable');
-  const at=cursor;
+  const target=tracks.find(t=>t.id===(secureCaptureInfo?.trackId||recordTrackIdFor()));
+  if(!target)throw Error('Piste originale d’enregistrement introuvable');
+  const at=secureCaptureInfo?.start??cursor;
   checkpoint();
-  clips.push({id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:at,trim:0,len:item.seconds,gain:1,muted:false});
-  render();setCursor(at+item.seconds,true);
+  const rawClip={id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:at,trim:0,len:item.seconds,gain:1,muted:false};
+  const compensation=secureOverdubSync?measuredLatencyMs:0;
+  const attached=compensation?applyClipTiming(rawClip,compensation,true):rawClip;
+  clips.push(attached);
+  render();setCursor(attached.start+attached.len,true);
   await flushLocalAutosave();
   if(autosavePending)throw Error('Prise ajoutée mais sauvegarde automatique incomplète : garde les fragments WAV');
 }});

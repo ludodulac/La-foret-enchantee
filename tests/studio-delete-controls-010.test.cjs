@@ -5,7 +5,11 @@ const A=require('../js/studio-autosave.js');
 
 const html=fs.readFileSync('studio.html','utf8');
 function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);assert(a>=0,'missing '+start);assert(b>a,'missing '+end);return html.slice(a,b)}
-const stateFns=section('function projectDuration()','function syncStudioViewport');
+const stateRaw=section('function projectDuration()','function syncStudioViewport');
+const latencyUiStart=stateRaw.indexOf('function syncLatencyDisplay(');
+const trackSelectionStart=stateRaw.indexOf('function selectRecordTrack(',latencyUiStart);
+assert(latencyUiStart>0&&trackSelectionStart>latencyUiStart,'Separate calibration DOM setup from project-state VM');
+const stateFns=stateRaw.slice(0,latencyUiStart)+stateRaw.slice(trackSelectionStart);
 const clipDeleteHandler=section("$('#del').onclick","$('#clipmute').onclick");
 const renderSource=section('function render(){','function dragLaneAt');
 

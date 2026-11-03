@@ -11,7 +11,14 @@ const dragSource=section('function dragLaneAt','function trimGesture');
 const trimSource=section('function trimGesture','function chooseFile');
 const renderSource=section('function render(){','function dragLaneAt');
 const playbackSource010=section('function startPreparedPlayback','async function play(');
-const recordTrackSelectionSource=section('function recordTrackIdFor',"$('#track-volume-slider').oninput");
+const trackSelectionRaw=section('function recordTrackIdFor',"$('#track-volume-slider').oninput");
+// Source now also contains LATENCY control bindings between these helpers.
+// They are tested separately in the real browser; do not execute full UI
+// bindings in this minimal Node VM that intentionally has no DOM.
+const latencyStart=trackSelectionRaw.indexOf('function syncLatencyDisplay(');
+const selectionRestart=trackSelectionRaw.indexOf('function selectRecordTrack(');
+assert(latencyStart>0&&selectionRestart>latencyStart,'latency feature and selection helpers separated');
+const recordTrackSelectionSource=trackSelectionRaw.slice(0,latencyStart)+trackSelectionRaw.slice(selectionRestart);
 
 // Reference viewport required by mission.
 const VIEWPORT_W=390,VIEWPORT_H=844;
@@ -70,7 +77,7 @@ assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
 assert(css.includes('.trimhandle.left{left:-22px}'));
 assert(css.includes('.trimhandle.right{right:-22px}'));
 assert(css.includes('.trimhandle:after{top:15px;bottom:15px;width:5px'));
-assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
 console.log('TRIM_VISUAL_WIDTH PASS visual=5px');
 console.log('TRIM_TOUCH_TARGET PASS touchTarget=24px; outward=22px; inward=2px/side');
 
@@ -94,23 +101,73 @@ function makeTrimHarness(side){
 {const h=makeTrimHarness('left');assert(Math.abs(h.c.start-1.2)<1e-9);assert(Math.abs(h.c.trim-.7)<1e-9);assert(Math.abs(h.c.len-1.8)<1e-9);assert.equal(h.undo.length,1);console.log('TRIM_LEFT PASS actual production trimGesture')}
 {const h=makeTrimHarness('right');assert(Math.abs(h.c.len-2.2)<1e-9);assert.equal(h.undo.length,1);console.log('TRIM_RIGHT PASS actual production trimGesture')}
 
-// Exercise actual 009 selected clip movement + cross-track.
-function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x)}}
+// Clip body gestures: unselected=horizontal scroll, tapped=select/toggle,
+// selected+second gesture=deliberate move. No audio data is edited by a pan.
+function classList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),contains:x=>s.has(x),toggle(x,b){if(b)s.add(x);else s.delete(x)}}}
 function lane(id,top,bottom){return{dataset:{trackId:id},classList:classList(),getBoundingClientRect:()=>({top,bottom}),appendChild(el){el.parentElement=this}}}
-{
+function clipHarness(selectedAtStart=false){
  const lanes=[lane('A',100,176),lane('B',183,259),lane('C',266,342)];
  const clip={id:'small',track:'A',sourceId:'src',start:2,trim:0,len:1,gain:1,muted:false};
- const state={captured:new Set(),dirty:0},el={style:{},parentElement:lanes[0],setPointerCapture:id=>state.captured.add(id),hasPointerCapture:id=>state.captured.has(id),releasePointerCapture:id=>state.captured.delete(id)};
- const context={console,Math,document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]}},pixelsPerSecond:()=>100,snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},selected:clip,$:sel=>sel==='#editor'?{classList:{add(){}}}:sel==='#clipvol'?{value:0}:{textContent:''}};
+ const state={captured:new Set(),dirty:0},timeline={scrollLeft:100},
+   editor={classList:classList()},volume={value:0},mute={textContent:'',classList:classList()};
+ const el={style:{},parentElement:lanes[0],setPointerCapture:id=>state.captured.add(id),
+   hasPointerCapture:id=>state.captured.has(id),releasePointerCapture:id=>state.captured.delete(id)};
+ const context={console,Math,
+   document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;
+     if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]},
+     querySelector(){return null}},
+   pixelsPerSecond:()=>100,
+   snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),
+   undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},
+   selected:selectedAtStart?clip:null,
+   $:sel=>sel==='#editor'?editor:sel==='#clipvol'?volume:sel==='#clipmute'?mute:sel==='#timeline'?timeline:{textContent:''}};
  vm.createContext(context);vm.runInContext(dragSource,context);context.clipGesture(el,clip,20);
- const e=(x,y,id=7)=>({clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){},stopPropagation(){}});
- el.onpointerdown(e(50,130));el.onpointermove(e(80,210));el.onpointerup(e(80,210));
- assert.equal(clip.start,2.3);assert.equal(clip.track,'B');assert.equal(context.undo.length,1);assert.equal(state.dirty,1);
- console.log('MOVE_SELECTED_CLIP PASS selected clip retains body drag');
+ const e=(x,y,pointerType='touch',id=7)=>({clientX:x,clientY:y,pointerId:id,pointerType,isPrimary:true,
+   preventDefault(){},stopPropagation(){}});
+ return {lanes,clip,state,timeline,editor,el,context,e}
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(80,130));h.el.onpointermove(h.e(115,210));h.el.onpointerup(h.e(115,210));
+ assert.equal(h.clip.start,2,'Unselected touch swipe must NEVER move audio in time');
+ assert.equal(h.clip.track,'A','Unselected touch swipe must NEVER change track');
+ assert.equal(h.context.selected,null);
+ assert.equal(h.context.undo.length,0);
+ assert.equal(h.state.dirty,0);
+ console.log('UNSELECTED_TOUCH_SWIPE_NEVER_EDITS_AUDIO PASS');
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(110,130,'mouse'));h.el.onpointermove(h.e(145,130,'mouse'));
+ h.el.onpointerup(h.e(145,130,'mouse'));
+ assert.equal(h.timeline.scrollLeft,65,'Desktop unselected drag pans viewport');
+ assert.equal(h.clip.start,2);assert.equal(h.state.dirty,0);
+ console.log('UNSELECTED_MOUSE_PAN_TIMELINE PASS');
+}
+{
+ const h=clipHarness();
+ h.el.onpointerdown(h.e(60,130));h.el.onpointerup(h.e(60,130));
+ assert.equal(h.context.selected,h.clip);
+ assert.equal(h.editor.classList.contains('show'),true);
+ h.el.onpointerdown(h.e(60,130));h.el.onpointerup(h.e(60,130));
+ assert.equal(h.context.selected,null,'Second tap on selected clip must deselect');
+ assert.equal(h.editor.classList.contains('show'),false,'Deselect must close clip panel');
+ assert.equal(h.clip.start,2);assert.equal(h.context.undo.length,0);
+ console.log('TAP_SELECT_SECOND_TAP_CLOSE_EDITOR PASS');
+}
+{
+ const h=clipHarness(true);
+ h.el.onpointerdown(h.e(50,130));h.el.onpointermove(h.e(80,210));h.el.onpointerup(h.e(80,210));
+ assert.equal(h.clip.start,2.3);assert.equal(h.clip.track,'B');
+ assert.equal(h.context.undo.length,1);assert.equal(h.state.dirty,1);
+ console.log('MOVE_ONLY_PRESELECTED_CLIP PASS');
  console.log('CROSS_TRACK_DRAG_009 PASS A -> B');
 }
-assert(dragSource.includes("el.onpointercancel=e=>finish(e,true)"));assert(dragSource.includes("c.start=startState.start;c.track=startState.track"));
-console.log('POINTER_CANCEL PASS policy A retained');
+assert(dragSource.includes('el.onpointercancel=e=>end(e,true)'));
+assert(dragSource.includes('c.start=g.start;c.track=g.track'));
+assert(html.includes('.clip:not(.sel){touch-action:pan-x pan-y}'));
+assert(html.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
+console.log('POINTER_CANCEL_AND_NATIVE_TOUCH_SCROLL PASS');
 
 // Undo + redo handlers retained.
 for(const marker of [
@@ -123,15 +180,17 @@ console.log('REDO PASS');
 // Transport above timeline, with explicit STOP.
 for(const id of ['back','record','play','stop','forward','undo','redo'])assert(html.includes('id="'+id+'"'),'transport missing '+id);
 for(const marker of [
- "$('#record').onclick=record",
- "$('#play').onclick=()=>playing||playPreparing?stopPlay():play()",
- "$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}",
+ "$('#record').onclick=recordSecurelyFromStudio",
+ "$('#play').onclick=()=>{if(secureCaptureState!=='idle')return;return playing||playPreparing?stopPlay():play()}",
+ "$('#stop').onclick=()=>{",
  "$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)}",
  "$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)}"
 ])assert(html.includes(marker),'transport handler missing '+marker);
 console.log('TRANSPORT_NEAR_TIMELINE PASS immediately above multipiste');
 console.log('PLAY_ACCESSIBLE PASS');
-console.log('STOP_ACCESSIBLE PASS dedicated STOP + PLAY toggle retained');
+assert(html.includes("if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}"),'STOP must end the secure WAV capture');
+assert(html.includes("if(recording&&recorder?.state!=='inactive'){recorder.stop();return}"),'legacy STOP retained as safety fallback');
+console.log('STOP_ACCESSIBLE PASS dedicated STOP ends WAV; legacy STOP and PLAY retained');
 console.log('RECORD_ACCESSIBLE PASS');
 console.log('SEEK_MINUS_5 PASS');
 console.log('SEEK_PLUS_5 PASS');
@@ -151,22 +210,23 @@ console.log('NO_CLIP_SELECTED_SPACE PASS');
 console.log('CLIP_SELECTED_CONTEXT PASS name + volume + cut/duplicate/delete/mute');
 
 // Bottom bar provides general structural commands.
-for(const id of ['import-phone','sound-library-jump','addtrack','project-menu-toggle','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
+for(const id of ['import-phone','sound-library-jump','addtrack','tools-menu-toggle'])assert(html.includes('id="'+id+'"'),'bottom bar missing '+id);
+assert(!html.includes('id="project-menu-toggle"'),'The redundant PROJECT bottom button was deliberately removed');
+assert(css.includes('grid-template-columns:repeat(4,1fr)'),'Exactly four bottom commands on mobile');
 assert(positions.bottom>positions.context);
 assert(html.includes("$('#sound-library-jump').onclick=()=>{let lib=document.querySelector('.soundlib');if(!lib)return;if(matchMedia('(max-width:520px)').matches)lib.classList.toggle('mobile-open');else lib.scrollIntoView"));
-console.log('BOTTOM_BAR_ACCESS PASS IMPORTER / SONS / +PISTE / PROJET / OUTILS');
+console.log('BOTTOM_BAR_ACCESS PASS four commands IMPORTER / SONS / +PISTE / OUTILS');
 
-// Project menu keeps editor navigation without reintroducing manual save.
-for(const marker of [
- "$('#editor-projects').onclick=returnToProjectLibrary",
- "$('#editor-new-project').onclick=createLocalProject",
- "$('#download-project').onclick=downloadProjectCopy"
-])assert(html.includes(marker),'project handler changed '+marker);
+// Navigation in the top header and project library replaces duplicate PROJECT.
+assert(html.includes("$('#back-projects').onclick=returnToProjectLibrary"));
+assert(html.includes("$('#create-local-project').onclick=createLocalProject"));
+assert(html.includes("$('#download-project').onclick=downloadProjectCopy"));
+assert(html.includes('id="studio-wav-clean-temp"'));
 assert(!html.includes('id="save-project"'));
 assert(!html.includes('id="projects"'));
-assert(css.includes('.projectbar.menu-open{display:grid}'));
-console.log('PROJECT_MENU PASS');
-console.log('PROJECT_ACTION_HANDLERS_RETAINED PASS local project navigation + advanced copy; no manual save');
+assert(!html.includes('id="project-menu-panel"'));
+assert(html.includes('<details class="studio-advanced-tools">'));
+console.log('PROJECT_MENU_REMOVED PASS top navigation and safe backup/cleanup preserved in collapsed options');
 
 // Tools menu retains selection + metronome.
 for(const marker of ["$('#sel-start').onclick","$('#sel-end').onclick","$('#sel-clear').onclick","$('#export-selection').onclick","$('#metro').onclick","$('#bpm-minus').onclick","$('#bpm-plus').onclick"])assert(html.includes(marker),'tools handler changed '+marker);
@@ -204,14 +264,14 @@ for(const [id,klass] of [
   ['minus','game-btn-standard'],['plus','game-btn-standard'],
   ['import-phone','game-btn-standard'],['sound-library-jump','game-btn-violet'],
   ['addtrack','game-btn-green'],['del','game-btn-red'],['clipmute','game-btn-dark'],
-  ['project-menu-toggle','game-btn-dark'],['tools-menu-toggle','game-btn']
+  ['tools-menu-toggle','game-btn']
 ]){
   const rx=new RegExp('<button[^>]*class="[^"]*'+klass+'[^"]*"[^>]*id="'+id+'"|<button[^>]*id="'+id+'"[^>]*class="[^"]*'+klass+'[^"]*"');
   assert(rx.test(html),'semantic class missing '+id+' '+klass);
 }
 assert(renderSource.includes("game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')"));
 assert(renderSource.includes('game-btn game-btn-compact game-btn-secondary" data-vol'));
-console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete/project semantics retained');
+console.log('BUTTON_COLOR_SEMANTICS PASS PLAY yellow; REC red; STOP dark; track/add/delete semantics retained');
 
 // Physical press feedback, no heavy animation.
 for(const marker of [
@@ -318,41 +378,61 @@ console.log('TRIM_LIVE_WAVEFORM_REDRAW PASS no stale canvas during left trim');
 
 // REC label remains stable; active recording is visual state only.
 const recordStart=html.indexOf('async function record()'),recordEnd=html.indexOf('function clickBeat',recordStart),recordSource=html.slice(recordStart,recordEnd);
-assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record"><b>●</b> REC</button>'));
+assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record" title="Enregistrement WAV sécurisé"><b>●</b> REC WAV</button>'));
 assert(recordSource.includes('async function record(){if(recording)return;try{'));
 assert(recordSource.includes("$('#record').classList.add('is-recording')"));
 assert(recordSource.includes("$('#record').classList.remove('is-recording')"));
 assert(!recordSource.includes("$('#record').innerHTML"));
 assert(css.includes('.record.is-recording{filter:brightness(1.18)'));
-console.log('REC_LABEL_STABLE PASS always ● REC');
+console.log('REC_LABEL_STABLE PASS always ● REC WAV');
 console.log('REC_ACTIVE_VISUAL_STATE PASS active class brightens/glows REC without relabeling');
 
 // Exactly one STOP visual control, and its handler routes to recorder OR playback.
 assert.equal((html.match(/id="stop"/g)||[]).length,1);
 assert(!recordSource.includes('STOP'));
-const controlsStart=html.indexOf("$('#record').onclick=record;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
-assert(controlsSource.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"));
+const controlsStart=html.indexOf("$('#record').onclick=recordSecurelyFromStudio;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
+assert(controlsStart>=0&&controlsEnd>controlsStart,'primary recording transport handlers located');
+assert(controlsSource.includes("wavController.stop()"),'STOP must stop secured WAV');
+assert(controlsSource.includes("recorder.stop();return"),'legacy STOP fallback retained');
+{
+  let handlers={},recStops=0,wavStops=0,playStops=0;
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording:false,secureCaptureState:'recording',secureOverdubPreparing:false,wavController:{stop(){wavStops++}},recorder:{state:'inactive',stop(){recStops++}}};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert.equal(wavStops,1);assert.equal(recStops,0);assert.equal(playStops,1);
+}
 {
   let handlers={},recStops=0,playStops=0,recording=true,recorder={state:'recording',stop(){recStops++}};
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder,secureCaptureState:'idle',secureOverdubPreparing:false,wavController:{stop(){throw Error('unexpected WAV')}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,1);assert.equal(playStops,0);
 }
 {
   let handlers={},recStops=0,playStops=0;
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,recorder:{state:'inactive',stop(){recStops++}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,secureCaptureState:'idle',secureOverdubPreparing:false,wavController:{stop(){}},recorder:{state:'inactive',stop(){recStops++}}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,0);assert.equal(playStops,1);
 }
+{
+  let handlers={},cancelled=false,ended=0;
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),recordSecurelyFromStudio(){},
+    play(){},stopPlay(){},setCursor(){},cursor:0,playPreparing:false,playing:false,
+    recording:false,secureCaptureState:'idle',secureOverdubPreparing:true,
+    secureOverdubGeneration:1,secureCaptureInfo:{},setOverdubPreparing(v){ended++;this.secureOverdubPreparing=v},
+    msg(){cancelled=true},wavController:{},recorder:{state:'inactive',stop(){}}};
+  vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
+  assert(cancelled&&ctx.secureOverdubGeneration===2&&ctx.secureCaptureInfo===null&&ended===1,
+    'STOP cancels guide pre-decoding without opening microphone');
+}
 console.log('STOP_SINGLE_VISUAL_CONTROL PASS one ■ STOP control; REC never becomes STOP');
-console.log('STOP_STOPS_RECORDING PASS');
+console.log('STOP_STOPS_WAV PASS secure capture');
+console.log('STOP_STOPS_RECORDING PASS legacy fallback');
 console.log('STOP_STOPS_PLAYBACK PASS');
 
 
 // Real trim hit-area audit: the declared 24px must be actually reachable at timeline edges.
 assert(css.includes('.timeline{display:block;position:relative;border:0;box-shadow:none;border-radius:0;padding:0 22px;'));
 assert(css.includes('.lane{min-height:88px;overflow:visible}'));
-assert(css.includes('.clip.sel{overflow:visible;z-index:20}'));
+assert(css.includes('.clip.sel{overflow:visible;z-index:20;touch-action:none}'));
 assert(css.includes('.trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}'));
 assert(html.includes('.playhead{position:absolute')&&html.includes('z-index:15'));
 assert(trimSource.includes('e.stopPropagation();e.preventDefault();handle.setPointerCapture(e.pointerId)'));

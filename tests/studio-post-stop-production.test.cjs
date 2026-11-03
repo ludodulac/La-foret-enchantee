@@ -19,8 +19,10 @@ assert(stopPlay.includes('sources.forEach'),'transport stop must stop active Buf
 
 const recordFn=section('async function record()','function clickBeat');
 assert(recordFn.includes('if(recording)return'),'REC must remain REC while recording; it must not act as STOP');
-const transportHandlers=section("$('#record').onclick=record;",'function zoomAt');
-assert(transportHandlers.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"),'dedicated STOP must stop MediaRecorder while recording and playback otherwise');
+const transportHandlers=section("$('#record').onclick=recordSecurelyFromStudio;",'function zoomAt');
+assert(transportHandlers.includes("if(secureCaptureState==='recording'){stopPlay(false);wavController.stop()}"),'dedicated STOP must stop secure WAV');
+assert(transportHandlers.includes("if(recording&&recorder?.state!=='inactive'){recorder.stop();return}"),'legacy MediaRecorder STOP fallback must be retained');
+assert(transportHandlers.includes('stopPlay()'),'dedicated STOP still stops playback otherwise');
 assert(recordFn.includes('stream.getTracks().forEach(t=>t.stop())'),'MediaStream tracks must be stopped');
 assert(recordFn.includes('cancelAnimationFrame(liveAnim);liveAnim=0;'),'REC animation must be cancelled and normalized');
 assert(recordFn.includes('liveMic=null;liveAnalyser=null;liveRec=null;'),'live REC state must be released');

@@ -111,11 +111,12 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
   assert(css.includes('#back,#forward{height:46px'));
   console.log('STANDARD_BUTTON_HIERARCHY PASS navigation/import/sounds/zoom standard');
 
-  for(const id of ['undo','redo','project-menu-toggle','tools-menu-toggle']){
+  for(const id of ['undo','redo','tools-menu-toggle']){
     assert(new RegExp('<button[^>]*class="[^"]*game-btn-secondary[^"]*"[^>]*id="'+id+'"|<button[^>]*id="'+id+'"[^>]*class="[^"]*game-btn-secondary').test(html),'missing secondary '+id);
   }
   assert(css.includes('.game-btn-secondary{filter:saturate(.72) brightness(.9)'));
-  console.log('SECONDARY_BUTTON_HIERARCHY PASS undo/redo/project/tools subdued');
+  assert(!html.includes('id="project-menu-toggle"'),'PROJECT removed by request, top navigation preserved');
+  console.log('SECONDARY_BUTTON_HIERARCHY PASS undo/redo/tools subdued; duplicate project shortcut removed');
 
   // Track controls: direct touch targets MUTE + VOLUME are 44px; destructive action is in menu.
   assert(css.includes('.track-control-buttons button{min-height:44px;height:44px'));
@@ -155,9 +156,9 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
   assert(html.includes('✓ SAUVEGARDE AUTOMATIQUE'));
   assert(html.includes('＋ NOUVEAU PROJET'));
   assert(html.includes('id="project-library-screen"'));
-  assert(html.includes('← MES PROJETS'));
+  assert(html.includes('id="back-projects"'),'top-left project navigation retained');
   assert(html.includes('TÉLÉCHARGER UNE COPIE'));
-  assert(html.includes('<summary>OPTIONS AVANCÉES</summary>'));
+  assert(html.includes('<details class="studio-advanced-tools">'),'occasional tools collapsed but not lost');
   assert(!html.includes('ENREGISTRER DANS MES PROJETS'));
   console.log('AUTOSAVE_LABEL_CLEAR PASS');
   console.log('PROJECT_ACTION_LABELS_CLEAR PASS local library + autosave; manual save removed');

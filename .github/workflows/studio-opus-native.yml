@@ -1,0 +1,71 @@
+name: Studio native Ogg Opus verification
+on:
+  pull_request:
+    paths:
+      - 'js/studio-opus-compact.js'
+      - 'js/studio-ogg-opus.js'
+      - 'tests/studio-opus-browser-native-028.test.cjs'
+      - 'tests/studio-integrated-mobile-smoke-029.test.cjs'
+      - 'tests/studio-wav-mobile-capture-030.test.cjs'
+      - 'tests/studio-main-rec-wav-031.test.cjs'
+      - 'tests/studio-microphone-release-032.test.cjs'
+      - 'tests/studio-hung-microphone-033.test.cjs'
+      - 'tests/studio-overdub-synchronization-036.test.cjs'
+      - 'tests/studio-rhythmic-overdub-037.test.cjs'
+      - 'js/studio-latency-compensation.js'
+      - 'tests/studio-latency-compensation-038.test.cjs'
+      - 'tests/studio-loopback-calibration-039.test.cjs'
+      - 'tests/studio-timeline-touch-navigation-041.test.cjs'
+      - 'studio.html'
+      - '.github/workflows/studio-opus-native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact PR source
+        uses: actions/checkout@v4
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral Playwright browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Native WebCodecs Opus encoding and independent decode
+        run: node tests/studio-opus-browser-native-028.test.cjs
+      - name: Integrated Studio UI smoke in mobile Chromium (offline, no microphone)
+        run: node tests/studio-integrated-mobile-smoke-029.test.cjs
+      - name: Synthetic microphone WAV capture, OPFS and project reload (isolated Chromium)
+        run: node tests/studio-wav-mobile-capture-030.test.cjs
+      - name: Primary REC WAV / STOP on mobile Studio (synthetic mic and local persistence)
+        run: node tests/studio-main-rec-wav-031.test.cjs
+      - name: Mic startup cancellations, silent Android input and background release
+        run: node tests/studio-microphone-release-032.test.cjs
+      - name: Dead worklet and ignored Android microphone permission watchdog
+        run: node tests/studio-hung-microphone-033.test.cjs
+      - name: Multitrack overdub starts after backing decode and with capture, not 1 second late
+        run: node tests/studio-overdub-synchronization-036.test.cjs
+      - name: Real WAV attack-time alignment against guide clicks, even after slow decode
+        run: node tests/studio-rhythmic-overdub-037.test.cjs
+      - name: Latency offset and loopback detection mathematical contract
+        run: node tests/studio-latency-compensation-038.test.cjs
+      - name: Calibrated loopback with speaker-to-mic roundtrip, saved overdub and clip nudges
+        run: node tests/studio-loopback-calibration-039.test.cjs
+      - name: Touch timeline scroll, tap-to-toggle editor and selected-only deliberate clip movement
+        run: node tests/studio-timeline-touch-navigation-041.test.cjs
+      - name: Preserve isolated mobile UI screenshot for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-029-mobile-smoke
+          path: |
+            artifacts/studio-mobile-smoke-029.png
+            artifacts/studio-main-rec-live-031.png
+            artifacts/studio-main-rec-14s-031.png
+          if-no-files-found: ignore
+          retention-days: 7
