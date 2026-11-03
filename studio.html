@@ -133,7 +133,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   #tracks .head{display:none}
   .lane{min-height:88px;overflow:visible}
   .clip{height:66px;top:5px}
-  .clip.sel{overflow:visible;z-index:20}
+  .clip:not(.sel){touch-action:pan-x pan-y}
+  .clip.sel{overflow:visible;z-index:20;touch-action:none}
   .trimhandle{width:24px;background:transparent!important;top:0;bottom:0;pointer-events:auto}
   .trimhandle.left{left:-22px}
   .trimhandle.right{right:-22px}
@@ -149,7 +150,8 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .editor.show{display:block}
   .editin{max-width:none;margin:0;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:24px 34px;gap:3px}
   .clip-context-name{display:block;grid-column:1/2;grid-row:1;min-height:24px;height:24px;padding:4px 5px;border-left:2px solid var(--px-blue2);font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .volrow{grid-column:2/5;grid-row:1;min-height:24px;height:24px;gap:4px;font-size:10px}
+  .volrow{grid-column:2/4;grid-row:1;min-height:24px;height:24px;gap:4px;font-size:10px}
+  .editor #clip-close{grid-column:4;grid-row:1;min-height:24px;height:24px;padding:1px 2px;font-size:8px}
   .editor button{min-height:34px;height:34px;font-size:8px}
   #cut{grid-column:1;grid-row:2}
   #duplicate{grid-column:2;grid-row:2}
@@ -312,6 +314,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 
 <div class="editor" id="editor"><div class="editin">
   <div class="clip-context-name" id="clip-context-name"></div>
+  <button class="game-btn game-btn-compact game-btn-secondary" id="clip-close" type="button" aria-label="Fermer les commandes du clip">✕ FERMER</button>
   <div class="volrow">🔊 <input id="clipvol" type="range" min="0" max="150" value="100"></div>
   <div class="clip-latency" aria-label="Synchroniser le son sélectionné">
     <span>RECALER CETTE PRISE</span>
@@ -473,6 +476,7 @@ function adjustSelectedClip(shiftMs){
     msg('Prise recalée de '+Math.abs(shiftMs)+' ms vers '+(shiftMs>0?'la gauche':'la droite')+' ✓');
   }catch(e){msg('Décalage impossible : '+e.message)}
 }
+$('#clip-close').onclick=closeClipEditor;
 $('#clip-early').onclick=()=>adjustSelectedClip(25);
 $('#clip-late').onclick=()=>adjustSelectedClip(-25);
 $('#clip-calibrated').onclick=()=>{
@@ -516,11 +520,113 @@ let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;d
 function pixelsPerSecond(){return Math.max(1,$('#timeline').clientWidth/15)*zoom}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){selectedRecordTrackId=recordTrackIdFor();let d=projectDuration(),pps=pixelsPerSecond(),w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let marks=Math.max(5,Math.floor(d/5)+1),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let i=0;i<marks;i++){let tm=Math.min(d,i*5),s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(88,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(selectedRecordTrackId===t.id)lane.classList.add('active-destination');placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'');ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-top"><button class="track-arm game-btn game-btn-compact game-btn-dark '+(selectedRecordTrackId===t.id?'is-active':'')+'" data-arm type="button" aria-pressed="'+(selectedRecordTrackId===t.id?'true':'false')+'" aria-label="Destination '+t.name+'"><span class="track-arm-name">'+t.name+'</span><span class="track-arm-rec">● REC</span></button><button class="track-more game-btn game-btn-compact game-btn-secondary" data-track-menu type="button" aria-label="Menu '+t.name+'">⋯</button></div><div class="track-control-buttons"><button class="game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')+'" data-mute title="Muet">'+(t.muted?'🔇':'🔊')+' MUET</button><button class="game-btn game-btn-compact game-btn-secondary" data-vol title="Volume">🔊 '+Math.round(t.gain*100)+'%</button></div>';bindRecordTrackControl(ctrl,t);controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';if(secureCaptureState!=='idle')e.classList.add('secure-wav-live');lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
 function dragLaneAt(clientY){for(const lane of document.querySelectorAll('#tracks .lane[data-track-id]')){let r=lane.getBoundingClientRect();if(clientY>=r.top&&clientY<=r.bottom)return{lane,trackId:lane.dataset.trackId}}return null}
 function setDragLaneFeedback(lane){document.querySelectorAll('#tracks .lane.drag-target').forEach(x=>x.classList.remove('drag-target'));if(lane)lane.classList.add('drag-target')}
-function clipGesture(el,c,d){let sx=null,sy=null,startState=null,moved=false,pointerId=null;function releasePointer(){if(pointerId===null)return;try{if(!el.hasPointerCapture||el.hasPointerCapture(pointerId))el.releasePointerCapture(pointerId)}catch{}pointerId=null}function finish(e,cancelled){if(sx===null)return;e.preventDefault();e.stopPropagation();releasePointer();setDragLaneFeedback(null);if(cancelled){c.start=startState.start;c.track=startState.track}else if(moved){let after=snapshot();undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,start:startState.start,track:startState.track}:x)});redo=[];buttons();markProjectDirty()}else{selected=c;document.querySelector('.soundlib')?.classList.remove('mobile-open');$('#editor').classList.add('show');$('#clipvol').value=c.gain*100;$('#clipmute').textContent=c.muted?'🔇 RÉACTIVER':'🔊 MUET';$('#clipmute').classList.toggle('is-active',c.muted)}sx=sy=null;startState=null;moved=false;render()}el.onpointerdown=e=>{if(e.pointerType==='touch'&&e.isPrimary===false)return;sx=e.clientX;sy=e.clientY;startState={start:c.start,track:c.track};moved=false;pointerId=e.pointerId;el.setPointerCapture(e.pointerId);e.preventDefault()};el.onpointermove=e=>{if(sx===null)return;let dx=e.clientX-sx,dy=e.clientY-sy;if(Math.hypot(dx,dy)>5)moved=true;if(!moved)return;e.preventDefault();e.stopPropagation();c.start=Math.max(0,startState.start+dx/pixelsPerSecond());let hit=dragLaneAt(e.clientY);if(hit){c.track=hit.trackId;if(el.parentElement!==hit.lane){hit.lane.appendChild(el);el.style.top='5px'}setDragLaneFeedback(hit.lane)}el.style.left=(c.start*pixelsPerSecond())+'px'};el.onpointerup=e=>finish(e,false);el.onpointercancel=e=>finish(e,true)}
+function closeClipEditor(){
+  if(!selected&&!$('#editor').classList.contains('show'))return;
+  selected=null;
+  $('#editor').classList.remove('show');
+  render();
+}
+// A tap selects one clip; a second tap deselects it. Unselected clips are
+// never draggable. Touch swipes on them belong to the native timeline pan.
+function clipGesture(el,c,d){
+  let gesture=null;
+  const tl=$('#timeline');
+  function release(){
+    if(gesture?.captured){
+      try{if(!el.hasPointerCapture||el.hasPointerCapture(gesture.id))el.releasePointerCapture(gesture.id)}catch{}
+    }
+  }
+  function end(e,cancelled=false){
+    const g=gesture;
+    if(!g||e.pointerId!==g.id)return;
+    release();gesture=null;setDragLaneFeedback(null);
+    if(g.mode==='move'){
+      e.preventDefault();e.stopPropagation();
+      if(cancelled){
+        c.start=g.start;c.track=g.track;
+      }else if(g.moved&&(c.start!==g.start||c.track!==g.track)){
+        const after=snapshot();
+        undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,start:g.start,track:g.track}:x)});
+        if(undo.length>30)undo.shift();
+        redo=[];buttons();markProjectDirty();
+      }else if(!g.moved){
+        closeClipEditor();return;
+      }
+      render();return;
+    }
+    // A finger dragging an UNSELECTED clip only scrolls the timeline:
+    // native pan-x handles touch, explicit scrollLeft handles desktop mouse.
+    if(!cancelled&&!g.moved){
+      selected=c;
+      document.querySelector('.soundlib')?.classList.remove('mobile-open');
+      $('#editor').classList.add('show');
+      $('#clipvol').value=c.gain*100;
+      $('#clipmute').textContent=c.muted?'🔇 RÉACTIVER':'🔊 MUET';
+      $('#clipmute').classList.toggle('is-active',c.muted);
+      render();
+    }
+  }
+  el.onpointerdown=e=>{
+    if(e.pointerType==='touch'&&e.isPrimary===false)return;
+    const moving=selected===c;
+    gesture={id:e.pointerId,x:e.clientX,y:e.clientY,start:c.start,track:c.track,
+      mode:moving?'move':'pan',scroll:tl.scrollLeft,moved:false,captured:false,pointerType:e.pointerType};
+    if(moving||e.pointerType==='mouse'){
+      gesture.captured=true;
+      try{el.setPointerCapture(e.pointerId)}catch{gesture.captured=false}
+    }
+    if(moving)e.preventDefault();
+  };
+  el.onpointermove=e=>{
+    const g=gesture;if(!g||e.pointerId!==g.id)return;
+    const dx=e.clientX-g.x,dy=e.clientY-g.y;
+    if(Math.hypot(dx,dy)>7)g.moved=true;
+    if(!g.moved)return;
+    if(g.mode==='pan'){
+      if(g.pointerType==='mouse')tl.scrollLeft=g.scroll-dx;
+      return;
+    }
+    e.preventDefault();e.stopPropagation();
+    c.start=Math.max(0,g.start+dx/pixelsPerSecond());
+    const hit=dragLaneAt(e.clientY);
+    if(hit){
+      c.track=hit.trackId;
+      if(el.parentElement!==hit.lane){hit.lane.appendChild(el);el.style.top='5px'}
+      setDragLaneFeedback(hit.lane);
+    }
+    el.style.left=(c.start*pixelsPerSecond())+'px';
+  };
+  el.onpointerup=e=>end(e,false);
+  el.onpointercancel=e=>end(e,true);
+}
 function trimGesture(handle,c,side){let active=false,sx=0,startState=null,clipEl=handle.closest('.clip');handle.addEventListener('pointerdown',e=>{active=true;sx=e.clientX;startState={start:c.start,trim:c.trim,len:c.len};e.stopPropagation();e.preventDefault();handle.setPointerCapture(e.pointerId)});handle.addEventListener('pointermove',e=>{if(!active)return;e.stopPropagation();e.preventDefault();let delta=(e.clientX-sx)/pixelsPerSecond();if(side==='left'){let change=Math.max(-startState.trim,Math.min(startState.len-.08,delta));c.start=startState.start+change;c.trim=startState.trim+change;c.len=startState.len-change}else{let maxLen=Math.max(.08,sourceDurationFor(c)-startState.trim);c.len=Math.max(.08,Math.min(maxLen,startState.len+delta))}clipEl.style.left=(c.start*pixelsPerSecond())+'px';clipEl.style.width=(c.len*pixelsPerSecond())+'px';let wave=clipEl.querySelector('.wavecanvas');if(wave)waveform(wave,c)});let finish=e=>{if(!active)return;active=false;e.stopPropagation();e.preventDefault();let changed=Math.abs(c.start-startState.start)>.001||Math.abs(c.len-startState.len)>.001;if(changed){let after=snapshot();undo.push({...after,clips:after.clips.map(x=>x.id===c.id?{...x,...startState}:x)});redo=[];buttons();markProjectDirty();msg('Rognage ✓')}selected=c;render()};handle.addEventListener('pointerup',finish);handle.addEventListener('pointercancel',finish)}
 function chooseFile(track=recordTrackIdFor(),start=cursor){let input=$('#file'),target=recordTrackIdFor(track);if(!target)return msg('Aucune piste active');input.dataset.track=target;input.dataset.start=String(start);input.click()}function addTrack(kind='sound'){checkpoint();let n=tracks.length,colors=['#18a77b','#e09b32','#2997d6','#d65b9d'];let t={id:(kind==='voice'?'voice':'sound')+Date.now(),name:(kind==='voice'?'🎙️ VOIX ':'🎵 SON ')+(tracks.filter(x=>x.type===kind).length+1),type:kind,gain:1,muted:false,color:colors[(n-1)%colors.length]};tracks.push(t);render();return t}$('#addtrack').onclick=()=>{if(tracks.length>=4)return;addTrack('sound')};
 $('#file').onchange=async e=>{let f=e.target.files[0],track=recordTrackIdFor(e.target.dataset.track),start=Number.isFinite(+e.target.dataset.start)?+e.target.dataset.start:cursor;if(!f)return;if(!track){e.target.value='';return msg('Aucune piste active')}try{let b=await ctx.decodeAudioData(await f.arrayBuffer()),sourceId=await registerSourceBlob(f,b,{origin:'phone-import',originalName:f.name,mimeType:f.type||''});checkpoint();clips.push({id:crypto.randomUUID(),track,name:f.name,sourceId,start,trim:0,len:b.duration,gain:1,muted:false});render();msg('Audio importé sur la piste active ✓')}catch{msg('Format audio non reconnu')}e.target.value='';delete e.target.dataset.start};
-$('#timeline').onpointerdown=e=>{if(e.target.closest('.clip,button')||e.target===$('#playhead'))return;if(e.pointerType==='touch'&&e.isPrimary===false)return;setCursor(xToTime(e.clientX))};
+// An empty-space tap seeks and dismisses the editor. An empty-space swipe
+// scrolls instead (native on touch, scrollLeft on desktop), never moving clips.
+let emptyTimelineGesture=null;
+$('#timeline').onpointerdown=e=>{
+  if(e.target.closest('.clip,button')||e.target===$('#playhead'))return;
+  if(e.pointerType==='touch'&&e.isPrimary===false)return;
+  emptyTimelineGesture={id:e.pointerId,x:e.clientX,y:e.clientY,
+    scroll:$('#timeline').scrollLeft,moved:false,pointerType:e.pointerType};
+  if(e.pointerType==='mouse')try{$('#timeline').setPointerCapture(e.pointerId)}catch{}
+};
+$('#timeline').onpointermove=e=>{
+  const g=emptyTimelineGesture;if(!g||g.id!==e.pointerId)return;
+  const dx=e.clientX-g.x,dy=e.clientY-g.y;
+  if(Math.hypot(dx,dy)>7)g.moved=true;
+  if(g.moved&&g.pointerType==='mouse')$('#timeline').scrollLeft=g.scroll-dx;
+};
+$('#timeline').onpointerup=e=>{
+  const g=emptyTimelineGesture;if(!g||g.id!==e.pointerId)return;
+  emptyTimelineGesture=null;
+  if(!g.moved){
+    setCursor(xToTime(e.clientX));
+    closeClipEditor();
+  }
+};
+$('#timeline').onpointercancel=()=>{emptyTimelineGesture=null};
 let ph=$('#playhead');
 function beginPlayheadSeek(e){draggingHead=true;seekResumePlayback=playing||playPreparing;if(seekResumePlayback)stopPlay(false);ph.setPointerCapture(e.pointerId);e.preventDefault();e.stopPropagation()}
 function movePlayheadSeek(e){if(!draggingHead)return;e.preventDefault();e.stopPropagation();setCursor(xToTime(e.clientX),false)}
