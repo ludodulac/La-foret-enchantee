@@ -96,7 +96,7 @@ async function inspect(blob){
 
   // Studio keeps the existing local download path, but only after one shared mix/encode.
   assert(studio.includes('function downloadPreparedExport()'));
-  assert(studio.includes("a.download=x.filename"));
+  assert(studio.includes("a.download=filename"));
   assert(studio.includes("$('#export-download-ready').onclick=downloadPreparedExport"));
   assert(studio.includes("openExportDestination({blob,wavInfo,filename,diagnostic,requestedStart,requestedEnd,opfsBacked:output==='opfs',opfsCleanup:opfsResult?.cleanup||null})"));
   assert.equal((studio.match(/StudioExportCore\.streamWavCooperative\(/g)||[]).length,1);
