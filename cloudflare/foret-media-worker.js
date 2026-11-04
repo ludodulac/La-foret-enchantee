@@ -5,7 +5,7 @@
  *
  * Existing GET /media/... URLs remain compatible with the worker's current read-only deployment.
  * Do NOT deploy without first configuring SUPABASE_URL and SUPABASE_ANON_KEY
- * in Worker Settings → Variables and Secrets; never use a service_role key.
+ * in Worker Settings → Variables and Secrets; never use privileged server keys.
  */
 const DEFAULT_ORIGIN = 'https://ludodulac.github.io';
 const MEDIA_KEY = /^(?:contes\/(?:[a-z0-9_-]+|[0-9a-f-]{36})\.mp3|couvertures\/(?:[a-z0-9_-]+|[0-9a-f-]{36})\.(?:jpg|jpeg|png|webp))$/i;
