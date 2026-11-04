@@ -68,7 +68,7 @@ function wav(durationSeconds) {
 
   // If the pinned, separate LGPL encoder is installed, exercise actual MP3 encoding.
   let lame;
-  try{lame=require('lamejs')}catch(e){throw Error('Test requires pinned lamejs@1.2.1: '+e.message)}
+  try{lame=require('@breezystack/lamejs')}catch(e){throw Error('Test requires pinned lamejs@1.2.1: '+e.message)}
   const real=await encodeWavBlob(wav(1.2),{lame,yieldFn:async()=>{}});
   const mp3=new Uint8Array(await real.blob.arrayBuffer());
   assert(mp3.byteLength>10000,'Real MP3 must be non-empty and have meaningful bitrate');
