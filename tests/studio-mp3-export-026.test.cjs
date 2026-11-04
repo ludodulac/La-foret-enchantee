@@ -66,6 +66,14 @@ function wav(durationSeconds) {
   new Function(inline);
   console.log('STUDIO MP3 026 EXPORT CHOICE UI AND INLINE JAVASCRIPT SYNTAX PASS');
 
+  // Emulate the actual separate browser script tag to check window.lamejs exists.
+  const vm=require('node:vm');
+  const iifeSource=fs.readFileSync(require.resolve('@breezystack/lamejs'),'utf8');
+  const browserGlobal={};
+  vm.runInNewContext(iifeSource,browserGlobal,{timeout:5000});
+  assert.equal(typeof browserGlobal.lamejs?.Mp3Encoder,'function','Pinned IIFE must expose window.lamejs.Mp3Encoder');
+  console.log('STUDIO MP3 026 PINNED BROWSER IIFE GLOBAL PASS');
+
   // If the pinned, separate LGPL encoder is installed, exercise actual MP3 encoding.
   let lame;
   try{lame=await import('@breezystack/lamejs')}catch(e){throw Error('Test requires pinned @breezystack/lamejs@1.2.7: '+e.message)}
