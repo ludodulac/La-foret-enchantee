@@ -262,22 +262,38 @@ function updateSubSelect(selId, catId) {
 }
 
 async function uploadFile(bucket, path, file) {
+  // Only stories and their covers move to R2. Blog and other assets are unchanged.
+  if (bucket === 'audios' || bucket === 'images') {
+    if (!window.ForestR2Media) throw Error('Le module Cloudflare des contes est indisponible.');
+    return window.ForestR2Media.upload(dbClient, bucket, file);
+  }
   const { error } = await dbClient.storage.from(bucket).upload(path, file, { upsert: false });
   if (error) throw error;
   return path;
 }
 
 async function removeFiles(entries) {
-  const grouped = entries.filter(item => item?.path).reduce((map, item) => {
-    if (!map[item.bucket]) map[item.bucket] = [];
-    map[item.bucket].push(item.path);
-    return map;
-  }, {});
-  const results = await Promise.allSettled(Object.entries(grouped).map(([bucket, paths]) =>
-    dbClient.storage.from(bucket).remove(paths)
-  ));
-  const failed = results.some(result => result.status === 'rejected' || result.value?.error);
-  if (failed) console.warn('Certains fichiers Storage n’ont pas pu être nettoyés.', results);
+  const oldBuckets = {};
+  const tasks = [];
+  for (const item of entries.filter(entry => entry?.path)) {
+    if (item.path.startsWith('r2:')) {
+      if (!window.ForestR2Media?.isR2Path(item.path)) {
+        tasks.push(Promise.reject(Error('Référence R2 invalide : suppression refusée')));
+        continue;
+      }
+      tasks.push(window.ForestR2Media.remove(dbClient, item.path));
+    } else {
+      (oldBuckets[item.bucket] ||= []).push(item.path);
+    }
+  }
+  for (const [bucket, paths] of Object.entries(oldBuckets)) {
+    tasks.push(dbClient.storage.from(bucket).remove(paths).then(({ error }) => {
+      if (error) throw error;
+    }));
+  }
+  const results = await Promise.allSettled(tasks);
+  const failed = results.some(result => result.status === 'rejected');
+  if (failed) console.warn('Certains anciens médias n’ont pas pu être nettoyés.', results);
   return !failed;
 }
 
@@ -305,13 +321,11 @@ async function handleAddAudio(e) {
 
     let imagePath = null;
     if (imgFile) {
-      imagePath = makeStoragePath(title, imgFile.name);
-      await uploadFile('images', imagePath, imgFile);
+      imagePath = await uploadFile('images', makeStoragePath(title, imgFile.name), imgFile);
       uploaded.push({ bucket: 'images', path: imagePath });
     }
 
-    const audPath = makeStoragePath(title, audFile.name);
-    await uploadFile('audios', audPath, audFile);
+    const audPath = await uploadFile('audios', makeStoragePath(title, audFile.name), audFile);
     uploaded.push({ bucket: 'audios', path: audPath });
 
     const duration = await getAudioDuration(audFile);
@@ -398,13 +412,11 @@ async function handleEditAudio(e) {
 
   try {
     if (imgFile) {
-      imagePath = makeStoragePath(title, imgFile.name);
-      await uploadFile('images', imagePath, imgFile);
+      imagePath = await uploadFile('images', makeStoragePath(title, imgFile.name), imgFile);
       uploaded.push({ bucket: 'images', path: imagePath });
     }
     if (audFile) {
-      audioPath = makeStoragePath(title, audFile.name);
-      await uploadFile('audios', audioPath, audFile);
+      audioPath = await uploadFile('audios', makeStoragePath(title, audFile.name), audFile);
       uploaded.push({ bucket: 'audios', path: audioPath });
     }
 
