@@ -1,0 +1,24 @@
+name: Studio 026 — choix WAV ou MP3
+on:
+  pull_request:
+    paths:
+      - 'studio.html'
+      - 'js/studio-mp3-export.js'
+      - 'tests/studio-mp3-export-026.test.cjs'
+      - '.github/workflows/studio-mp3-026.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mp3-export:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned LGPL encoder for actual MP3 test
+        run: npm install --no-save --ignore-scripts --package-lock=false lamejs@1.2.1
+      - name: Validate real MP3 frame, chunked conversion and untouched WAV
+        run: node tests/studio-mp3-export-026.test.cjs
