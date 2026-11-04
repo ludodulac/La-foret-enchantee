@@ -211,8 +211,14 @@
 
   async function uploadVerified(bucket, path, file) {
     const stored = await uploadFile(bucket, path, file);
-    await verifyStoragePath(bucket, stored);
-    return stored;
+    try {
+      await verifyStoragePath(bucket, stored);
+      return stored;
+    } catch (error) {
+      // Upload succeeded but verification failed: never leave an untracked new object.
+      await removeFiles([{ bucket, path: stored }]);
+      throw error;
+    }
   }
 
   function verifyRow(row, expected) {
