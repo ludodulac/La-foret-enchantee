@@ -1,0 +1,26 @@
+name: La Forêt Enchantée — R2 médias (tests isolés)
+on:
+  pull_request:
+    paths:
+      - 'cloudflare/foret-media-worker.js'
+      - 'js/foret-r2-media.js'
+      - 'js/supabase.js'
+      - 'js/admin.js'
+      - 'js/admin-cover-editor.js'
+      - 'admin.html'
+      - 'tests/foret-r2-media-gateway-001.test.cjs'
+      - '.github/workflows/foret-r2-media-draft.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r2-gateway:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests R2 en mémoire (aucun Cloudflare/Supabase réel)
+        run: node tests/foret-r2-media-gateway-001.test.cjs
