@@ -499,7 +499,7 @@ function showExportTooLargeDiagnostic(start,end){let p=$('#export-error-panel'),
 $('#export-error-close').onclick=closeExportError;
 function setExportBusy(b){exportBusy=b;$('#export').disabled=b;$('#export-selection').disabled=b}
 function cleanupPreparedExport(x){if(!x?.opfsCleanup)return;let fn=x.opfsCleanup;x.opfsCleanup=null;Promise.resolve(fn()).catch(e=>console.warn('OPFS cleanup',e))}
-function closeExportDestination(){let x=pendingExport;pendingExport=null;$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;cleanupPreparedExport(x)}
+function closeExportDestination(){if(downloadExportBusy)return msg('Encodage MP3 en cours…');let x=pendingExport;pendingExport=null;$('#export-destination-panel').hidden=true;$('#export-title-input').value='';$('#export-destination-note').textContent='';$('#export-forest-ready').disabled=false;cleanupPreparedExport(x)}
 function exportFormatNote(){if(!pendingExport)return;let x=pendingExport,mode=$('#export-format-choice').value;$('#export-destination-note').textContent=mode==='mp3'?'MP3 192 kb/s · '+Math.round(x.wavInfo.duration)+' s · pour publier, télécharge le MP3 puis importe-le dans l’administration.':'WAV '+x.wavInfo.bits+' bits · '+x.wavInfo.channels+' canal'+(x.wavInfo.channels>1?'aux':'')+' · '+Math.round(x.wavInfo.duration)+' s';}
 function openExportDestination(artifact){pendingExport=artifact;$('#export-title-input').value=currentProjectName||'';$('#export-format-choice').value='mp3';exportFormatNote();$('#export-forest-ready').disabled=true;$('#export-destination-panel').hidden=false}
 $('#export-format-choice').addEventListener('change',exportFormatNote);
@@ -522,7 +522,7 @@ async function downloadPreparedExport(){
   let x=pendingExport;if(!x||downloadExportBusy)return;
   downloadExportBusy=true;
   let button=$('#export-download-ready'),format=$('#export-format-choice').value;
-  button.disabled=true;$('#export-format-choice').disabled=true;
+  button.disabled=true;$('#export-format-choice').disabled=true;$('#export-destination-cancel').disabled=true;setExportBusy(true);
   try{
     let blob=x.blob,filename=x.filename;
     if(format==='mp3'){
@@ -549,7 +549,7 @@ async function downloadPreparedExport(){
     console.error('EXPORT MP3',e);
     $('#export-destination-note').textContent='⚠️ '+(e?.message||e)+' Tu peux sélectionner WAV et télécharger sans conversion.';
     msg('EXPORT IMPOSSIBLE · '+(e?.message||e));
-  }finally{downloadExportBusy=false;button.disabled=false;button.textContent='⬇ TÉLÉCHARGER';$('#export-format-choice').disabled=false;}
+  }finally{downloadExportBusy=false;button.disabled=false;button.textContent='⬇ TÉLÉCHARGER';$('#export-format-choice').disabled=false;$('#export-destination-cancel').disabled=false;setExportBusy(false);}
 }
 async function publishPreparedExport(){if(forestPublishBusy||!pendingExport)return;let x=pendingExport;if(x.opfsBacked)return msg('Upload long non activé dans cette mission · télécharge le WAV');let btn=$('#export-forest-ready');forestPublishBusy=true;btn.disabled=true;btn.textContent='PUBLICATION…';try{let explicitTitle=$('#export-title-input').value,result=await ForestAudioPublish.publishNormalAudio({dbClient,blob:x.blob,title:explicitTitle,projectName:currentProjectName,duration:x.wavInfo.duration});closeExportDestination();msg('Audio ajouté à La Forêt Enchantée ✓');return result}catch(e){console.error('FOREST EXPORT',e);msg(e?.rollbackError?'Erreur publication · nettoyage Storage incomplet':'Erreur publication · aucun audio ajouté')}finally{forestPublishBusy=false;btn.disabled=false;btn.textContent='🌲 EXPORTER DANS LA FORÊT ENCHANTÉE'}}
 $('#export-download-ready').onclick=downloadPreparedExport;
