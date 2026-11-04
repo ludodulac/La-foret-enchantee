@@ -19,6 +19,6 @@ jobs:
         with:
           node-version: '22'
       - name: Install pinned LGPL encoder for actual MP3 test
-        run: npm install --no-save --ignore-scripts --package-lock=false lamejs@1.2.1
+        run: npm install --no-save --ignore-scripts --package-lock=false @breezystack/lamejs@1.2.7
       - name: Validate real MP3 frame, chunked conversion and untouched WAV
         run: node tests/studio-mp3-export-026.test.cjs
