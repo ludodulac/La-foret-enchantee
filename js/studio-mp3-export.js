@@ -1,5 +1,5 @@
 /* Studio MP3 026 — bounded-memory WAV PCM16 stereo -> MP3 conversion.
- * Encoder is a separate, pinned LGPL-3.0 lamejs runtime dependency.
+ * Encoder is a separate, pinned LGPL-3.0 @breezystack/lamejs@1.2.7 runtime dependency.
  * Does not modify original WAV, project, Supabase or Cloudflare.
  */
 (function(root,factory) {
