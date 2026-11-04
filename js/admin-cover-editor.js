@@ -194,6 +194,11 @@
   }
 
   async function verifyStoragePath(bucket, path) {
+    if (path.startsWith('r2:')) {
+      if (!window.ForestR2Media?.isR2Path(path)) throw Error('Chemin Cloudflare invalide.');
+      return window.ForestR2Media.verify(path);
+    }
+    // Legacy Supabase media still works without migration.
     const cleanPath = String(path || '').replace(/^\/+/, '');
     const parts = cleanPath.split('/');
     const fileName = parts.pop();
@@ -205,9 +210,15 @@
   }
 
   async function uploadVerified(bucket, path, file) {
-    await uploadFile(bucket, path, file);
-    await verifyStoragePath(bucket, path);
-    return path;
+    const stored = await uploadFile(bucket, path, file);
+    try {
+      await verifyStoragePath(bucket, stored);
+      return stored;
+    } catch (error) {
+      // Upload succeeded but verification failed: never leave an untracked new object.
+      await removeFiles([{ bucket, path: stored }]);
+      throw error;
+    }
   }
 
   function verifyRow(row, expected) {
@@ -236,13 +247,11 @@
       const cover = await resolveAdd();
       let imagePath = null;
       if (cover.file) {
-        imagePath = makeStoragePath(title, cover.file.name);
-        await uploadVerified('images', imagePath, cover.file);
+        imagePath = await uploadVerified('images', makeStoragePath(title, cover.file.name), cover.file);
         uploaded.push({ bucket: 'images', path: imagePath });
       }
 
-      const audPath = makeStoragePath(title, audFile.name);
-      await uploadVerified('audios', audPath, audFile);
+      const audPath = await uploadVerified('audios', makeStoragePath(title, audFile.name), audFile);
       uploaded.push({ bucket: 'audios', path: audPath });
       const duration = await getAudioDuration(audFile);
 
@@ -304,13 +313,11 @@
     try {
       const cover = await resolveEdit();
       if (cover.file) {
-        imagePath = makeStoragePath(title, cover.file.name);
-        await uploadVerified('images', imagePath, cover.file);
+        imagePath = await uploadVerified('images', makeStoragePath(title, cover.file.name), cover.file);
         uploaded.push({ bucket: 'images', path: imagePath });
       }
       if (audFile) {
-        audioPath = makeStoragePath(title, audFile.name);
-        await uploadVerified('audios', audioPath, audFile);
+        audioPath = await uploadVerified('audios', makeStoragePath(title, audFile.name), audFile);
         uploaded.push({ bucket: 'audios', path: audioPath });
       }
 
