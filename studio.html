@@ -509,7 +509,7 @@ function loadMp3Encoder(){
   if(!mp3EncoderPromise){
     mp3EncoderPromise=new Promise((resolve,reject)=>{
       const script=document.createElement('script');
-      script.src='https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+      script.src='https://cdn.jsdelivr.net/npm/@breezystack/lamejs@1.2.7/dist/lamejs.iife.js';
       script.async=true;
       script.onload=()=>window.lamejs?.Mp3Encoder?resolve(window.lamejs):reject(Error('Encodeur MP3 indisponible.'));
       script.onerror=()=>reject(Error('Connexion à l’encodeur MP3 impossible.'));
