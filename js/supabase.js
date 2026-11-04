@@ -7,5 +7,11 @@ const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public`;
 
 function getPublicUrl(bucket, path) {
+  // R2 references coexist with all legacy Supabase paths. No data migration.
+  if (typeof path === 'string' && path.startsWith('r2:')) {
+    const key = path.slice(3);
+    const valid = /^(?:contes\/[a-z0-9_-]+\.mp3|couvertures\/[a-z0-9_-]+\.(?:jpg|jpeg|png|webp))$/i.test(key);
+    return valid ? 'https://foret-enchantee-stockage.rondes.workers.dev/media/' + key : '';
+  }
   return `${STORAGE_URL}/${bucket}/${path}`;
 }
