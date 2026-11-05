@@ -16,6 +16,9 @@
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <style>
     .upload-hint{font-size:.72rem;margin-top:.3rem}.add-audio-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}.admin-head-actions{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.admin-brand-mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#f3d56c;color:#171a34;font-weight:900}.admin-title{display:flex;align-items:center;gap:.65rem}.admin-intro-actions{display:flex;gap:.65rem;flex-wrap:wrap}.admin-intro-action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 15px;border-radius:13px;text-decoration:none;font-weight:800;background:#303654;color:#fff;border:1px solid rgba(255,255,255,.08)}
+    .studio-footer-entry{padding:20px 0 10px;margin-top:22px;text-align:center;border-top:1px solid rgba(255,255,255,.12)}
+    .studio-footer-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;font-weight:800;color:#f3d56c;text-decoration:underline;text-underline-offset:4px}
+    .studio-footer-link:focus-visible{outline:3px solid #f3d56c;outline-offset:2px}
     @media(max-width:640px){.add-audio-grid{grid-template-columns:1fr}.admin-header-inner{align-items:flex-start!important}.admin-title span:last-child{display:none}.visit-link.blog-link{display:none}.admin-intro-actions{width:100%}.admin-intro-action{flex:1}}
   </style>
 </head>
@@ -24,7 +27,6 @@
   <div class="admin-header-inner">
     <div class="admin-title"><span class="admin-brand-mark">⌁</span><span>Ludodio · Administration</span></div>
     <div class="admin-head-actions">
-      <a href="studio.html" class="visit-link" style="background:#f3d56c;color:#171a34;border-color:#f3d56c;font-weight:900">🎙 STUDIO</a>
       <a href="index.html" class="visit-link">← Voir le site</a>
       <a href="blog.html" class="visit-link blog-link">Journal</a>
       <button class="btn-logout" id="btn-logout">Déconnexion</button>
@@ -72,6 +74,7 @@
         <div class="admin-form-actions"><button type="submit" class="btn-primary">Enregistrer</button><button type="button" class="btn-cancel" id="btn-cancel-edit">Annuler</button></div>
       </form>
     </div>
+    <div class="studio-footer-entry"><a href="studio.html" class="studio-footer-link">studio</a></div>
   </div>
 
   <div class="tab-panel" id="tab-blog">
