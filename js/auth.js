@@ -69,26 +69,10 @@ if (isAdminPage) {
     const session = await window.adminSessionPromise;
     if (!session) return;
 
-    const wrap = document.querySelector('.admin-wrap');
-    if (wrap && !document.querySelector('.admin-intro')) {
-      const intro = document.createElement('section');
-      intro.className = 'admin-intro';
-      intro.innerHTML = `
-        <div>
-          <div class="eyebrow">Studio de publication</div>
-          <h1>Gérer La Forêt Enchantée</h1>
-          <p>Histoires, journal et catégories sont réunis ici.</p>
-        </div>
-        <div class="admin-search">
-          <input id="admin-global-search" type="search" placeholder="Filtrer les éléments affichés…" aria-label="Filtrer les contenus de l’administration">
-          <button type="button" class="btn-primary" data-action="new-audio" style="margin-top:8px;width:100%">＋ Nouvelle histoire</button>
-        </div>`;
-      wrap.prepend(intro);
-    }
-
     try {
       await loadAdminScript('js/admin-cover-editor.js?v=20260912-final-cover-images');
       await loadAdminScript('js/admin-story-flow.js');
+      await loadAdminScript('js/admin-inline-taxonomy.js?v=1');
       await loadAdminScript('js/admin-blog-safety.js');
       await loadAdminScript('js/admin-ux.js');
       document.documentElement.classList.remove('admin-auth-pending');
