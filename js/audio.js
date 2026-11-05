@@ -57,8 +57,8 @@ function renderAudio(item) {
   const art = document.getElementById('detail-art');
   art.innerHTML = cover ? `<img src="${escapeHtml(cover)}" alt="Couverture de ${escapeHtml(item.title)}">` : '<div class="cover-placeholder">⌁</div>';
   document.getElementById('audio-title').textContent = item.title;
-  document.title = `${item.title} — Katpist Audio`;
-  document.getElementById('audio-cat').textContent = [item.categories?.name, item.subcategories?.name].filter(Boolean).join(' · ') || 'Katpist Audio';
+  document.title = `${item.title} — Ludodio`;
+  document.getElementById('audio-cat').textContent = [item.categories?.name, item.subcategories?.name].filter(Boolean).join(' · ') || 'Ludodio';
   document.getElementById('audio-desc').textContent = item.description || 'Installe-toi confortablement et laisse l’histoire commencer.';
   if (!src) return showError('Le fichier audio n’est pas disponible.');
   buildPlayer(src, item.duration, item.id);
