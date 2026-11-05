@@ -1,4 +1,4 @@
-// La Forêt Enchantée — bibliothèque 2026
+// Katpist Audio — bibliothèque 2026
 const STORAGE = {
   display: 'forestDisplay',
   progress: 'forestAudioProgress',
@@ -208,7 +208,7 @@ function updateNavigation() {
 
 function updateHeader() {
   const titles = {
-    library: ['Médiathèque personnelle', 'Votre forêt sonore', 'Choisissez une histoire et lancez-la.'],
+    library: ['Médiathèque personnelle', 'Votre bibliothèque audio', 'Choisissez une histoire et lancez-la.'],
     recent: ['À reprendre', 'Écoutés récemment', 'Retrouvez les dernières histoires lancées sur cet appareil et reprenez votre écoute.'],
     categories: ['Explorer', 'Toutes les catégories', 'Parcourez la collection par univers sonore.'],
     all: ['Bibliothèque', 'Tous les audios', 'Une vue exhaustive, idéale pour retrouver rapidement un contenu précis.']
@@ -326,7 +326,7 @@ function updateNowPlaying() {
   mini.classList.add('visible');
   mini.setAttribute('aria-hidden', 'false');
   $('#mini-title').textContent = audio.title;
-  $('#mini-sub').textContent = categoryFor(audio)?.name ?? 'La Forêt Enchantée';
+  $('#mini-sub').textContent = categoryFor(audio)?.name ?? 'Katpist Audio';
   const cover = imageUrl(audio);
   const coverEl = $('#mini-cover');
   coverEl.src = cover || '';
