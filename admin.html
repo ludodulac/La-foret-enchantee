@@ -19,6 +19,13 @@
     .studio-footer-entry{padding:20px 0 10px;margin-top:22px;text-align:center;border-top:1px solid rgba(255,255,255,.12)}
     .studio-footer-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 16px;font-weight:800;color:#f3d56c;text-decoration:underline;text-underline-offset:4px}
     .studio-footer-link:focus-visible{outline:3px solid #f3d56c;outline-offset:2px}
+
+    #audio-drafts-section[hidden]{display:none!important}
+    #audio-drafts-section{border:1px solid rgba(243,213,108,.42);border-radius:18px;padding:18px;margin-bottom:20px;background:rgba(243,213,108,.05)}
+    #audio-drafts-section h3{margin:0 0 7px;color:#f3d56c}
+    #audio-drafts-section p{margin:0 0 14px;font-size:.85rem;color:#c5cbd8;line-height:1.5}
+    #audio-drafts-section .btn-publish-audio{background:#f3d56c;color:#171a34;font-weight:900}
+    #audio-drafts-section .btn-publish-audio:disabled{opacity:.48;cursor:not-allowed}
     @media(max-width:640px){.add-audio-grid{grid-template-columns:1fr}.admin-header-inner{align-items:flex-start!important}.admin-title span:last-child{display:none}.visit-link.blog-link{display:none}.admin-intro-actions{width:100%}.admin-intro-action{flex:1}}
   </style>
 </head>
@@ -43,6 +50,11 @@
   </div>
 
   <div class="tab-panel active" id="tab-audios">
+    <div class="admin-section" id="audio-drafts-section" hidden>
+      <h3>À classer <span id="audio-draft-count"></span></h3>
+      <p>Les MP3 envoyés depuis le Studio sont enregistrés ici, sans catégorie et invisibles sur le site. Choisis une catégorie avec « Classer », enregistre, puis clique sur « Publier ».</p>
+      <div id="audio-drafts-admin"></div>
+    </div>
     <div class="admin-section">
       <h3>Ajouter une histoire</h3>
       <form id="form-add-audio" novalidate>
