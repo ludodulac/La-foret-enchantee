@@ -192,14 +192,15 @@ async function identical(name,cs,start,end){
   assert(studio.includes("StudioExportCore.validatePlan(xs,start,end,{output})"));
   console.log('SELECTION_EXPORT_REGRESSION = PASS');
 
-  assert(studio.includes("let url=URL.createObjectURL(x.blob)"));
-  assert(studio.includes("a.download=x.filename"));
+  assert(studio.includes("let url=URL.createObjectURL(blob)"));
+  assert(studio.includes("a.download=filename"));
   assert(studio.includes("if(cleanup)Promise.resolve(cleanup())"));
   console.log('DOWNLOAD_FILE_PATH = PASS File/Blob -> object URL -> anchor download');
 
-  assert(studio.includes("if(x.opfsBacked)return msg('Upload long non activé dans cette mission · télécharge le WAV')"));
+  assert(studio.includes("StudioMp3Export.encodeWavBlob(x.blob"),'Large OPFS WAV supports MP3 encoding');
+  assert(studio.includes("ForestAudioPublish.publishDraftMp3({"),'MP3 draft upload available');
   assert(!coreSource.includes('Supabase'));
-  console.log('FOREST_LONG_UPLOAD_TOUCHED = NO');
+  console.log('LONG_MP3_DRAFT_UPLOAD = ENABLED; WAV ENGINE = UNCHANGED');
 
   console.log('OUTPUT_AUDIO_IDENTICAL = YES');
   console.log('Studio bounded OPFS WAV 011E tests PASS');

@@ -99,6 +99,8 @@ jobs:
         run: node tests/admin-footer-navigation-001.test.cjs
       - name: Check Katpist branding and inline categories
         run: node tests/katpist-admin-simplification-001.test.cjs
+      - name: Check Ludodio MP3 drafts and classified publication
+        run: node tests/ludodio-audio-drafts-027.test.cjs
       - name: Check public page contracts
         shell: bash
         run: |
