@@ -96,7 +96,7 @@ async function inspect(blob){
 
   // Studio keeps the existing local download path, but only after one shared mix/encode.
   assert(studio.includes('function downloadPreparedExport()'));
-  assert(studio.includes("a.download=x.filename"));
+  assert(studio.includes("a.download=filename"));
   assert(studio.includes("$('#export-download-ready').onclick=downloadPreparedExport"));
   assert(studio.includes("openExportDestination({blob,wavInfo,filename,diagnostic,requestedStart,requestedEnd,opfsBacked:output==='opfs',opfsCleanup:opfsResult?.cleanup||null})"));
   assert.equal((studio.match(/StudioExportCore\.streamWavCooperative\(/g)||[]).length,1);
@@ -132,8 +132,9 @@ async function inspect(blob){
   console.log('FOREST_EXPORT_NO_NEW_RLS = PASS');
 
   // Production Studio uses the helper with the already-authenticated dbClient and exact success message.
-  assert(studio.includes('ForestAudioPublish.publishNormalAudio({dbClient,blob:x.blob'));
-  assert(studio.includes("msg('Audio ajouté à Ludodio ✓')"));
+  assert(studio.includes('ForestAudioPublish.publishDraftMp3({'));
+  assert(studio.includes('js/foret-r2-media.js'), 'R2 MP3 upload client loaded');
+  assert(studio.includes('MP3 enregistré en brouillon dans Ludodio ✓'), 'Draft confirmation message');
   assert(studio.includes('<script src="js/audio-publish.js"></script>'));
 
   console.log('Studio forest export 011E tests PASS');

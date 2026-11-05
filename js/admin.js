@@ -177,32 +177,61 @@ function formatAdminDuration(seconds) {
 }
 
 function renderAudioList() {
-  const list = document.getElementById('audio-list-admin');
-  if (!list) return;
-  if (!audios.length) {
-    list.innerHTML = '<p class="empty-msg">Aucun audio.</p>';
-    return;
+  const list=document.getElementById('audio-list-admin');
+  const draftsSection=document.getElementById('audio-drafts-section');
+  const draftList=document.getElementById('audio-drafts-admin');
+  const draftCount=document.getElementById('audio-draft-count');
+  if(!list)return;
+  const waiting=audios.filter(audio=>audio.is_published===false);
+  const published=audios.filter(audio=>audio.is_published!==false);
+  if(draftsSection)draftsSection.hidden=waiting.length===0;
+  if(draftCount)draftCount.textContent=waiting.length?'('+waiting.length+')':'';
+  function rows(items){
+    return items.map(audio=>{
+      const category=categories.find(cat=>sameId(cat.id,audio.category_id));
+      const sub=subcategories.find(sub=>sameId(sub.id,audio.subcategory_id));
+      const cover=audio.image_path?getPublicUrl('images',audio.image_path):'';
+      const isDraft=audio.is_published===false;
+      const safeId=escapeHtml(audio.id);
+      return `<div class="admin-row">
+        <div class="admin-audio-identity">${cover?`<img class="admin-audio-thumb" src="${escapeHtml(cover)}" alt="">`:'<div class="admin-audio-thumb placeholder" aria-hidden="true">⌁</div>'}<span class="admin-audio-title">${escapeHtml(audio.title)}</span></div>
+        <span class="row-meta">${escapeHtml(category?.name??'Sans catégorie')}${sub?' › '+escapeHtml(sub.name):''} · <span class="admin-audio-duration">${formatAdminDuration(audio.duration)}</span></span>
+        <div class="row-actions">
+          <button class="btn-sm btn-edit" type="button" data-edit-audio="${safeId}">${isDraft?'Classer':'Modifier'}</button>
+          ${isDraft?`<button class="btn-sm btn-publish-audio" type="button" data-publish-audio="${safeId}" ${!category?'disabled title="Choisir une catégorie avant de publier"':''}>Publier</button>`:''}
+          <button class="btn-sm btn-del" type="button" data-delete-audio="${safeId}">Supprimer</button>
+        </div>
+      </div>`;
+    }).join('');
   }
-  list.innerHTML = audios.map(audio => {
-    const cat = categories.find(c => sameId(c.id, audio.category_id));
-    const sub = subcategories.find(s => sameId(s.id, audio.subcategory_id));
-    const cover = audio.image_path ? getPublicUrl('images', audio.image_path) : '';
-    return `<div class="admin-row">
-      <div class="admin-audio-identity">${cover ? `<img class="admin-audio-thumb" src="${escapeHtml(cover)}" alt="">` : '<div class="admin-audio-thumb placeholder" aria-hidden="true">⌁</div>'}<span class="admin-audio-title">${escapeHtml(audio.title)}</span></div>
-      <span class="row-meta">${escapeHtml(cat?.name ?? '—')}${sub ? ' › ' + escapeHtml(sub.name) : ''} · <span class="admin-audio-duration">${formatAdminDuration(audio.duration)}</span></span>
-      <div class="row-actions">
-        <button class="btn-sm btn-edit" type="button" data-edit-audio="${escapeHtml(audio.id)}">Modifier</button>
-        <button class="btn-sm btn-del" type="button" data-delete-audio="${escapeHtml(audio.id)}">Supprimer</button>
-      </div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('[data-edit-audio]').forEach(btn => btn.addEventListener('click', () => openEditAudio(btn.dataset.editAudio)));
-  list.querySelectorAll('[data-delete-audio]').forEach(btn => btn.addEventListener('click', () => {
-    const audio = audios.find(item => sameId(item.id, btn.dataset.deleteAudio));
-    if (audio) deleteAudio(audio.id, audio.image_path, audio.audio_path);
-  }));
+  list.innerHTML=published.length?rows(published):'<p class="empty-msg">Aucune histoire publiée.</p>';
+  if(draftList)draftList.innerHTML=rows(waiting);
+  for(const container of [list,draftList].filter(Boolean)){
+    container.querySelectorAll('[data-edit-audio]').forEach(btn=>btn.addEventListener('click',()=>openEditAudio(btn.dataset.editAudio)));
+    container.querySelectorAll('[data-delete-audio]').forEach(btn=>btn.addEventListener('click',()=>{
+      const audio=audios.find(item=>sameId(item.id,btn.dataset.deleteAudio));
+      if(audio)deleteAudio(audio.id,audio.image_path,audio.audio_path);
+    }));
+    container.querySelectorAll('[data-publish-audio]').forEach(btn=>btn.addEventListener('click',async()=>{
+      const audio=audios.find(item=>sameId(item.id,btn.dataset.publishAudio));
+      if(!audio||audio.is_published!==false)return;
+      if(!audio.category_id)return showNotif('Choisis une catégorie et enregistre avant de publier.','error');
+      if(!confirm('Rendre cette histoire visible sur le site Ludodio ?'))return;
+      btn.disabled=true;
+      try{
+        const {data,error}=await dbClient.from('audios').update({is_published:true})
+          .eq('id',audio.id).eq('is_published',false).select('id,is_published').single();
+        if(error||!data?.id||data.is_published!==true)throw error||Error('Publication non confirmée');
+        showNotif('Histoire publiée sur Ludodio ✓');
+        await refreshData();
+        renderAll();
+      }catch(error){
+        btn.disabled=false;
+        showNotif('Publication impossible : '+(error?.message||String(error)),'error');
+      }
+    }));
+  }
 }
-
 function setupForms() {
   document.getElementById('form-add-cat')?.addEventListener('submit', async e => {
     e.preventDefault();

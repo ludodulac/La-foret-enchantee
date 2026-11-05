@@ -46,5 +46,38 @@ async function publishNormalAudio({dbClient,blob,title,projectName,duration,path
   return{bucket:BUCKET,table:TABLE,title:finalTitle,audio_path:audioPath,duration:row.duration,publicUrl};
 }
 
-return{BUCKET,TABLE,cleanTitle,resolveTitle,slugify,makeAudioPath,normalizeDuration,publishNormalAudio};
+
+/* Direct MP3 upload is a draft: no category or public visibility until admin publication.
+   R2 owns MP3 uploads; Supabase's existing admin RLS owns row writes. */
+async function publishDraftMp3({dbClient,blob,title,projectName,duration,media}) {
+  if(!dbClient?.auth?.getSession||!dbClient.rpc)throw Error('Connexion Ludodio indisponible.');
+  if(!(blob instanceof Blob)||!blob.size)throw Error('MP3 vide ou invalide.');
+  if(!media?.upload||!media?.verify||!media?.remove||!media?.checkedMedia)throw Error('Stockage MP3 indisponible.');
+  const {data:sessionData,error:sessionError}=await dbClient.auth.getSession();
+  if(sessionError||!sessionData?.session?.access_token)throw Error('Connecte-toi à ton administration Ludodio.');
+  const {data:authorized,error:authError}=await dbClient.rpc('is_app_admin');
+  if(authError||authorized!==true)throw Error('Accès administrateur requis pour enregistrer dans Ludodio.');
+  const finalTitle=resolveTitle(title,projectName);
+  const file=new File([blob],slugify(finalTitle)+'.mp3',{type:'audio/mpeg'});
+  media.checkedMedia('audios',file);
+  let storedPath=null;
+  try{
+    storedPath=await media.upload(dbClient,'audios',file);
+    await media.verify(storedPath);
+    const row={title:finalTitle,audio_path:storedPath,duration:normalizeDuration(duration),
+      category_id:null,subcategory_id:null,is_published:false};
+    const {data,error}=await dbClient.from(TABLE).insert(row).select('id,is_published,audio_path,title').single();
+    if(error)throw Error('Enregistrement du brouillon impossible : '+(error.message||error));
+    if(!data?.id||data.is_published!==false||data.audio_path!==storedPath)throw Error('Brouillon non confirmé : sauvegarde interrompue.');
+    return{id:data.id,title:finalTitle,audio_path:storedPath,is_published:false,duration:row.duration};
+  }catch(error){
+    if(storedPath){
+      try{await media.remove(dbClient,storedPath)}
+      catch(cleanupError){error.rollbackError=cleanupError}
+    }
+    throw error;
+  }
+}
+
+return{BUCKET,TABLE,cleanTitle,resolveTitle,slugify,makeAudioPath,normalizeDuration,publishNormalAudio,publishDraftMp3};
 });
