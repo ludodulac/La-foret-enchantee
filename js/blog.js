@@ -184,7 +184,7 @@ async function loadArticle() {
 
   const bcTitle = document.getElementById('article-bc-title');
   if (bcTitle) bcTitle.textContent = article.title;
-  document.title = article.title + ' — La Forêt Enchantée';
+  document.title = article.title + ' — Katpist Audio';
 
   const date = article.published_at
     ? new Date(article.published_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })

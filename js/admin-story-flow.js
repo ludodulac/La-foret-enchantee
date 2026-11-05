@@ -1,24 +1,5 @@
 // admin-story-flow.js — aide légère au parcours réel de préparation d'une histoire.
 (() => {
-  const STORY_SUGGESTIONS = [
-    'Hansel et Gretel',
-    'Blanche-Neige',
-    'Le Roi-grenouille',
-    'Raiponce',
-    'Le Petit Chaperon rouge',
-    'Les Musiciens de Brême',
-    'Le Vaillant Petit Tailleur',
-    'Les Sept Corbeaux',
-    'Le Loup et les Sept Chevreaux',
-    'Dame Holle',
-    'Le Pêcheur et sa femme',
-    'Les Douze Frères',
-    'Le Conte du genévrier',
-    'La Gardeuse d’oies',
-    'Le Roi Barbabec',
-    'Les Six Cygnes'
-  ];
-
   let illustrationConcepts = {};
   let illustrationBaseUrl = '';
   const nativeFetch = window.fetch.bind(window);
@@ -73,47 +54,6 @@
     } catch (error) {
       console.warn('Mots-clés des illustrations indisponibles.', error);
     }
-  }
-
-  function enhanceStoryStart() {
-    const titleInput = document.getElementById('audio-title-in');
-    if (!titleInput || document.querySelector('[data-story-start-helper]')) return;
-    const group = titleInput.closest('.form-group');
-    if (!group) return;
-
-    const helper = document.createElement('div');
-    helper.className = 'story-start-helper';
-    helper.dataset.storyStartHelper = 'true';
-    helper.innerHTML = `
-      <div class="story-start-copy">
-        <strong>Commence par l’histoire</strong>
-        <span>Choisis une proposition ou écris librement ton propre titre.</span>
-      </div>
-      <label class="story-suggestion-label">
-        <span>Choisir une histoire proposée</span>
-        <select id="story-suggestion-select">
-          <option value="">— Choisir dans la liste —</option>
-          ${STORY_SUGGESTIONS.map(title => `<option value="${title.replace(/"/g, '&quot;')}">${title}</option>`).join('')}
-        </select>
-      </label>
-      <div class="story-free-note">Ou ajoute une autre histoire avec le champ <strong>Titre</strong> ci-dessous.</div>`;
-
-    group.insertBefore(helper, titleInput);
-    const select = helper.querySelector('#story-suggestion-select');
-    select.addEventListener('change', () => {
-      if (!select.value) return;
-      titleInput.value = select.value;
-      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
-      titleInput.focus();
-    });
-
-    titleInput.addEventListener('input', () => {
-      if (select.value && titleInput.value.trim() !== select.value) select.value = '';
-    });
-
-    document.getElementById('form-add-audio')?.addEventListener('reset', () => {
-      setTimeout(() => { select.value = ''; }, 0);
-    });
   }
 
   function searchableText(button) {
@@ -219,12 +159,10 @@
   }
 
   function init() {
-    enhanceStoryStart();
     enhanceCoverEditors();
     loadIllustrationKeywords();
 
     const observer = new MutationObserver(() => {
-      enhanceStoryStart();
       enhanceCoverEditors();
     });
     observer.observe(document.body, { childList: true, subtree: true });

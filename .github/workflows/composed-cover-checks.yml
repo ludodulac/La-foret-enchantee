@@ -89,7 +89,7 @@ jobs:
           grep -q "cover_color" js/admin-cover-editor.js
           grep -q "uploadVerified" js/admin-cover-editor.js
           grep -q "verifyRow" js/admin-cover-editor.js
-          grep -q "Choisir une histoire proposée" js/admin-story-flow.js
+          ! grep -q "Choisir une histoire proposée" js/admin-story-flow.js
           grep -q "Rechercher une image" js/admin-story-flow.js
           grep -q "illustration_key" supabase/migrations/20260910_add_composed_cover_metadata.sql
           grep -q "cover_color" supabase/migrations/20260910_add_composed_cover_metadata.sql
