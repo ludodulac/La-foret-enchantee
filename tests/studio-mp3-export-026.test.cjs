@@ -56,6 +56,15 @@ function wav(durationSeconds) {
   await assert.rejects(encodeWavBlob(input,{lame:null}),/encodeur MP3/i);
   console.log('STUDIO MP3 026 BAD INPUT / ABORT / MISSING ENCODER PASS');
 
+  const filenameLine=html.split('\n').find(line=>line.startsWith('function makeExportFilename('));
+  assert(filenameLine,'Custom export filename helper must be present');
+  const makeExportFilename=new Function(filenameLine+';return makeExportFilename;')();
+  assert.equal(makeExportFilename('Mon conte','montage-son.wav','mp3'),'Mon conte.mp3');
+  assert.equal(makeExportFilename('Épisode 1.wav','montage-son.wav','wav'),'Épisode 1.wav');
+  assert.equal(makeExportFilename('Mon/Conte:*?','montage-son.wav','mp3'),'Mon-Conte---.mp3');
+  assert.equal(makeExportFilename('   ','montage-son.wav','wav'),'montage-son.wav');
+  assert(html.includes("makeExportFilename($('#export-title-input').value,x.filename,format)"),'Download must use editable filename');
+  assert(html.includes("window.addEventListener('beforeunload'"),'Warn on page exit during encoding');
   assert(html.includes('id="export-format-choice"'));
   assert(html.includes('<option value="mp3">'));
   assert(html.includes('<option value="wav">'));
