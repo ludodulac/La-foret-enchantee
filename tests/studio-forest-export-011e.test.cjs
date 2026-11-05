@@ -111,7 +111,7 @@ async function inspect(blob){
   console.log('FOREST_EXPORT_DOUBLE_TAP_GUARD = PASS');
 
   // Admin return is deliberately a discreet text link on the project library, not the old primary back button.
-  assert(studio.includes('<a class="project-library-admin-link" href="admin.html">← Administration Katpist Audio</a>'));
+  assert(studio.includes('<a class="project-library-admin-link" href="admin.html">← Administration Ludodio</a>'));
   assert(!studio.includes('<a class="project-library-back game-btn'));
   console.log('ADMIN_RETURN_TARGET = admin.html');
 
@@ -133,7 +133,7 @@ async function inspect(blob){
 
   // Production Studio uses the helper with the already-authenticated dbClient and exact success message.
   assert(studio.includes('ForestAudioPublish.publishNormalAudio({dbClient,blob:x.blob'));
-  assert(studio.includes("msg('Audio ajouté à Katpist Audio ✓')"));
+  assert(studio.includes("msg('Audio ajouté à Ludodio ✓')"));
   assert(studio.includes('<script src="js/audio-publish.js"></script>'));
 
   console.log('Studio forest export 011E tests PASS');
