@@ -128,13 +128,13 @@
     const p = activeProfile();
     const featured = state.audios[0];
     const featuredCover = imageUrl(featured);
-    const featuredCategory = categoryFor(featured)?.name || 'Une histoire de la forêt';
+    const featuredCategory = categoryFor(featured)?.name || 'Une histoire à écouter';
     const latest = state.audios.slice(0,10);
     const recent = typeof recentIds === 'function' ? recentIds().map(id => state.audios.find(item => sameId(item.id,id))).filter(Boolean).slice(0,10) : [];
     const categoryRails = state.categories.slice(0,4).map(category => ({ title:category.name, audios:state.audios.filter(audio => sameId(audio.category_id,category.id)).slice(0,10) })).filter(group => group.audios.length);
-    document.getElementById('page-eyebrow').textContent = 'La Forêt Enchantée';
+    document.getElementById('page-eyebrow').textContent = 'Katpist Audio';
     document.getElementById('page-title').textContent = `Que veux-tu écouter, ${p.name} ?`;
-    document.getElementById('page-subtitle').textContent = 'Choisis une histoire et laisse la forêt raconter.';
+    document.getElementById('page-subtitle').textContent = 'Choisis une histoire et laisse-toi emporter.';
     document.getElementById('toolbar').style.display = 'none';
     main.innerHTML = `<div class="child-home"><section class="child-featured" data-child-id="${escapeHtml(featured.id)}" tabindex="0"><div class="child-featured-copy"><span class="child-featured-kicker">À découvrir</span><h2>${escapeHtml(featured.title)}</h2><p>${escapeHtml(featured.description || featuredCategory)}</p><button class="child-featured-play" type="button" data-child-play="${escapeHtml(featured.id)}"><span>▶</span> Écouter</button></div><div class="child-featured-art">${featuredCover ? `<img src="${escapeHtml(featuredCover)}" alt="">` : '<div class="child-featured-placeholder child-symbolic-hero" aria-hidden="true"><span class="symbol-moon">☾</span><span class="symbol-tree">♠</span><span class="symbol-star">✦</span></div>'}</div></section>${rail('Nouveautés',latest,'all')}${recent.length ? rail('À reprendre',recent,'recent') : ''}${categoryRails.map(group => rail(group.title,group.audios,'categories')).join('')}</div>`;
     bindChildContent(main);
