@@ -112,10 +112,14 @@ function lane(id,top,bottom){return{dataset:{trackId:id},classList:classList(),g
 assert(dragSource.includes("el.onpointercancel=e=>finish(e,true)"));assert(dragSource.includes("c.start=startState.start;c.track=startState.track"));
 console.log('POINTER_CANCEL PASS policy A retained');
 
-// Undo + redo handlers retained.
+// Undo + redo: the legacy buttons and the mobile shortcuts use the same history functions.
 for(const marker of [
- "$('#undo').onclick=()=>{if(!undo.length)return;redo.push(snapshot());restore(undo.pop())}",
- "$('#redo').onclick=()=>{if(!redo.length)return;undo.push(snapshot());restore(redo.pop())}"
+ "function undoLastChange(){if(recording||!undo.length)return false;stopPlay();redo.push(snapshot());restore(undo.pop())",
+ "function redoLastChange(){if(recording||!redo.length)return false;stopPlay();undo.push(snapshot());restore(redo.pop())",
+ "$('#undo').onclick=undoLastChange",
+ "$('#redo').onclick=redoLastChange",
+ "$('#undo-quick').onclick=undoLastChange",
+ "$('#redo-quick').onclick=redoLastChange"
 ])assert(html.includes(marker),'undo/redo changed '+marker);
 console.log('UNDO PASS');
 console.log('REDO PASS');
