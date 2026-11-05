@@ -65,6 +65,11 @@ function wav(durationSeconds) {
   assert.equal(makeExportFilename('   ','montage-son.wav','wav'),'montage-son.wav');
   assert(html.includes("makeExportFilename($('#export-title-input').value,x.filename,format)"),'Download must use editable filename');
   assert(html.includes("window.addEventListener('beforeunload'"),'Warn on page exit during encoding');
+  assert(html.includes('id="undo-quick"') && html.includes('id="redo-quick"'),'Mobile undo and redo controls visible in zoom strip');
+  assert(html.includes("$('#undo-quick').onclick=undoLastChange"),'Quick undo must connect to existing history');
+  assert(html.includes("$('#redo-quick').onclick=redoLastChange"),'Quick redo must connect to existing history');
+  assert(html.includes("document.addEventListener('keydown'") && html.includes("e.ctrlKey||e.metaKey"),'Ctrl/Cmd+Z support must exist');
+  assert(html.includes("$('#undo-quick').disabled=!canUndo"),'Mobile undo must reflect history state');
   assert(html.includes('id="export-format-choice"'));
   assert(html.includes('<option value="mp3">'));
   assert(html.includes('<option value="wav">'));
