@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#171a34">
   <meta name="robots" content="noindex, nofollow">
-  <title>Administration — La Forêt Enchantée</title>
+  <title>Administration — Katpist Audio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/blog.css">
   <link rel="stylesheet" href="css/admin-2026.css">
+  <link rel="stylesheet" href="css/admin-inline-taxonomy.css?v=1">
   <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
   <style>
     .upload-hint{font-size:.72rem;margin-top:.3rem}.add-audio-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}.admin-head-actions{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}.admin-brand-mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#f3d56c;color:#171a34;font-weight:900}.admin-title{display:flex;align-items:center;gap:.65rem}.admin-intro-actions{display:flex;gap:.65rem;flex-wrap:wrap}.admin-intro-action{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 15px;border-radius:13px;text-decoration:none;font-weight:800;background:#303654;color:#fff;border:1px solid rgba(255,255,255,.08)}
@@ -21,7 +22,7 @@
 <body class="admin-experience">
 <header class="admin-header">
   <div class="admin-header-inner">
-    <div class="admin-title"><span class="admin-brand-mark">⌁</span><span>La Forêt Enchantée · Administration</span></div>
+    <div class="admin-title"><span class="admin-brand-mark">⌁</span><span>Katpist Audio · Administration</span></div>
     <div class="admin-head-actions">
       <a href="studio.html" class="visit-link" style="background:#f3d56c;color:#171a34;border-color:#f3d56c;font-weight:900">🎙 STUDIO</a>
       <a href="index.html" class="visit-link">← Voir le site</a>
@@ -32,24 +33,6 @@
 </header>
 
 <main class="admin-wrap">
-  <section class="admin-intro">
-    <div>
-      <div class="eyebrow">Tableau de bord</div>
-      <h1>Gérer la forêt</h1>
-      <p>Ajoute et organise les histoires, les catégories et le Journal depuis un espace cohérent avec le site public.</p>
-    </div>
-    <div class="admin-intro-actions">
-      <a class="admin-intro-action" href="index.html">Aperçu du site</a>
-      <a class="admin-intro-action" href="blog.html">Voir le Journal</a>
-    </div>
-  </section>
-
-  <div class="stat-row">
-    <div class="stat-card"><span class="stat-num" id="stat-audios">—</span><span class="stat-label">Histoires</span></div>
-    <div class="stat-card"><span class="stat-num" id="stat-cats">—</span><span class="stat-label">Catégories</span></div>
-    <div class="stat-card"><span class="stat-num" id="stat-articles">—</span><span class="stat-label">Articles</span></div>
-  </div>
-
   <div class="tabs" role="tablist" aria-label="Sections de l’administration">
     <button class="tab-btn active" data-tab="tab-audios">🎧 Histoires</button>
     <button class="tab-btn" data-tab="tab-blog">📖 Journal</button>
@@ -62,9 +45,9 @@
       <h3>Ajouter une histoire</h3>
       <form id="form-add-audio" novalidate>
         <div class="add-audio-grid">
-          <div class="form-group"><label for="audio-title-in">Titre *</label><input type="text" id="audio-title-in" placeholder="Ex : Le Petit Chaperon Rouge" required></div>
-          <div class="form-group"><label for="audio-cat">Catégorie</label><select id="audio-cat"><option value="">— Sélectionner —</option></select></div>
-          <div class="form-group"><label for="audio-sub">Sous-catégorie</label><select id="audio-sub"><option value="">— Aucune —</option></select></div>
+          <div class="form-group"><label for="audio-title-in">Titre</label><input type="text" id="audio-title-in" required></div>
+          <div class="form-group"><label for="audio-cat">Catégorie</label><div class="taxonomy-select-line"><select id="audio-cat"><option value="">— Sélectionner —</option></select><button class="taxonomy-add-toggle" type="button" data-taxonomy-toggle="audio-cat" aria-label="Ajouter une catégorie" title="Ajouter une catégorie">＋</button></div><div class="taxonomy-create" id="audio-cat-create" hidden><input id="audio-cat-new" type="text" placeholder="Nouvelle catégorie" maxlength="100" autocomplete="off" aria-label="Nom de une catégorie"><div class="taxonomy-create-actions"><button type="button" data-taxonomy-save="audio-cat">Ajouter</button><button type="button" data-taxonomy-cancel="audio-cat">Annuler</button></div><p id="audio-cat-message" class="taxonomy-message" aria-live="polite"></p></div></div>
+          <div class="form-group"><label for="audio-sub">Sous-catégorie</label><div class="taxonomy-select-line"><select id="audio-sub"><option value="">— Aucune —</option></select><button class="taxonomy-add-toggle" type="button" data-taxonomy-toggle="audio-sub" aria-label="Ajouter une sous-catégorie" title="Ajouter une sous-catégorie">＋</button></div><div class="taxonomy-create" id="audio-sub-create" hidden><input id="audio-sub-new" type="text" placeholder="Nouvelle sous-catégorie" maxlength="100" autocomplete="off" aria-label="Nom de une sous-catégorie"><div class="taxonomy-create-actions"><button type="button" data-taxonomy-save="audio-sub">Ajouter</button><button type="button" data-taxonomy-cancel="audio-sub">Annuler</button></div><p id="audio-sub-message" class="taxonomy-message" aria-live="polite"></p></div></div>
           <div class="form-group"><label for="audio-img">Image de couverture</label><input type="file" id="audio-img" accept="image/*"><div class="upload-hint">JPG, PNG · 600×600 px recommandé</div></div>
           <div class="form-group" style="grid-column:1/-1"><label for="audio-desc-in">Description</label><textarea id="audio-desc-in" placeholder="Courte description…"></textarea></div>
           <div class="form-group" style="grid-column:1/-1"><label for="audio-file">Fichier audio *</label><input type="file" id="audio-file" accept="audio/*" required><div class="upload-hint">MP3, M4A, OGG</div></div>
@@ -80,8 +63,8 @@
       <form id="form-edit-audio" novalidate>
         <div class="edit-grid">
           <div class="form-group"><label for="edit-audio-title">Titre *</label><input type="text" id="edit-audio-title" required></div>
-          <div class="form-group"><label for="edit-audio-cat">Catégorie</label><select id="edit-audio-cat"></select></div>
-          <div class="form-group"><label for="edit-audio-sub">Sous-catégorie</label><select id="edit-audio-sub"></select></div>
+          <div class="form-group"><label for="edit-audio-cat">Catégorie</label><div class="taxonomy-select-line"><select id="edit-audio-cat"><option value="">— Sélectionner —</option></select><button class="taxonomy-add-toggle" type="button" data-taxonomy-toggle="edit-audio-cat" aria-label="Ajouter une catégorie" title="Ajouter une catégorie">＋</button></div><div class="taxonomy-create" id="edit-audio-cat-create" hidden><input id="edit-audio-cat-new" type="text" placeholder="Nouvelle catégorie" maxlength="100" autocomplete="off" aria-label="Nom de une catégorie"><div class="taxonomy-create-actions"><button type="button" data-taxonomy-save="edit-audio-cat">Ajouter</button><button type="button" data-taxonomy-cancel="edit-audio-cat">Annuler</button></div><p id="edit-audio-cat-message" class="taxonomy-message" aria-live="polite"></p></div></div>
+          <div class="form-group"><label for="edit-audio-sub">Sous-catégorie</label><div class="taxonomy-select-line"><select id="edit-audio-sub"><option value="">— Aucune —</option></select><button class="taxonomy-add-toggle" type="button" data-taxonomy-toggle="edit-audio-sub" aria-label="Ajouter une sous-catégorie" title="Ajouter une sous-catégorie">＋</button></div><div class="taxonomy-create" id="edit-audio-sub-create" hidden><input id="edit-audio-sub-new" type="text" placeholder="Nouvelle sous-catégorie" maxlength="100" autocomplete="off" aria-label="Nom de une sous-catégorie"><div class="taxonomy-create-actions"><button type="button" data-taxonomy-save="edit-audio-sub">Ajouter</button><button type="button" data-taxonomy-cancel="edit-audio-sub">Annuler</button></div><p id="edit-audio-sub-message" class="taxonomy-message" aria-live="polite"></p></div></div>
           <div class="form-group"><label for="edit-audio-img">Nouvelle image de couverture</label><input type="file" id="edit-audio-img" accept="image/*"><div class="keep-file-hint"><strong>Laisser vide pour conserver la couverture actuelle.</strong></div></div>
           <div class="form-group" style="grid-column:1/-1"><label for="edit-audio-desc">Description</label><textarea id="edit-audio-desc"></textarea></div>
           <div class="form-group" style="grid-column:1/-1"><label for="edit-audio-file">Nouveau fichier audio</label><input type="file" id="edit-audio-file" accept="audio/*"><div class="keep-file-hint"><strong>Laisser vide pour conserver l’audio actuel.</strong></div></div>
@@ -123,13 +106,6 @@
 <script src="js/foret-r2-media.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/admin-blog.js"></script>
-<script>
-  const _origRenderAll = renderAll;
-  renderAll = function() {
-    _origRenderAll();
-    document.getElementById('stat-audios').textContent = audios.length;
-    document.getElementById('stat-cats').textContent = categories.length;
-  };
-</script>
+
 </body>
 </html>
