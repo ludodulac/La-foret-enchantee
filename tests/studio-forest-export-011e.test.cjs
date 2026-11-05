@@ -105,9 +105,11 @@ async function inspect(blob){
   console.log('FOREST_EXPORT_PIPELINE_STILL_WORKS = PASS');
 
   // One publication at a time; repeated taps return before any second call.
-  assert(studio.includes('if(forestPublishBusy||!pendingExport)return'));
-  assert(studio.includes('forestPublishBusy=true;btn.disabled=true'));
-  assert(studio.includes('finally{forestPublishBusy=false;btn.disabled=false'));
+  assert(studio.includes('if(forestPublishBusy||downloadExportBusy||exportBusy||!pendingExport)return'));
+  assert(studio.includes('forestPublishBusy=true;'));
+  assert(studio.includes('btn.disabled=true;'));
+  assert(studio.includes('forestPublishBusy=false;'));
+  assert(studio.includes('closeExportDestination(true)'));
   console.log('FOREST_EXPORT_DOUBLE_TAP_GUARD = PASS');
 
   // Admin return is deliberately a discreet text link on the project library, not the old primary back button.
