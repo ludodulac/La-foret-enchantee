@@ -1,0 +1,83 @@
+/* Accès discret à l'administration depuis le bas de la médiathèque. */
+.forest-public-footer {
+  margin-top:64px;
+  padding:22px 0 12px;
+  border-top:1px solid rgba(255,255,255,.12);
+  color:#aab0c8;
+  font:600 12px/1.5 Inter,system-ui,sans-serif;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+.forest-admin-footer-link {
+  border:0;
+  background:transparent;
+  color:#c4c9db;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  font:inherit;
+  cursor:pointer;
+  padding:10px;
+  min-height:44px;
+}
+.forest-admin-footer-link:focus-visible,
+.forest-admin-gate button:focus-visible,
+.forest-admin-gate input:focus-visible {
+  outline:3px solid #f3d56c;
+  outline-offset:3px;
+}
+.forest-admin-gate[hidden],.forest-admin-gate-error[hidden]{display:none!important}
+.forest-admin-gate {
+  position:fixed;
+  inset:0;
+  z-index:2100;
+  background:rgba(5,8,19,.78);
+  backdrop-filter:blur(6px);
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+.forest-admin-gate-dialog {
+  width:min(100%,390px);
+  max-height:calc(100dvh - 40px);
+  overflow:auto;
+  border-radius:20px;
+  padding:26px 22px;
+  background:#242947;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 22px 75px rgba(0,0,0,.46);
+  color:#fff;
+  font:600 15px/1.5 Inter,system-ui,sans-serif;
+}
+.forest-admin-gate-dialog h2{margin:0 0 8px;font:850 24px/1.2 Nunito,Inter,sans-serif}
+.forest-admin-gate-dialog p{margin:0 0 18px;color:#c6cadc;font-size:13px}
+.forest-admin-gate-dialog label{display:block;margin-bottom:7px;font-weight:800}
+.forest-admin-gate-dialog input {
+  width:100%;
+  box-sizing:border-box;
+  border:1px solid #8993b9;
+  border-radius:12px;
+  background:#171b33;
+  color:#fff;
+  font:inherit;
+  min-height:48px;
+  padding:12px 14px;
+}
+.forest-admin-gate-error{margin:10px 0 0!important;color:#ffb9b4!important}
+.forest-admin-gate-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.forest-admin-gate-actions button {
+  min-height:44px;
+  padding:10px 16px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.22);
+  font:800 14px Inter,system-ui,sans-serif;
+  cursor:pointer;
+}
+.forest-admin-cancel{background:transparent;color:#fff}
+.forest-admin-continue{background:#f3d56c;color:#171a34;border-color:#f3d56c!important}
+@media(max-width:700px){
+  .forest-public-footer{margin-top:38px;padding-bottom:18px;gap:4px 16px}
+  .forest-admin-gate-dialog{padding:24px 18px}
+}

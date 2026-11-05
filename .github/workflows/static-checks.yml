@@ -95,6 +95,8 @@ jobs:
           test -f supabase/migrations/20260904_unify_admin_permissions.sql
           test -f supabase/migrations/20260904_add_fk_indexes.sql
           test -f supabase/migrations/20260904_optimize_article_select_policies.sql
+      - name: Check footer admin entry and Supabase auth
+        run: node tests/admin-footer-navigation-001.test.cjs
       - name: Check public page contracts
         shell: bash
         run: |
