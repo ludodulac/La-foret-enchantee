@@ -192,8 +192,8 @@ async function identical(name,cs,start,end){
   assert(studio.includes("StudioExportCore.validatePlan(xs,start,end,{output})"));
   console.log('SELECTION_EXPORT_REGRESSION = PASS');
 
-  assert(studio.includes("let url=URL.createObjectURL(x.blob)"));
-  assert(studio.includes("a.download=x.filename"));
+  assert(studio.includes("let url=URL.createObjectURL(blob)"));
+  assert(studio.includes("a.download=filename"));
   assert(studio.includes("if(cleanup)Promise.resolve(cleanup())"));
   console.log('DOWNLOAD_FILE_PATH = PASS File/Blob -> object URL -> anchor download');
 
