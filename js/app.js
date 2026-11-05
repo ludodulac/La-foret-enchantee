@@ -1,4 +1,4 @@
-// Katpist Audio — bibliothèque 2026
+// Ludodio — bibliothèque 2026
 const STORAGE = {
   display: 'forestDisplay',
   progress: 'forestAudioProgress',
@@ -326,7 +326,7 @@ function updateNowPlaying() {
   mini.classList.add('visible');
   mini.setAttribute('aria-hidden', 'false');
   $('#mini-title').textContent = audio.title;
-  $('#mini-sub').textContent = categoryFor(audio)?.name ?? 'Katpist Audio';
+  $('#mini-sub').textContent = categoryFor(audio)?.name ?? 'Ludodio';
   const cover = imageUrl(audio);
   const coverEl = $('#mini-cover');
   coverEl.src = cover || '';

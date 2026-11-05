@@ -132,7 +132,7 @@
     const latest = state.audios.slice(0,10);
     const recent = typeof recentIds === 'function' ? recentIds().map(id => state.audios.find(item => sameId(item.id,id))).filter(Boolean).slice(0,10) : [];
     const categoryRails = state.categories.slice(0,4).map(category => ({ title:category.name, audios:state.audios.filter(audio => sameId(audio.category_id,category.id)).slice(0,10) })).filter(group => group.audios.length);
-    document.getElementById('page-eyebrow').textContent = 'Katpist Audio';
+    document.getElementById('page-eyebrow').textContent = 'Ludodio';
     document.getElementById('page-title').textContent = `Que veux-tu écouter, ${p.name} ?`;
     document.getElementById('page-subtitle').textContent = 'Choisis une histoire et laisse-toi emporter.';
     document.getElementById('toolbar').style.display = 'none';

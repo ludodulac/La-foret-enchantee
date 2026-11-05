@@ -26,7 +26,7 @@ assert(auth.includes("dbClient.rpc('is_app_admin')")||read('js/auth.js').include
 for(const file of ['index.html','admin.html','login.html','studio.html','audio.html','blog.html','article.html','js/app.js','js/audio.js','js/blog.js','js/child-shell.js']){
  const source=read(file);
  assert(!source.includes('La Forêt Enchantée'),file+' old name persists');
- assert(source.includes('Katpist Audio'),file+' new brand missing');
+ assert(source.includes('Ludodio'),file+' new brand missing');
 }
 assert(main.includes('forest-admin-entry'),'Footer administration entry retained');
 assert(read('js/admin-entry-footer.js').includes("'lfe'"),'Existing LFE navigation code retained');
@@ -67,5 +67,5 @@ vm.runInNewContext(script,context);
  await add.listeners.click();
  assert.equal(writes.length,2,'duplicate category reused, not written twice');
  assert(toasts.length>=3,'Feedback after saves');
- console.log('KATPIST AUDIO — branding, simple admin, inline categories and secure access PASS');
+ console.log('LUDODIO — branding, simple admin, inline categories and secure access PASS');
 })().catch(e=>{console.error(e);process.exitCode=1});
