@@ -255,7 +255,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 <div class="mic-controls" aria-label="Entrée microphone">
   <label for="mic-choice">Micro :</label>
   <select id="mic-choice" aria-label="Choisir le microphone"><option value="">Micro Android (automatique)</option></select>
-  <span id="mic-status" role="status" aria-live="polite">Micro libéré · dictée disponible</span>
+  <span id="mic-status" role="status" aria-live="polite">Micro du Studio libéré</span>
 </div>
 <section class="multitrack" id="multitrack">
   <div class="multitrack-body">
@@ -445,7 +445,7 @@ function freeMic(stream){
   stopPlay(false);
   recording=false;$('#app').classList.remove('recording');$('#record').classList.remove('is-recording');
   micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false;
-  micStatus('Micro libéré · dictée disponible');
+  micStatus('Micro du Studio libéré');
   Promise.resolve(ctx.suspend()).catch(()=>{});
 }
 async function record(){if(recording||micStarting)return;
