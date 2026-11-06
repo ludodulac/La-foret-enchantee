@@ -107,7 +107,7 @@ const copy=x=>JSON.parse(JSON.stringify(x));
 
   const html=fs.readFileSync('studio.html','utf8');
   assert(html.includes("registerSourceBlob(f,b,{origin:'phone-import'"),'import téléphone doit enregistrer le File original');
-  assert(html.includes("registerSourceBlob(blob,b,{origin:'micro-recording'"),'micro doit enregistrer le Blob MediaRecorder original');
+  assert(html.includes("registerSourceBlob(blob,buffer,{origin:'micro-recording'"),'micro doit enregistrer le Blob MediaRecorder original');
   assert(html.includes("registerSourceBlob(data,b,{origin:'cloud-library'"),'sonothèque téléchargée doit devenir source locale');
   assert(html.includes("await registerSourceBlob(blob,null,{...row,id,waveform:saved.waveforms?.get(id)||null})"),'projet local rouvert doit restaurer la source canonique sans decode eager');
   assert(html.includes("let snap=saved.snapshot,rebuilt=snap.clips.map"),'reopen local doit reconstruire les clips par sourceId');

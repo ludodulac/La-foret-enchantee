@@ -129,7 +129,7 @@ for(const id of ['back','record','play','stop','forward','undo','redo'])assert(h
 for(const marker of [
  "$('#record').onclick=record",
  "$('#play').onclick=()=>playing||playPreparing?stopPlay():play()",
- "$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}",
+ "$('#stop').onclick=()=>{if(micStarting){micGeneration++;micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false;micStatus('Demande micro annulée · micro libéré');return}if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}",
  "$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)}",
  "$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)}"
 ])assert(html.includes(marker),'transport handler missing '+marker);
@@ -321,9 +321,9 @@ assert(trimSource.includes("let wave=clipEl.querySelector('.wavecanvas');if(wave
 console.log('TRIM_LIVE_WAVEFORM_REDRAW PASS no stale canvas during left trim');
 
 // REC label remains stable; active recording is visual state only.
-const recordStart=html.indexOf('async function record()'),recordEnd=html.indexOf('function clickBeat',recordStart),recordSource=html.slice(recordStart,recordEnd);
+const recordStart=html.indexOf('function micStatus('),recordEnd=html.indexOf('function clickBeat',recordStart),recordSource=html.slice(recordStart,recordEnd);
 assert(html.includes('<button class="record game-btn game-btn-primary game-btn-red" id="record"><b>●</b> REC</button>'));
-assert(recordSource.includes('async function record(){if(recording)return;try{'));
+assert(recordSource.includes('async function record(){if(recording||micStarting)return;'));
 assert(recordSource.includes("$('#record').classList.add('is-recording')"));
 assert(recordSource.includes("$('#record').classList.remove('is-recording')"));
 assert(!recordSource.includes("$('#record').innerHTML"));
@@ -335,16 +335,16 @@ console.log('REC_ACTIVE_VISUAL_STATE PASS active class brightens/glows REC witho
 assert.equal((html.match(/id="stop"/g)||[]).length,1);
 assert(!recordSource.includes('STOP'));
 const controlsStart=html.indexOf("$('#record').onclick=record;"),controlsEnd=html.indexOf('function zoomAt',controlsStart),controlsSource=html.slice(controlsStart,controlsEnd);
-assert(controlsSource.includes("$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"));
+assert(controlsSource.includes("$('#stop').onclick=()=>{if(micStarting){micGeneration++;micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false;micStatus('Demande micro annulée · micro libéré');return}if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()}"));
 {
   let handlers={},recStops=0,playStops=0,recording=true,recorder={state:'recording',stop(){recStops++}};
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:false,recording,recorder,micStarting:false,micGeneration:0,micStatus(){}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,1);assert.equal(playStops,0);
 }
 {
   let handlers={},recStops=0,playStops=0;
-  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,recorder:{state:'inactive',stop(){recStops++}}};
+  const ctx={$:sel=>({set onclick(fn){handlers[sel]=fn}}),record(){},play(){},stopPlay(){playStops++},setCursor(){},cursor:10,playPreparing:false,playing:true,recording:false,recorder:{state:'inactive',stop(){recStops++}},micStarting:false,micGeneration:0,micStatus(){}};
   vm.createContext(ctx);vm.runInContext(controlsSource,ctx);handlers['#stop']();
   assert.equal(recStops,0);assert.equal(playStops,1);
 }
@@ -491,34 +491,28 @@ async function recordInto(selectedId){
   class FakeMediaRecorder{
     constructor(stream){this.stream=stream;this.mimeType='audio/webm;codecs=opus';this.state='inactive';this.ondataavailable=null;this.onstop=null}
     start(){this.state='recording'}
-    stop(){this.state='inactive';return this.onstop?.()}
+    async stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['audio'],{type:this.mimeType})});return this.onstop?.()}
   }
+  const select={value:'',disabled:false,options:[],classList:{toggle(){}}};
+  const status={textContent:'',classList:{toggle(){}}};
+  const fakeStream={getAudioTracks(){return [{label:'Micro-test',addEventListener(){},stop(){}}]},getTracks(){return this.getAudioTracks()}};
   const ctx={
-    console,Math,Blob,Uint8Array,
-    navigator:{mediaDevices:{getUserMedia:async()=>({getTracks:()=>[{stop(){}}]})}},
-    MediaRecorder:FakeMediaRecorder,
-    crypto:{randomUUID:()=> 'clip-rec'},
+    console,Math,Map,Blob,Uint8Array,Promise,setTimeout,clearTimeout,performance:{now:()=>1000},
+    navigator:{mediaDevices:{getUserMedia:async()=>fakeStream}},
+    StudioMicGuard:{acquire:async()=>fakeStream,release(stream){stream.getTracks().forEach(track=>track.stop())},errorMessage:error=>error.message},
+    MediaRecorder:FakeMediaRecorder,crypto:{randomUUID:()=> 'clip-rec'},
     tracks,clips,selectedRecordTrackId:selectedId,selected:null,
-    recorder:null,chunks:[],recording:false,cursor:3,liveDuration:0,liveRec:null,liveAnalyser:null,liveMic:null,liveAnim:0,
-    document:{querySelectorAll:()=>[]},
-    markProjectDirty(){},
-    msg(){},
-    projectDuration:()=>15,
-    play:async()=>true,
-    stopPlay(){},
-    registerSourceBlob:async()=> 'src-rec',
-    checkpoint(){},
-    render(){},
-    setCursor(){},
-    requestAnimationFrame:()=>1,
-    cancelAnimationFrame(){},
-    devicePixelRatio:1,
-    ctx:{
+    recorder:null,chunks:[],recording:false,micStarting:false,micGeneration:0,micStream:null,cursor:3,liveDuration:0,liveRec:null,liveAnalyser:null,liveMic:null,liveAnim:0,
+    document:{hidden:false,querySelectorAll:()=>[]},markProjectDirty(){},msg(){},projectDuration:()=>15,
+    stopPlay(){},startPreparedPlayback(){},preparePlayback:async()=>new Map(),
+    registerSourceBlob:async()=> 'src-rec',checkpoint(){},render(){},setCursor(){},
+    requestAnimationFrame:()=>1,cancelAnimationFrame(){},devicePixelRatio:1,
+    ctx:{state:'running',resume:async()=>{},suspend:async()=>{},currentTime:0,
       createAnalyser:()=>({fftSize:0,getByteTimeDomainData(){}}),
       createMediaStreamSource:()=>({connect(){},disconnect(){}}),
       decodeAudioData:async()=>({duration:1.25})
     },
-    $:sel=>sel==='#app'?app:sel==='#record'?recBtn:sel==='#livewave'?null:{},
+    $:sel=>sel==='#app'?app:sel==='#record'?recBtn:sel==='#mic-choice'?select:sel==='#mic-status'?status:sel==='#livewave'?null:{},
   };
   vm.createContext(ctx);
   vm.runInContext(recordTrackSelectionSource,ctx);

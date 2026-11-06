@@ -185,6 +185,12 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .project-dialog-panel{align-items:flex-start;padding:clamp(12px,calc(var(--studio-vh,100dvh) * .08),48px) 12px 12px}
   .project-dialog-box{max-height:calc(var(--studio-vh,100dvh) - clamp(36px,calc(var(--studio-vh,100dvh) * .16),96px))}
 }
+
+.mic-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:2px 2px 8px;font:600 11px/1.4 system-ui,sans-serif;color:#b7c9d7}
+.mic-controls label{font-weight:800;color:#f3d56c}
+.mic-controls select{min-height:35px;max-width:220px;min-width:0;flex:1 1 135px;color:#fff;background:#272b34;border:1px solid #565b6c;border-radius:9px;padding:5px;font-size:11px}
+#mic-status{flex:1 1 100%;min-height:17px;white-space:normal;overflow-wrap:anywhere}
+#mic-status.mic-warning{color:#ffd685}
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
   <header class="project-library-header">
@@ -246,7 +252,11 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button class="transport game-btn game-btn-primary game-btn-dark" id="stop">■</button>
   <button class="transport game-btn game-btn-standard" id="forward">+5s</button>
 </div></nav>
-
+<div class="mic-controls" aria-label="Entrée microphone">
+  <label for="mic-choice">Micro :</label>
+  <select id="mic-choice" aria-label="Choisir le microphone"><option value="">Micro Android (automatique)</option></select>
+  <span id="mic-status" role="status" aria-live="polite">Micro du Studio libéré</span>
+</div>
 <section class="multitrack" id="multitrack">
   <div class="multitrack-body">
     <aside class="track-controls-column" aria-label="Commandes des pistes">
@@ -359,9 +369,9 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-playback-preload.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
-const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,selectionStart=null,selectionEnd=null;
+const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,micStarting=false,micStream=null,micGeneration=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
 function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){let canUndo=undo.length>0,canRedo=redo.length>0;$('#undo').disabled=!canUndo;$('#undo-quick').disabled=!canUndo;$('#redo').disabled=!canRedo;$('#redo-quick').disabled=!canRedo;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
@@ -414,7 +424,120 @@ function movePlayheadSeek(e){if(!draggingHead)return;e.preventDefault();e.stopPr
 async function endPlayheadSeek(e){if(!draggingHead)return false;draggingHead=false;e?.preventDefault?.();e?.stopPropagation?.();let resume=seekResumePlayback;seekResumePlayback=false;if(resume)return play(cursor);return false}
 ph.onpointerdown=beginPlayheadSeek;ph.onpointermove=movePlayheadSeek;ph.onpointerup=endPlayheadSeek;ph.onpointercancel=endPlayheadSeek;
 $('#timeline').addEventListener('touchmove',e=>{if(draggingHead||e.target.closest('.playhead,.clip,.trimhandle'))return;if(e.touches.length===2&&pinch){let dist=Math.abs(e.touches[0].clientX-e.touches[1].clientX);zoom=Math.max(1,Math.min(20,pinch.zoom*dist/pinch.dist));render()}},{passive:true});$('#timeline').addEventListener('touchend',e=>{if(e.touches.length<2)pinch=null},{passive:true});
-async function record(){if(recording)return;try{let stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}),recStart=cursor;chunks=[];let recordTarget=tracks.find(t=>t.id===recordTrackIdFor());if(!recordTarget){stream.getTracks().forEach(t=>t.stop());return msg('Aucune piste disponible pour enregistrer')}let recordTargetId=recordTarget.id;liveRec={start:recStart,len:.03,track:recordTargetId};liveAnalyser=ctx.createAnalyser();liveAnalyser.fftSize=256;liveMic=ctx.createMediaStreamSource(stream);liveMic.connect(liveAnalyser);recorder=new MediaRecorder(stream);recorder.ondataavailable=e=>chunks.push(e.data);recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());if(liveMic)try{liveMic.disconnect()}catch{};cancelAnimationFrame(liveAnim);liveAnim=0;liveMic=null;liveAnalyser=null;liveRec=null;stopPlay(false);liveDuration=0;try{let blob=new Blob(chunks,{type:recorder.mimeType}),b=await ctx.decodeAudioData(await blob.arrayBuffer()),sourceId=await registerSourceBlob(blob,b,{origin:'micro-recording',originalName:'Voix',mimeType:blob.type||recorder.mimeType||''});checkpoint();let recEnd=recStart+b.duration;cursor=recEnd;let target=tracks.find(t=>t.id===recordTargetId)||tracks.find(t=>t.id===recordTrackIdFor());if(!target)throw Error('Piste d’enregistrement absente');clips.push({id:crypto.randomUUID(),track:target.id,name:'Voix',sourceId,start:recStart,trim:0,len:b.duration,gain:1,muted:false});render();setCursor(recEnd,true);msg('Prise enregistrée sur '+target.name+' ✓')}catch{msg('Impossible de relire la prise')}recording=false;$('#app').classList.remove('recording');$('#record').classList.remove('is-recording')};liveDuration=Math.max(projectDuration(),recStart+10);render();function drawLive(){if(!recording&&!recorder)return;let cv=$('#livewave');if(cv&&liveAnalyser){let w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight),dpr=devicePixelRatio||1;cv.width=w*dpr;cv.height=h*dpr;let g=cv.getContext('2d');g.scale(dpr,dpr);let a=new Uint8Array(liveAnalyser.fftSize);liveAnalyser.getByteTimeDomainData(a);g.clearRect(0,0,w,h);g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1.4;g.beginPath();for(let i=0;i<a.length;i++){let x=i/(a.length-1)*w,y=(a[i]/255)*h;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}liveAnim=requestAnimationFrame(drawLive)}if(!await play(recStart,true)){stream.getTracks().forEach(t=>t.stop());return}recorder.start();recording=true;drawLive();$('#app').classList.add('recording');$('#record').classList.add('is-recording')}catch{msg('Autorise le microphone pour enregistrer')}}
+
+function micStatus(message,warning=false){const el=$('#mic-status');if(!el)return;el.textContent=message;el.classList.toggle('mic-warning',warning)}
+async function refreshMicrophones(){
+  if(!navigator.mediaDevices?.enumerateDevices)return;
+  try{
+    const inputs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');
+    const select=$('#mic-choice'),old=select.value;
+    select.innerHTML='';
+    const defaultOption=document.createElement('option');defaultOption.value='';defaultOption.textContent='Micro Android (automatique)';select.appendChild(defaultOption);
+    inputs.forEach((d,i)=>{if(!d.deviceId)return;const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||'Micro '+(i+1);select.appendChild(o)});
+    if([...select.options].some(o=>o.value===old))select.value=old;
+  }catch(error){console.warn('Microphones non listés',error)}
+}
+function freeMic(stream){
+  StudioMicGuard.release(stream);
+  if(micStream===stream)micStream=null;
+  if(liveMic)try{liveMic.disconnect()}catch{}
+  cancelAnimationFrame(liveAnim);liveAnim=0;liveMic=null;liveAnalyser=null;liveRec=null;liveDuration=0;
+  stopPlay(false);
+  recording=false;$('#app').classList.remove('recording');$('#record').classList.remove('is-recording');
+  micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false;
+  micStatus('Micro du Studio libéré');
+  Promise.resolve(ctx.suspend()).catch(()=>{});
+}
+async function record(){if(recording||micStarting)return;
+  const target=tracks.find(t=>t.id===recordTrackIdFor());
+  if(!target)return msg('Sélectionne une piste pour enregistrer');
+  const recStart=cursor,targetId=target.id,attempt=++micGeneration;
+  let stream=null,activeRecorder=null,failed=false,prepared=new Map(),received=[];
+  micStarting=true;$('#record').disabled=true;$('#mic-choice').disabled=true;
+  micStatus('Préparation des pistes…');
+  try{
+    // L'ancien code ouvrait le micro puis attendait le décodage de toutes
+    // les pistes. Android gardait alors le micro occupé, parfois sans prise.
+    stopPlay(false);
+    let prepTimer;
+    try{
+      const prep=Promise.resolve(ctx.resume()).then(()=>clips.length?preparePlayback(recStart):new Map());
+      prepared=await Promise.race([prep,new Promise(resolve=>{prepTimer=setTimeout(()=>resolve(null),4500)})]);
+    }catch(error){console.warn('Écoute des autres pistes indisponible',error);prepared=null}
+    finally{clearTimeout(prepTimer)}
+    if(attempt!==micGeneration)return;
+    micStatus('Ouverture du microphone…');
+    const chosen=$('#mic-choice').value;
+    const audio={echoCancellation:false,noiseSuppression:false,autoGainControl:false,...(chosen?{deviceId:{exact:chosen}}:{})};
+    stream=await StudioMicGuard.acquire(navigator.mediaDevices,{audio},{timeoutMs:15000,cancelled:()=>attempt!==micGeneration||document.hidden});
+    if(attempt!==micGeneration){StudioMicGuard.release(stream);return}
+    micStream=stream;
+    const input=stream.getAudioTracks()[0],label=input?.label||'micro Android';
+    micStatus('Micro actif : '+label+' · parle pour voir le signal');
+    // Le niveau est indicatif : si AudioContext reste suspendu, la prise
+    // fonctionne quand même, même sans vumètre.
+    try{
+      if(ctx.state==='running'){liveAnalyser=ctx.createAnalyser();liveAnalyser.fftSize=256;liveMic=ctx.createMediaStreamSource(stream);liveMic.connect(liveAnalyser)}
+    }catch(error){console.warn('Vumètre indisponible, mais micro actif',error);liveMic=null;liveAnalyser=null}
+    activeRecorder=new MediaRecorder(stream);recorder=activeRecorder;chunks=received;
+    let heard=false,startedAt=performance.now(),lastWarn=0;
+    function drawLive(){
+      if(!recording||attempt!==micGeneration)return;
+      const cv=$('#livewave');
+      if(cv&&liveAnalyser){
+        let w=Math.max(1,cv.clientWidth),h=Math.max(1,cv.clientHeight),dpr=devicePixelRatio||1;
+        cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+        const g=cv.getContext('2d');g.scale(dpr,dpr);
+        const a=new Uint8Array(liveAnalyser.fftSize);liveAnalyser.getByteTimeDomainData(a);
+        g.clearRect(0,0,w,h);g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1.4;g.beginPath();
+        let peak=0;for(let i=0;i<a.length;i++){peak=Math.max(peak,Math.abs(a[i]-128));let x=i/(a.length-1)*w,y=a[i]/255*h;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+        if(peak>=4){heard=true;if(performance.now()-lastWarn>1500){micStatus('✓ Signal reçu : '+label);lastWarn=performance.now()}}
+        else if(!heard&&performance.now()-startedAt>3500&&performance.now()-lastWarn>3500){micStatus('Signal faible : vérifie que le micro-cravate est sélectionné.',true);lastWarn=performance.now()}
+      }
+      liveAnim=requestAnimationFrame(drawLive);
+    }
+    function fail(error){
+      if(failed)return;failed=true;console.error('ERREUR MICRO STUDIO',error);
+      if(activeRecorder?.state==='recording')try{activeRecorder.stop()}catch{}
+      freeMic(stream);msg(StudioMicGuard.errorMessage(error));
+    }
+    activeRecorder.ondataavailable=e=>{if(e.data?.size)received.push(e.data)};
+    activeRecorder.onerror=e=>fail(e.error||e);
+    input?.addEventListener?.('ended',()=>{if(recording&&!failed)fail(Error('Micro débranché pendant la prise'))},{once:true});
+    activeRecorder.onstop=async()=>{
+      // Stop tracks BEFORE reading/decoding large take so Gboard can use mic.
+      freeMic(stream);
+      if(failed)return;
+      try{
+        const blob=new Blob(received,{type:activeRecorder.mimeType||received[0]?.type||''});
+        if(!blob.size)throw Error('Aucun son enregistré : vérifie le micro-cravate.');
+        const buffer=await ctx.decodeAudioData(await blob.arrayBuffer());
+        if(!buffer||!Number.isFinite(buffer.duration)||buffer.duration<=0)throw Error('Prise vide.');
+        const sourceId=await registerSourceBlob(blob,buffer,{origin:'micro-recording',originalName:'Voix',mimeType:blob.type});
+        checkpoint();const recEnd=recStart+buffer.duration;
+        const chosen=tracks.find(t=>t.id===targetId)||tracks.find(t=>t.id===recordTrackIdFor());
+        if(!chosen)throw Error('Piste supprimée');
+        clips.push({id:crypto.randomUUID(),track:chosen.id,name:'Voix',sourceId,start:recStart,trim:0,len:buffer.duration,gain:1,muted:false});
+        cursor=recEnd;render();setCursor(recEnd,true);
+        msg('Prise enregistrée '+buffer.duration.toFixed(1)+' s ✓ · micro libéré');
+      }catch(error){console.error('SAUVEGARDE AUDIO',error);msg(error?.message||'Impossible de relire la prise')}
+    };
+    liveRec={start:recStart,len:.03,track:targetId};
+    liveDuration=Math.max(projectDuration(),recStart+10);render();
+    activeRecorder.start(1000);
+    recording=true;micStarting=false;$('#record').disabled=false;
+    $('#app').classList.add('recording');$('#record').classList.add('is-recording');
+    startPreparedPlayback(recStart,true,prepared instanceof Map?prepared:new Map());
+    drawLive();refreshMicrophones().catch(()=>{});
+  }catch(error){
+    // A failure after MediaRecorder.start must never leave a live recorder.
+    failed=true;
+    if(activeRecorder?.state==='recording')try{activeRecorder.stop()}catch{}
+    if(stream)freeMic(stream);else{micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false}
+    micStatus(StudioMicGuard.errorMessage(error),true);msg(StudioMicGuard.errorMessage(error));
+    console.error('OUVERTURE MICRO',error);
+  }
+}
 function clickBeat(at){let o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=1000;g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(.18,at+.002);g.gain.exponentialRampToValueAtTime(.0001,at+.045);o.connect(g).connect(ctx.destination);o.start(at);o.stop(at+.05)}function startMetro(){stopMetro();if(!metroOn)return;metroNext=ctx.currentTime+.05;metroTimer=setInterval(()=>{while(metroNext<ctx.currentTime+.12){clickBeat(metroNext);metroNext+=60/bpm}},25)}function stopMetro(){clearInterval(metroTimer);metroTimer=null}function updateMetro(){let b=$('#metro');b.textContent='🎵 CLIC : '+(metroOn?'OUI':'NON');b.classList.toggle('on',metroOn);$('#bpm').textContent=bpm+' BPM'}$('#metro').onclick=()=>{metroOn=!metroOn;updateMetro();if(playing||recording){if(metroOn)startMetro();else stopMetro()}};$('#bpm-minus').onclick=()=>{bpm=Math.max(30,bpm-5);updateMetro();if(metroTimer)startMetro()};$('#bpm-plus').onclick=()=>{bpm=Math.min(240,bpm+5);updateMetro();if(metroTimer)startMetro()};updateMetro();
 function stopPlay(keep=true){playGeneration++;playPreparing=false;playing=false;clearInterval(tick);tick=null;stopMetro();sources.forEach(s=>{try{s.stop()}catch{}});sources=[];$('#play').textContent='▶';if(keep)setCursor(cursor)}
 function updateLiveRecordingVisual(t){liveDuration=Math.max(liveDuration,t+5);if(liveRec)liveRec.len=Math.max(.03,t-liveRec.start);let pps=pixelsPerSecond(),tl=$('#timeline'),canvas=$('#canvas'),needed=Math.max(tl.clientWidth,projectDuration()*pps),current=parseFloat(canvas.style.width)||0;if(needed>current)canvas.style.width=needed+'px';let e=$('#liveclip');if(e&&liveRec){e.style.left=(liveRec.start*pps)+'px';e.style.width=(liveRec.len*pps)+'px'}}
@@ -427,7 +550,19 @@ function renderSelection(){let e=$('#selection'),a=$('#selection-start-mark'),b=
 $('#sel-start').onclick=()=>{selectionStart=cursor;if(selectionEnd!==null&&selectionEnd<=selectionStart)selectionEnd=null;renderSelection();selectionDiagnostic('SÉLECTION DÉBUT = '+selectionSeconds(selectionStart)+' s');markProjectDirty();msg('Début de sélection posé')};
 $('#sel-end').onclick=()=>{if(selectionStart===null){selectionDiagnostic('SÉLECTION INVALIDE — pose d’abord le DÉBUT');return msg('Pose d’abord le début')}if(cursor<=selectionStart){selectionDiagnostic('SÉLECTION INVALIDE — FIN = '+selectionSeconds(cursor)+' s, DÉBUT = '+selectionSeconds(selectionStart)+' s');return msg('Place le curseur après le début')}selectionEnd=cursor;renderSelection();selectionDiagnostic('SÉLECTION = '+selectionSeconds(selectionStart)+' → '+selectionSeconds(selectionEnd)+' s\nDURÉE = '+selectionSeconds(selectionEnd-selectionStart)+' s');markProjectDirty();msg('Fin de sélection posée')};
 $('#sel-clear').onclick=()=>{selectionStart=selectionEnd=null;renderSelection();markProjectDirty();msg('Sélection effacée')};
-$('#record').onclick=record;$('#play').onclick=()=>playing||playPreparing?stopPlay():play();$('#stop').onclick=()=>{if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()};$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
+
+function exitMicroCapture(){
+  micGeneration++;
+  if(recording&&recorder?.state==='recording')try{recorder.stop()}catch{}
+  if(micStream)StudioMicGuard.release(micStream);
+  if(micStarting){micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false}
+  Promise.resolve(ctx.suspend()).catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)exitMicroCapture()});
+window.addEventListener('pagehide',exitMicroCapture);
+$('#mic-choice').addEventListener('change',()=>micStatus('Micro choisi · appuie sur REC pour vérifier'));
+refreshMicrophones().catch(()=>{});
+$('#record').onclick=record;$('#play').onclick=()=>playing||playPreparing?stopPlay():play();$('#stop').onclick=()=>{if(micStarting){micGeneration++;micStarting=false;$('#record').disabled=false;$('#mic-choice').disabled=false;micStatus('Demande micro annulée · micro libéré');return}if(recording&&recorder?.state!=='inactive'){recorder.stop();return}stopPlay()};$('#back').onclick=()=>{if(playing)stopPlay();setCursor(cursor-5,true)};$('#forward').onclick=()=>{if(playing)stopPlay();setCursor(cursor+5,true)};function zoomAt(f){let tl=$('#timeline'),oldPps=pixelsPerSecond(),screenX=cursor*oldPps-tl.scrollLeft;zoom=Math.max(1,Math.min(20,zoom*f));render();markProjectDirty();requestAnimationFrame(()=>{let newX=cursor*pixelsPerSecond();tl.scrollLeft=Math.max(0,newX-screenX)})}$('#plus').onclick=()=>zoomAt(1.6);$('#minus').onclick=()=>zoomAt(1/1.6);
 function undoLastChange(){if(recording||!undo.length)return false;stopPlay();redo.push(snapshot());restore(undo.pop());msg('Modification annulée ✓');return true}
 function redoLastChange(){if(recording||!redo.length)return false;stopPlay();undo.push(snapshot());restore(redo.pop());msg('Modification rétablie ✓');return true}
 $('#undo').onclick=undoLastChange;$('#redo').onclick=redoLastChange;$('#undo-quick').onclick=undoLastChange;$('#redo-quick').onclick=redoLastChange;
@@ -476,9 +611,9 @@ function closeProjectDelete(){deleteProjectTarget=null;hideProjectDialog('#proje
 function openProjectDelete(p){closeProjectOptions();deleteProjectTarget={id:p.id,name:p.name};$('#project-delete-copy').textContent='Supprimer « '+p.name+' » ?';$('#project-delete-panel').hidden=false}
 async function commitProjectDelete(){let target=deleteProjectTarget;if(!target)return false;let deletingCurrent=currentProjectId===target.id;closeProjectDelete();if(deletingCurrent){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;autosavePending=false;autosaveAgain=false;stopPlay();resetEditorRuntime();currentProjectId=null;currentProjectName='';syncCurrentProjectName()}await localStore.deleteProject(target.id);if(deletingCurrent)await localStore.closeProject();showProjectLibraryScreen();await renderLocalProjectLibrary();return true}
 async function renderLocalProjectLibrary(){let list=$('#local-project-list'),status=$('#project-library-status'),projects=await localStore.listProjects();list.innerHTML='';for(const p of projects){let row=document.createElement('div');row.className='local-project-row';row.dataset.projectId=p.id;let card=document.createElement('button');card.type='button';card.className='local-project-card game-btn game-btn-standard game-btn-dark';card.dataset.projectId=p.id;card.innerHTML='<b></b><small></small>';card.querySelector('b').textContent=p.name;card.querySelector('small').textContent='Modifié '+formatProjectUpdated(p.updatedAt);card.onclick=()=>openLocalProject(p.id);let more=document.createElement('button');more.type='button';more.className='local-project-more game-btn game-btn-compact game-btn-secondary';more.textContent='⋯';more.setAttribute('aria-label','Options de '+p.name);more.onclick=e=>{e.preventDefault();e.stopPropagation();openProjectOptions(p)};row.append(card,more);list.appendChild(row)}if(!projects.length)list.innerHTML='<div class="project-library-empty">Aucun projet pour le moment.</div>';status.textContent=projects.length?projects.length+' projet'+(projects.length>1?'s':''):'Crée ton premier projet.';return projects}
-async function createLocalProject(){if(recording)return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
-async function openLocalProject(id){if(recording)return msg('Arrête l’enregistrement avant de changer de projet');invalidateAudioPreload();await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();startAudioPreload();msg('Projet ouvert ✓');return saved.card}
-async function returnToProjectLibrary(){if(recording)return msg('Arrête l’enregistrement avant de quitter le projet');invalidateAudioPreload();await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
+async function createLocalProject(){if(recording||micStarting)return msg('Arrête l’enregistrement avant de créer un projet');await flushLocalAutosave();let id=crypto.randomUUID(),now=new Date(),name=autoProjectName(now),snap=emptyProjectSnapshot(name,id);resetEditorRuntime();let card=await localStore.createProject({id,name,createdAt:now.toISOString(),updatedAt:now.toISOString(),snapshot:snap});currentProjectId=card.id;currentProjectName=card.name;syncCurrentProjectName();showEditorScreen();render();autosaveStatus('✓ SAUVEGARDE AUTOMATIQUE');return card}
+async function openLocalProject(id){if(recording||micStarting)return msg('Arrête l’enregistrement avant de changer de projet');invalidateAudioPreload();await flushLocalAutosave();stopPlay();let saved=await localStore.openProject(id);await applyLocalProject(saved);showEditorScreen();startAudioPreload();msg('Projet ouvert ✓');return saved.card}
+async function returnToProjectLibrary(){if(recording||micStarting)return msg('Arrête l’enregistrement avant de quitter le projet');invalidateAudioPreload();await flushLocalAutosave();stopPlay();await localStore.closeProject();currentProjectId=null;currentProjectName='';syncCurrentProjectName();showProjectLibraryScreen();await renderLocalProjectLibrary()}
 async function initializeProjectLibraryEntry(){let migration=await localStore.initializeLibrary();showProjectLibraryScreen();let projects=await renderLocalProjectLibrary();if(migration.migrated)$('#project-library-status').textContent='Projet précédent récupéré ✓ · '+projects.length+' projet'+(projects.length>1?'s':'');return migration}
 let librarySounds=[],libraryPreview=null,libraryPreviewButton=null,currentProjectId=null,currentProjectName='';
 function cleanFrenchName(name){return name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()}
