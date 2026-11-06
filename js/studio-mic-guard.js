@@ -50,5 +50,19 @@
     });
     try{return await Promise.race([pending,timeout])}finally{clearTimeout(timer)}
   }
-  return{release,acquire,errorMessage};
+  // On older Chromium/Brave Android builds, disabling echoCancellation
+  // selects Android's CAMCORDER input preset, which can force the built-in mic
+  // even when a lavalier/headset is plugged in. Voice-communication routing
+  // avoids that preset; keep noise suppression and gain processing off.
+  function audioConstraints(userAgent='',selectedDeviceId=''){
+    const android=/Android/i.test(String(userAgent));
+    const constraints={
+      echoCancellation:android,
+      noiseSuppression:false,
+      autoGainControl:false
+    };
+    if(selectedDeviceId)constraints.deviceId={exact:selectedDeviceId};
+    return constraints;
+  }
+  return{release,acquire,errorMessage,audioConstraints};
 });
