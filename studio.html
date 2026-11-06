@@ -468,7 +468,7 @@ async function record(){if(recording||micStarting)return;
     if(attempt!==micGeneration)return;
     micStatus('Ouverture du microphone…');
     const chosen=$('#mic-choice').value;
-    const audio={echoCancellation:false,noiseSuppression:false,autoGainControl:false,...(chosen?{deviceId:{exact:chosen}}:{})};
+    const audio=StudioMicGuard.audioConstraints(navigator.userAgent||'',chosen);
     stream=await StudioMicGuard.acquire(navigator.mediaDevices,{audio},{timeoutMs:15000,cancelled:()=>attempt!==micGeneration||document.hidden});
     if(attempt!==micGeneration){StudioMicGuard.release(stream);return}
     micStream=stream;
