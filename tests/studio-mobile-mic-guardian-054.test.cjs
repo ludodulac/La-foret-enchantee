@@ -14,6 +14,17 @@ async function tests(){
   assert(html.includes("window.addEventListener('pagehide',exitMicroCapture)"));
   assert(html.includes("document.addEventListener('visibilitychange'"));
   assert(source.includes("StudioMicGuard.acquire(navigator.mediaDevices"));
+  assert(source.includes("StudioMicGuard.audioConstraints(navigator.userAgent||'',chosen)"),'Studio must use automatic browser-aware Android capture');
+  const android=Mic.audioConstraints('Mozilla/5.0 (Linux; Android 13; Redmi Note 12)','');
+  assert.equal(android.echoCancellation,true,'Android must avoid CAMCORDER preset forcing internal mic');
+  assert.equal(android.noiseSuppression,false);
+  assert.equal(android.autoGainControl,false);
+  assert(!('deviceId' in android),'Automatic mode delegates lavalier routing to Android');
+  const forced=Mic.audioConstraints('Android 13','usb-cravate-id');
+  assert.deepEqual(forced.deviceId,{exact:'usb-cravate-id'},'Manual fallback still available');
+  const desktop=Mic.audioConstraints('Mozilla/5.0 (X11; Linux x86_64)','');
+  assert.equal(desktop.echoCancellation,false,'Preserve raw recording on desktop');
+  console.log('ANDROID_CAMERA_STYLE_AUTO_MIC_ROUTING PASS');
   assert(source.indexOf('preparePlayback(recStart)')<source.indexOf('StudioMicGuard.acquire('),
     'Source decoding must finish or time out before microphone capture');
   assert(source.indexOf('StudioMicGuard.release(stream)')<source.indexOf('await ctx.decodeAudioData'),
