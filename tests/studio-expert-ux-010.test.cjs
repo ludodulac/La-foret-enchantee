@@ -18,7 +18,7 @@ const localSnapshotSource=section('function localSnapshot','async function runAu
 // Universal destination: active track + playhead.
 assert(recordSource.includes('recStart=cursor'));
 assert(recordSource.includes("tracks.find(t=>t.id===recordTrackIdFor())"));
-assert(recordSource.includes('track:target.id'));
+assert(recordSource.includes('track:chosen.id'),'Enregistrement sur la piste choisie après sauvegarde');
 assert(recordSource.includes('start:recStart'));
 console.log('UNIVERSAL_ACTIVE_TRACK_RECORD PASS');
 console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
