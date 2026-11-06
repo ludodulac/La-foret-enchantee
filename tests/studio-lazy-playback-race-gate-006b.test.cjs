@@ -139,9 +139,11 @@ function makeHarness({ids=['A'],runtime=null}={}){
 
   // CASE 10 is certified from actual record source plus transport behavior.
   const recordSource=section('async function record()','function clickBeat');
-  assert(recordSource.includes("if(!await play(recStart,true)){stream.getTracks().forEach(t=>t.stop());return}recorder.start();recording=true"));
-  assert(recordSource.indexOf('await play(recStart,true)')<recordSource.indexOf('recorder.start()'));
-  console.log('RECORD_PREPARATION PASS actual source awaits play before MediaRecorder.start; failed/cancelled prepare stops stream and returns');
+  assert(recordSource.includes('preparePlayback(recStart)'), 'Previous audio prepared before capture');
+  assert(recordSource.indexOf('preparePlayback(recStart)')<recordSource.indexOf('StudioMicGuard.acquire('),'Microphone must not be held during project decoding');
+  assert(recordSource.includes('startPreparedPlayback(recStart,true,'),'Overdub playback is prepared for capture');
+  assert(!recordSource.includes('await play(recStart,true)'),'Recorder cannot wait for playback to succeed');
+  console.log('RECORD_PREPARATION PASS tracks prepared before microphone acquisition, failed playback does not block REC');
 
   // CASE 11 structural async stop invariant.
   assert(transportSource.includes('playGeneration++;playPreparing=false;playing=false;clearInterval(tick);tick=null;'));
