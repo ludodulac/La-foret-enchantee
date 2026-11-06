@@ -499,7 +499,7 @@ async function recordInto(selectedId){
   const ctx={
     console,Math,Map,Blob,Uint8Array,Promise,setTimeout,clearTimeout,performance:{now:()=>1000},
     navigator:{mediaDevices:{getUserMedia:async()=>fakeStream}},
-    StudioMicGuard:{acquire:async()=>fakeStream,release(stream){stream.getTracks().forEach(track=>track.stop())},errorMessage:error=>error.message},
+    StudioMicGuard:{acquire:async()=>fakeStream,release(stream){stream.getTracks().forEach(track=>track.stop())},errorMessage:error=>error.message,audioConstraints(){return{echoCancellation:true,noiseSuppression:false,autoGainControl:false}}},
     MediaRecorder:FakeMediaRecorder,crypto:{randomUUID:()=> 'clip-rec'},
     tracks,clips,selectedRecordTrackId:selectedId,selected:null,
     recorder:null,chunks:[],recording:false,micStarting:false,micGeneration:0,micStream:null,cursor:3,liveDuration:0,liveRec:null,liveAnalyser:null,liveMic:null,liveAnim:0,
