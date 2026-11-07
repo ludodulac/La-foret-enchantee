@@ -122,6 +122,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
   // 8 INVALID_VERTICAL_DROP: keep last valid lane, no phantom track.
   {
     const h=makeHarness();
+    h.context.moveArmedClipId=h.clip.id;
     h.el.onpointerdown(event(100,50));
     h.el.onpointermove(event(120,170));assert.equal(h.clip.track,'B');
     h.el.onpointermove(event(140,999));assert.equal(h.clip.track,'B');
