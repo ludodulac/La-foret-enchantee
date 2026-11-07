@@ -200,6 +200,20 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .clip.sel:not(.move-armed) .trimhandle{display:none}
   .clip.move-armed{touch-action:none}
 }
+
+/* Keep five deliberate clip tools reachable without scrolling on Android. */
+.editor .editin{grid-template-columns:repeat(5,minmax(0,1fr))}
+#move-clip.is-active{outline:2px solid #ffe46a;outline-offset:-2px}
+.studio-maintenance{display:flex;flex-direction:column;gap:5px;padding-top:8px;margin-top:8px;border-top:1px solid #37547b}
+.studio-maintenance button{min-height:38px}
+.studio-maintenance small{font-size:10px;line-height:1.35;color:#bad0ea}
+#clean-unused-audio-result{font-size:11px;color:#f3d56c}
+@media (max-width:520px){
+  .editin{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .editin .volrow{grid-column:2/6}
+  #move-clip{grid-column:5;grid-row:2;font-size:7px}
+  .editor button{font-size:7px}
+}
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
   <header class="project-library-header">
@@ -299,6 +313,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   <button class="game-btn game-btn-compact" id="duplicate" title="Dupliquer">⧉ DUPLIQUER</button>
   <button class="game-btn game-btn-compact game-btn-red" id="del" title="Supprimer">🗑 SUPPRIMER</button>
   <button class="game-btn game-btn-compact game-btn-dark game-btn-secondary" id="clipmute" title="Couper ou réactiver le son">🔊 MUET</button>
+  <button class="game-btn game-btn-compact game-btn-yellow" id="move-clip" title="Armer le déplacement de ce morceau" aria-pressed="false" type="button">↔ DÉPLACER</button>
 </div></div>
 
 <nav class="bottomcmd" aria-label="Commandes générales">
@@ -330,6 +345,11 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-compact" id="bpm-minus">−</button>
     <div class="bpm" id="bpm">80 BPM</div>
     <button class="game-btn game-btn-compact" id="bpm-plus">＋</button>
+  </div>
+  <div class="studio-maintenance">
+    <button class="game-btn game-btn-compact game-btn-dark" id="clean-unused-audio" type="button">🧹 VIDER LA CORBEILLE</button>
+    <small>Efface les sons inutilisés et l’historique Annuler/Rétablir de ce projet, sans toucher aux autres projets.</small>
+    <span id="clean-unused-audio-result" role="status" aria-live="polite"></span>
   </div>
 </div>
 
