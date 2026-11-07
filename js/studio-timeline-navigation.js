@@ -5,7 +5,7 @@
   else root.StudioTimelineNavigation=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
-  const MIN_ZOOM=0.005,MAX_ZOOM=30;
+  const MIN_ZOOM=0.001,MAX_ZOOM=30;
   function clampZoom(value){
     const n=Number(value);
     return Number.isFinite(n)?Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,n)):1;
