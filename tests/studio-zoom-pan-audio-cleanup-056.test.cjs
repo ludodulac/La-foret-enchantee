@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
+const vm=require('node:vm');
 const A=require('../js/studio-autosave.js');
 const Nav=require('../js/studio-timeline-navigation.js');
 const html=fs.readFileSync('studio.html','utf8');
@@ -27,6 +28,26 @@ async function main(){
   assert(html.includes("el.onpointercancel=e=>finish(e,true)"),'Canceled touch must not move the clip');
   assert(html.includes('.clip{touch-action:pan-x}'),'Native horizontal gesture over clips');
   assert(html.includes('.clip.move-armed{touch-action:none}'),'Only armed clip captures touch');
+  // Run actual empty-space timeline handlers: swipe must not seek, tap does.
+  const start=html.indexOf('let blankPointer=null;');
+  const end=html.indexOf("let ph=$('#playhead');",start);
+  assert(start>=0&&end>start,'Timeline gestures must be present');
+  const timeline={scrollLeft:0},seekCalls=[];
+  const runtime={StudioTimelineNavigation:Nav,$:()=>timeline,xToTime:x=>x/10,setCursor:x=>seekCalls.push(x)};
+  vm.createContext(runtime);vm.runInContext(html.slice(start,end),runtime);
+  const event=(x,y,id=1,pointerType='touch')=>({pointerId:id,pointerType,isPrimary:true,clientX:x,clientY:y,target:{closest(){return null}}});
+  timeline.onpointerdown(event(100,50));
+  timeline.scrollLeft=150;
+  timeline.onpointerup(event(160,50));
+  assert.equal(seekCalls.length,0,'Native timeline swipe never moves playhead');
+  timeline.scrollLeft=150;
+  timeline.onpointerdown(event(110,50));
+  timeline.onpointerup(event(112,51));
+  assert.deepEqual(seekCalls,[11.2],'An intentional tap can move playhead');
+  timeline.onpointerdown(event(150,50,2,'mouse'));
+  assert.deepEqual(seekCalls,[11.2,15],'Mouse click-to-seek remains available');
+  console.log('ACTUAL_EMPTY_TIMELINE_POINTER_GESTURES PASS');
+
   console.log('STUDIO_ZOOM_30_MIN_FIT_AND_SAFE_TOUCH_PAN PASS');
 
   const store=A.createMemoryStore();
