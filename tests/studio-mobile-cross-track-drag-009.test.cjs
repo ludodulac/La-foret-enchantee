@@ -2,6 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
 const Autosave=require('../js/studio-autosave.js');
+const StudioTimelineNavigation=require('../js/studio-timeline-navigation.js');
 
 const html=fs.readFileSync('studio.html','utf8');
 function section(start,end){const a=html.indexOf(start),b=html.indexOf(end,a);assert(a>=0,'missing '+start);assert(b>a,'missing '+end);return html.slice(a,b)}
@@ -23,7 +24,7 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
   ];
   const undo=[],redo=[];
   const state={dirty:0,renders:0,buttons:0,captured:new Set()};
-  const editor={classList:{add(){}}},clipvol={value:0},clipmute={textContent:''};
+  const editor={classList:{add(){}}},clipvol={value:0},clipmute={textContent:'',classList:{toggle(){}}},timeline={scrollLeft:0};
   const el={
     style:{},parentElement:lanes.find(x=>x.dataset.trackId===track),
     setPointerCapture(id){state.captured.add(id)},
@@ -31,7 +32,7 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
     releasePointerCapture(id){state.captured.delete(id)}
   };
   const context={
-    console,Math,document:{querySelectorAll(sel){
+    console,Math,StudioTimelineNavigation,moveArmedClipId:null,document:{querySelector(){return null},querySelectorAll(sel){
       if(sel==='#tracks .lane[data-track-id]')return lanes;
       if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));
       return[];
@@ -39,24 +40,48 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
     pixelsPerSecond:()=>100,
     snapshot:()=>({clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t}))}),
     undo,redo,buttons:()=>state.buttons++,markProjectDirty:()=>state.dirty++,render:()=>state.renders++,
-    selected:null,$:sel=>sel==='#editor'?editor:sel==='#clipvol'?clipvol:clipmute
+    selected:null,$:sel=>sel==='#editor'?editor:sel==='#clipvol'?clipvol:sel==='#timeline'?timeline:clipmute
   };
   vm.createContext(context);vm.runInContext(dragSource,context);
   context.clipGesture(el,clip,30);
   return{context,clip,clips,tracks,lanes,undo,redo,state,el};
 }
 function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}){
+  h.context.moveArmedClipId=h.clip.id;
   h.el.onpointerdown(event(downX,downY,pointerId));
   h.el.onpointermove(event(moveX,moveY,pointerId));
   if(cancel)h.el.onpointercancel(event(moveX,moveY,pointerId));else h.el.onpointerup(event(moveX,moveY,pointerId));
 }
 
 (async()=>{
+  // Finger scrolling over an unselected recording never changes the audio.
+  {
+    const h=makeHarness();
+    h.el.onpointerdown(event(100,50));
+    h.el.onpointermove(event(180,52));
+    h.el.onpointercancel(event(180,52));
+    assert.equal(h.clip.start,12.4);
+    assert.equal(h.clip.track,'A');
+    assert.equal(h.undo.length,0);
+    assert.equal(h.state.dirty,0);
+    assert.equal(h.state.captured.size,0);
+    console.log('SWIPE_OVER_UNSELECTED_AUDIO_PANS_WITHOUT_MOVING PASS');
+  }
+  // A simple tap selects for editing but does not drag the recording.
+  {
+    const h=makeHarness();
+    h.el.onpointerdown(event(100,50));
+    h.el.onpointerup(event(102,52));
+    assert.strictEqual(h.context.selected,h.clip);
+    assert.equal(h.clip.start,12.4);
+    console.log('TOUCH_TAP_SELECTS_AUDIO_WITHOUT_MOVING PASS');
+  }
+
   // 1 + 13 HORIZONTAL_DRAG / EXISTING_HORIZONTAL_DRAG
   {
     const h=makeHarness();drag(h,{moveX:150,moveY:50});
     assert.equal(h.clip.start,12.9);assert.equal(h.clip.track,'A');assert.equal(h.undo.length,1);assert.equal(h.state.dirty,1);
-    console.log('HORIZONTAL_DRAG PASS start 12.4 -> 12.9; track A unchanged');
+    console.log('EXPLICIT_MOVE_MODE_HORIZONTAL_DRAG PASS start 12.4 -> 12.9; track A unchanged');
     console.log('EXISTING_HORIZONTAL_DRAG PASS dx/pixelsPerSecond behavior preserved');
   }
 
@@ -156,7 +181,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
   for(const marker of ["handle.setPointerCapture(e.pointerId)","handle.addEventListener('pointermove'","handle.addEventListener('pointerup',finish)","handle.addEventListener('pointercancel',finish)","c.trim=startState.trim+change","c.len=Math.max(.08"])assert(trimSource.includes(marker),'trim regression: '+marker);
   console.log('TRIM_GESTURES PASS pointer capture/move/up/cancel and trim math retained');
 
-  // 15 PLAYHEAD_GESTURE non-regression.
+  // 15 PLAYHEAD_GESTURE non-regression: click/tap-to-seek, but not swipe.
   for(const marker of ["setCursor(xToTime(e.clientX))","ph.setPointerCapture(e.pointerId)","ph.onpointermove","ph.onpointerup","ph.onpointercancel"])assert(playheadSource.includes(marker),'playhead regression: '+marker);
   console.log('PLAYHEAD_GESTURE PASS timeline tap + playhead drag handlers retained');
 
