@@ -697,6 +697,14 @@ async function runAutosave(){if(restoringLocal||!currentProjectId)return;if(auto
 try{await autosaveCurrentPromise}catch(e){console.error('AUTOSAVE STUDIO',e);autosavePending=true;let quota=e?.name==='QuotaExceededError'||/quota/i.test(e?.message||'');autosaveStatus(quota?'SAUVEGARDE LOCALE IMPOSSIBLE — espace insuffisant':'SAUVEGARDE LOCALE IMPOSSIBLE — '+(e?.message||'erreur'),true)}finally{autosaveBusy=false;autosaveCurrentPromise=null;if(autosaveAgain){autosaveAgain=false;autosavePending=true;return runAutosave()}}}
 function markProjectDirty(){if(undo.length>30)undo.splice(0,undo.length-30);if(redo.length>30)redo.splice(0,redo.length-30);if(restoringLocal||!currentProjectId)return;autosavePending=true;autosaveStatus('Sauvegarde automatique : modifications en attente…');clearTimeout(autosaveTimer);autosaveTimer=setTimeout(runAutosave,1500)}
 async function flushLocalAutosave(){clearTimeout(autosaveTimer);autosaveTimer=null;if(autosaveCurrentPromise)await autosaveCurrentPromise;if(autosavePending)await runAutosave();if(autosaveCurrentPromise)await autosaveCurrentPromise}
+function trySaveOnExit(){
+  if(!currentProjectId||(!autosavePending&&!autosaveBusy))return;
+  // Browser shutdown cannot guarantee async IndexedDB commits. The latest
+  // saved snapshot is always the authority; next launch collects its orphans.
+  void flushLocalAutosave().catch(error=>console.warn('Sauvegarde locale à reprendre',error));
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)trySaveOnExit()});
+window.addEventListener('pagehide',trySaveOnExit);
 function blankTrack(){return{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}}
 function autoProjectName(now=new Date()){let date=new Intl.DateTimeFormat('fr-FR',{day:'numeric',month:'long'}).format(now),time=new Intl.DateTimeFormat('fr-FR',{hour:'2-digit',minute:'2-digit',hour12:false}).format(now);return'Projet '+date+' - '+time}
 function emptyProjectSnapshot(name,id){return{schema:StudioAutosave.SCHEMA_VERSION,projectId:id,name,remoteProjectId:null,cursor:0,zoom:1,selectionStart:null,selectionEnd:null,selectedRecordTrackId:'voice',tracks:[blankTrack()],clips:[]}}
