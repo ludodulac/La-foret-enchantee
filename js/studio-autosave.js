@@ -13,6 +13,38 @@ function normalizeProjectCard(x){if(!x||typeof x.id!=='string'||!x.id)throw Erro
 function sourceIdsFromSnapshot(snapshot){validateSnapshot(snapshot);return new Set(snapshot.clips.map(c=>c.sourceId))}
 function openDb(impl){const idb=impl||(typeof indexedDB!=='undefined'?indexedDB:null);if(!idb)return Promise.reject(Error('IndexedDB indisponible'));return new Promise((ok,no)=>{const r=idb.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta');if(!d.objectStoreNames.contains('projects'))d.createObjectStore('projects',{keyPath:'generation'});if(!d.objectStoreNames.contains('sources'))d.createObjectStore('sources',{keyPath:'id'});if(!d.objectStoreNames.contains('waveforms'))d.createObjectStore('waveforms',{keyPath:'sourceId'});if(!d.objectStoreNames.contains(LIBRARY_STORE))d.createObjectStore(LIBRARY_STORE,{keyPath:'id'})};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error||Error('Ouverture IndexedDB impossible'))})}
 async function hydrate(db,row){if(!row)throw Error('Projet local incomplet');const snapshot=validateSnapshot(row.snapshot),t=db.transaction(['sources','waveforms'],'readonly'),s=t.objectStore('sources'),w=t.objectStore('waveforms'),audio=new Map(),sources=new Map(),waveforms=new Map();for(const id of new Set(snapshot.clips.map(c=>c.sourceId))){const raw=await req(s.get(id));if(!raw||!(raw.blob instanceof Blob))throw Error('Source audio manquante : '+id);const x=normalizeSourceRecord(raw),wr=await req(w.get(id));audio.set(id,x.blob);sources.set(id,x);if(wr?.waveform)waveforms.set(id,wr.waveform)}return{snapshot,audio,sources,waveforms}}
+
+// Conservative cleanup: only latest durable snapshots determine live sources.
+// Keep explicitly protected in-session Undo/Redo sources. If any snapshot is
+// corrupted or inconsistent, don't delete anything.
+function planAudioCleanup(rows,cards,protectedSourceIds=[]){
+  const keepSources=new Set(protectedSourceIds||[]),keepGenerations=new Set();
+  const byGeneration=new Map(rows.map(row=>[row.generation,row]));
+  const knownProjects=new Set(cards.map(card=>card.id));
+  try{
+    for(const rawCard of cards){
+      const card=normalizeProjectCard(rawCard);
+      if(!card.latestGeneration)throw Error('Projet sans génération validée');
+      const row=byGeneration.get(card.latestGeneration);
+      if(!row||row.projectId!==card.id)throw Error('Projet manquant : '+card.id);
+      keepGenerations.add(row.generation);
+      for(const sourceId of sourceIdsFromSnapshot(row.snapshot))keepSources.add(sourceId);
+    }
+    for(const row of rows){
+      // A legacy save or a project not represented by the current library
+      // must not lose audio until its status can be resolved.
+      if(!row.projectId||!knownProjects.has(row.projectId)){
+        for(const sourceId of sourceIdsFromSnapshot(row.snapshot))keepSources.add(sourceId);
+        keepGenerations.add(row.generation);
+      }
+    }
+    const redundantGenerations=rows.filter(row=>!keepGenerations.has(row.generation)).map(row=>row.generation);
+    return{safe:true,keepSources,redundantGenerations};
+  }catch(error){
+    return{safe:false,reason:error?.message||String(error),keepSources:new Set(),redundantGenerations:[]};
+  }
+}
+
 function createIndexedDbStore(impl){const dbp=openDb(impl);async function saveGeneration(projectId,snapshot,newSources=[],cardPatch={}){validateSnapshot(snapshot);const db=await dbp,generation=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),savedAt=isoNow(),t=db.transaction(['meta','projects','sources',LIBRARY_STORE],'readwrite'),m=t.objectStore('meta'),p=t.objectStore('projects'),s=t.objectStore('sources'),l=t.objectStore(LIBRARY_STORE),seen=new Set();for(const raw of newSources){const x=normalizeSourceRecord(raw);if(seen.has(x.id))continue;seen.add(x.id);s.put(x)}let card=await req(l.get(projectId));if(!card)throw Error('Projet local introuvable : '+projectId);card=normalizeProjectCard({...card,...cardPatch,updatedAt:cardPatch.updatedAt||savedAt,latestGeneration:generation});p.put({generation,projectId,snapshot:{...snapshot,projectId,generation,savedAt}});l.put(card);m.put(projectId,'currentProjectId');await done(t);return{generation,card}}
 return{
 async save(snapshot,newSources=[]){validateSnapshot(snapshot);const db=await dbp,generation=Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),t=db.transaction(['meta','projects','sources'],'readwrite'),m=t.objectStore('meta'),p=t.objectStore('projects'),s=t.objectStore('sources'),seen=new Set();for(const raw of newSources){const x=normalizeSourceRecord(raw);if(seen.has(x.id))continue;seen.add(x.id);s.put(x)}p.put({generation,snapshot:{...snapshot,generation,savedAt:isoNow()}});m.put(generation,'current');await done(t);return generation},
@@ -25,6 +57,20 @@ async openProject(projectId){const db=await dbp,t=db.transaction(['meta',LIBRARY
 async closeProject(){const db=await dbp,t=db.transaction(['meta'],'readwrite');t.objectStore('meta').delete('currentProjectId');await done(t)},
 async renameProject(projectId,name){const db=await dbp,t=db.transaction([LIBRARY_STORE],'readwrite'),l=t.objectStore(LIBRARY_STORE),card=await req(l.get(projectId));if(!card)throw Error('Projet local introuvable');const next=normalizeProjectCard({...card,name:normalizeProjectName(name,card.name),updatedAt:isoNow()});l.put(next);await done(t);return next},
 async deleteProject(projectId){const db=await dbp,t=db.transaction(['meta','projects','sources','waveforms',LIBRARY_STORE],'readwrite'),m=t.objectStore('meta'),p=t.objectStore('projects'),src=t.objectStore('sources'),w=t.objectStore('waveforms'),l=t.objectStore(LIBRARY_STORE),rows=await req(p.getAll()),cards=await req(l.getAll()),current=await req(m.get('currentProjectId')),targetRows=rows.filter(row=>row.projectId===projectId),candidates=new Set(),referenced=new Set();for(const row of targetRows)try{for(const id of sourceIdsFromSnapshot(row.snapshot))candidates.add(id)}catch{}let canGc=true;for(const rawCard of cards){if(rawCard.id===projectId)continue;let card=normalizeProjectCard(rawCard),row=rows.find(r=>r.generation===card.latestGeneration&&r.projectId===card.id);if(!row){canGc=false;break}try{for(const id of sourceIdsFromSnapshot(row.snapshot))referenced.add(id)}catch{canGc=false;break}}for(const row of targetRows)p.delete(row.generation);l.delete(projectId);if(current===projectId)m.delete('currentProjectId');if(canGc)for(const id of candidates)if(!referenced.has(id)){src.delete(id);w.delete(id)}await done(t);return true},
+async cleanupUnusedAudio(protectedSourceIds=[]){
+  const db=await dbp;
+  const tx=db.transaction(['projects','sources','waveforms',LIBRARY_STORE],'readwrite');
+  const p=tx.objectStore('projects'),src=tx.objectStore('sources'),waves=tx.objectStore('waveforms'),library=tx.objectStore(LIBRARY_STORE);
+  const rows=await req(p.getAll()),cards=await req(library.getAll());
+  const plan=planAudioCleanup(rows,cards,protectedSourceIds);
+  if(!plan.safe){await done(tx);return{safe:false,reason:plan.reason,removedSourceIds:[],removedGenerations:0}}
+  const keys=await req(src.getAllKeys());
+  const removedSourceIds=keys.filter(id=>!plan.keepSources.has(id));
+  for(const id of removedSourceIds){src.delete(id);waves.delete(id)}
+  for(const generation of plan.redundantGenerations)p.delete(generation);
+  await done(tx);
+  return{safe:true,removedSourceIds,removedGenerations:plan.redundantGenerations.length};
+},
 async getLocalStorageStats(){const db=await dbp,t=db.transaction(['sources'],'readonly'),rows=await req(t.objectStore('sources').getAll());let audioBytes=0;for(const row of rows)if(row?.blob instanceof Blob)audioBytes+=row.blob.size;return{sourceCount:rows.length,audioBytes}},
 async saveWaveform(sourceId,waveform){if(!sourceId||!waveform)throw Error('Cache waveform invalide');const db=await dbp,t=db.transaction(['waveforms'],'readwrite');t.objectStore('waveforms').put({sourceId,waveform});await done(t)},
 async clear(){const db=await dbp,t=db.transaction(['meta','projects','sources','waveforms',LIBRARY_STORE],'readwrite');for(const name of ['meta','projects','sources','waveforms',LIBRARY_STORE])t.objectStore(name).clear();await done(t)}
@@ -41,6 +87,16 @@ async openProject(id){const raw=library.get(id);if(!raw)throw Error('Projet loca
 async closeProject(){currentProjectId=null},
 async renameProject(id,name){const card=library.get(id);if(!card)throw Error('Projet local introuvable');const next=normalizeProjectCard({...card,name:normalizeProjectName(name,card.name),updatedAt:isoNow()});library.set(id,next);return{...next}},
 async deleteProject(id){const targetRows=[...projects.values()].filter(row=>row.projectId===id),candidates=new Set(),referenced=new Set();for(const row of targetRows)try{for(const sourceId of sourceIdsFromSnapshot(row.snapshot))candidates.add(sourceId)}catch{}let canGc=true;for(const [otherId,rawCard] of library){if(otherId===id)continue;let card=normalizeProjectCard(rawCard),row=projects.get(card.latestGeneration);if(!row||row.projectId!==otherId){canGc=false;break}try{for(const sourceId of sourceIdsFromSnapshot(row.snapshot))referenced.add(sourceId)}catch{canGc=false;break}}for(const [g,row] of projects)if(row.projectId===id)projects.delete(g);library.delete(id);if(currentProjectId===id)currentProjectId=null;if(canGc)for(const sourceId of candidates)if(!referenced.has(sourceId)){sources.delete(sourceId);waveforms.delete(sourceId)}return true},
+async cleanupUnusedAudio(protectedSourceIds=[]){
+  const plan=planAudioCleanup([...projects.values()],[...library.values()],protectedSourceIds);
+  if(!plan.safe)return{safe:false,reason:plan.reason,removedSourceIds:[],removedGenerations:0};
+  const removedSourceIds=[];
+  for(const id of sources.keys())if(!plan.keepSources.has(id)){
+    sources.delete(id);waveforms.delete(id);removedSourceIds.push(id)
+  }
+  for(const generation of plan.redundantGenerations)projects.delete(generation);
+  return{safe:true,removedSourceIds,removedGenerations:plan.redundantGenerations.length};
+},
 async getLocalStorageStats(){let audioBytes=0;for(const row of sources.values())if(row?.blob instanceof Blob)audioBytes+=row.blob.size;return{sourceCount:sources.size,audioBytes}},
 async saveWaveform(sourceId,waveform){if(opts.failWrite)throw Error('quota');if(!sourceId||!waveform)throw Error('Cache waveform invalide');waveforms.set(sourceId,waveform);waveformWrites++},
 async clear(){current=null;currentProjectId=null;projects.clear();library.clear();sources.clear();waveforms.clear();audioWrites=0;waveformWrites=0;libraryInitialized=false},

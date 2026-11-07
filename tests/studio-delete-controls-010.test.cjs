@@ -16,7 +16,7 @@ console.log('CLIP_DELETE_UI_ACCESS PASS selected clip context exposes SUPPRIMER'
 function makeClassList(){const s=new Set();return{add:x=>s.add(x),remove:x=>s.delete(x),toggle(x,on){on?s.add(x):s.delete(x)},contains:x=>s.has(x)}}
 function makeHarness({tracks,clips,armed,selectedId=null,confirmResult=true,sources=[]}){
   const undo=[],redo=[],msgs=[];
-  const editor={classList:makeClassList()};
+  const editor={classList:makeClassList(),setAttribute(){}};
   const controls=[];
   const localSources=new Map(sources.map(x=>[x.id,x]));
   const ctx={
@@ -24,7 +24,7 @@ function makeHarness({tracks,clips,armed,selectedId=null,confirmResult=true,sour
     window:{confirm:()=>confirmResult},
     tracks:tracks.map(x=>({...x})),
     clips:clips.map(x=>({...x})),
-    selectedRecordTrackId:armed,
+    selectedRecordTrackId:armed,moveArmedClipId:null,
     selected:selectedId?clips.map(x=>({...x})).find(x=>x.id===selectedId)||null:null,
     undo,redo,
     liveDuration:0,
