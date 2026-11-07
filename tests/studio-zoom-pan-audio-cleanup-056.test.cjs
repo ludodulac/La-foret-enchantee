@@ -10,7 +10,7 @@ function snapshot(id,clipIds){
     clips:clipIds.map((sourceId,i)=>({id:'clip-'+id+'-'+i,track:'voice',sourceId,name:'Voix',start:i*2,trim:0,len:1,gain:1,muted:false}))};
 }
 async function main(){
-  assert.equal(Nav.MIN_ZOOM,0.005);
+  assert.equal(Nav.MIN_ZOOM,0.001);
   assert(Nav.fitZoom(280,1800)<=0.009,'30 minute recording fits on narrow phone');
   assert(Nav.pixelsPerSecond(280,Nav.fitZoom(280,1800))*1800<=280);
   assert(Nav.pixelsPerSecond(280,Nav.MIN_ZOOM)*1800<220);
