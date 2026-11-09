@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
+const StudioSilenceEditor=require('../js/studio-silence-editor.js');
 const A=require('../js/studio-autosave.js');
 
 const html=fs.readFileSync('studio.html','utf8');
