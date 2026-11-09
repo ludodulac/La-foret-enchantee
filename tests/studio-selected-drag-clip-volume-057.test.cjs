@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const Autosave=require('../js/studio-autosave.js');
 const html=fs.readFileSync('studio.html','utf8');
 const cutAt=html.indexOf("$('#cut').onclick=()=>");
-const volumeEnd=html.indexOf('function wav(',cutAt);
+const volumeEnd=html.indexOf('// Silence reductions are virtual playback/export cuts:',cutAt);
 assert(cutAt>0&&volumeEnd>cutAt);
 const editSource=html.slice(cutAt,volumeEnd);
 const baseClip={id:'piece-1',track:'voice',name:'Prise originale',sourceId:'source-1',start:1,trim:0,len:10,gain:0.7,muted:false};
@@ -20,7 +20,7 @@ const ctx={console,Math,Number,tracks,clips,undo,redo,liveClipGainNodes,selected
   deleteClipById(){},$:selector=>elements[selector]};
 vm.createContext(ctx);
 vm.runInContext(editSource,ctx);
-assert(editSource.includes('let right={...selected,id:crypto.randomUUID()'),'Split parts inherit original clip metadata');
+assert(editSource.includes('right={...selected,id:crypto.randomUUID()')&&editSource.includes('StudioSilenceEditor.slice(original,rel,original.len)'),'Unedited and silence-processed splits preserve original metadata');
 elements['#cut'].onclick();
 assert.equal(clips.length,2);
 assert.equal(clips[0].start,1);

@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
+const StudioSilenceEditor=require('../js/studio-silence-editor.js');
 const A=require('../js/studio-autosave.js');
 
 const html=fs.readFileSync('studio.html','utf8');
@@ -85,7 +86,7 @@ const snap=(name,clips=[])=>({schema:A.SCHEMA_VERSION,name,cursor:0,zoom:1,selec
 
   function transportHarness(clips,from){
     const starts=[],nodes=[],ctxObj={
-      console,Math,Map,Set,Promise,
+      console,StudioSilenceEditor,Math,Map,Set,Promise,
       playGeneration:0,playPreparing:false,playing:false,tick:null,sources:[],liveClipGainNodes:new Map(),cursor:from,metroOn:false,t0:0,recording:false,
       tracks:[{id:'t1',gain:1,muted:false},{id:'t2',gain:.5,muted:false}],clips,
       performance:{now:()=>1000},setInterval:fn=>({fn}),clearInterval(){},

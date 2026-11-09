@@ -548,7 +548,7 @@ async function recordInto(selectedId){
   // Actual playback applies the selected destination track state to the recorded clip.
   const gains=[],starts=[],recorded={...r2.clips[0],gain:.8,muted:false,start:3,trim:0,len:1.25,sourceId:'src-rec'};
   const playCtx={
-    console,Map,Math,clips:[recorded],tracks:r2.tracks,sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
+    console,StudioSilenceEditor:require('../js/studio-silence-editor.js'),Map,Math,clips:[recorded],tracks:r2.tracks,sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
     sourceIdFor:x=>x.sourceId,
     ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
     startMetro(){},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual(){},setCursor(){},projectDuration:()=>30,$:()=>({textContent:''})

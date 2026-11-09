@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
+const StudioSilenceEditor=require('../js/studio-silence-editor.js');
 const Autosave=require('../js/studio-autosave.js');
 const StudioTimelineNavigation=require('../js/studio-timeline-navigation.js');
 
@@ -183,7 +184,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
     function runPlayback(trackMuted){
       const gains=[],starts=[];
       const c={id:'birds',track:'B',sourceId:'src-birds',start:4,trim:0,len:2,gain:.7,muted:false};
-      const context={console,Map,Math,clips:[c],tracks:[{id:'A',gain:1,muted:false},{id:'B',gain:.5,muted:trackMuted}],sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
+      const context={console,StudioSilenceEditor,Map,Math,clips:[c],tracks:[{id:'A',gain:1,muted:false},{id:'B',gain:.5,muted:trackMuted}],sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
         sourceIdFor:x=>x.sourceId,ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
         startMetro:()=>{},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual:()=>{},setCursor:()=>{},projectDuration:()=>30,$:()=>({textContent:''})};
       vm.createContext(context);vm.runInContext(playbackSource,context);

@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict');
 const fs=require('fs');
 const vm=require('node:vm');
+const StudioSilenceEditor=require('../js/studio-silence-editor.js');
 const R=require('../js/studio-audio-runtime.js');
 
 const html=fs.readFileSync('studio.html','utf8');
@@ -21,7 +22,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
   };
   const rt=runtime||{getDecodedSource:async id=>fakeBuffer(id)};
   const context={
-    console,
+    console,StudioSilenceEditor,
     Promise,Map,Set,Math,performance:{now:()=>1000},
     setInterval:fn=>({fn}),clearInterval:()=>{},
     playGeneration:state.playGeneration,playPreparing:state.playPreparing,playing:state.playing,tick:state.tick,

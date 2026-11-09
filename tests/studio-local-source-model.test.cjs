@@ -114,7 +114,7 @@ const copy=x=>JSON.parse(JSON.stringify(x));
   const autosave=html.slice(html.indexOf('async function runAutosave()'),html.indexOf('function markProjectDirty()'));
   assert(autosave.includes('localSources.get(id)'),'autosave doit lire la source persistante originale');
   assert(!autosave.includes('wav('),'autosave ne doit plus réencoder AudioBuffer en WAV');
-  assert(html.includes("let right={...selected,id:crypto.randomUUID()"),'split doit partager sourceId par copie des métadonnées');
+  assert(html.includes("right={...selected,id:crypto.randomUUID()")&&html.includes("StudioSilenceEditor.slice(original,rel,original.len)"),'split brut ou après silence doit réutiliser le sourceId original sans PCM dupliqué');
   assert(html.includes("let c={...selected,id:crypto.randomUUID()"),'duplicate doit partager sourceId par copie des métadonnées');
 
   console.log('AUDIO_WRITE_METRIC IMPORT=1; MOVE+TRIM+SPLIT+DUPLICATE+GAIN+MUTE+10_AUTOSAVES=0 additional audio writes');
