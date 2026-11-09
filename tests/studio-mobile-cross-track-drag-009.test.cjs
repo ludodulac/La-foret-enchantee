@@ -77,6 +77,23 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
     console.log('TOUCH_TAP_SELECTS_AUDIO_WITHOUT_MOVING PASS');
   }
 
+  // Actual two-step Android workflow: tap a recording, then drag it without
+  // arming a separate movement button.
+  {
+    const h=makeHarness();
+    h.el.onpointerdown(event(100,50,31));
+    h.el.onpointerup(event(100,50,31));
+    assert.strictEqual(h.context.selected,h.clip,'Tap selects the recording');
+    h.el.onpointerdown(event(100,50,32));
+    h.el.onpointermove(event(150,50,32));
+    h.el.onpointerup(event(150,50,32));
+    assert.equal(h.clip.start,12.9);
+    assert.equal(h.clip.track,'A');
+    assert.equal(h.undo.length,1);
+    assert.equal(h.state.dirty,1);
+    console.log('TAP_TO_SELECT_THEN_DIRECT_HORIZONTAL_DRAG PASS');
+  }
+
   // 1 + 13 HORIZONTAL_DRAG / EXISTING_HORIZONTAL_DRAG
   {
     const h=makeHarness();drag(h,{moveX:150,moveY:50});
