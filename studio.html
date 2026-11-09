@@ -236,6 +236,13 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 .silence-row button{font-size:9px;min-height:35px;padding:4px}
 .silence-row.is-restored{border-color:#3ca77a}
 @media(max-width:390px){.silence-row{grid-template-columns:minmax(0,1fr) auto}.silence-row button:nth-of-type(1){grid-column:1/2}}
+
+/* Every reduced pause has a 3px fuchsia stroke, with a larger tap target.
+   The pink line stays visible on selected and unselected audio clips. */
+.silence-marker{position:absolute;top:0;bottom:0;width:30px;transform:translateX(-50%);border:0;border-radius:0;background:transparent;padding:0;cursor:pointer;z-index:12;touch-action:manipulation;display:flex;align-items:stretch;justify-content:center}
+.silence-marker:before{content:"";display:block;flex:none;width:3px;height:100%;background:#ff4cb4;box-shadow:0 0 0 1px #5b133d,0 0 6px #ff3da4;pointer-events:none}
+.silence-marker:focus-visible{outline:2px solid #ffffff;outline-offset:-3px}
+.silence-marker:active:before{width:5px;background:#ff8ddb}
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
   <header class="project-library-header">
@@ -438,7 +445,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-silence-editor.js?v=059"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-silence-editor.js?v=060"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],liveClipGainNodes=new Map(),draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,micStarting=false,micStream=null,micGeneration=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
@@ -509,7 +516,7 @@ function waveform(canvas,c){
   g.stroke();
 }
 let waveformScrollRaf=0;function refreshVisibleWaveforms(){waveformScrollRaf=0;document.querySelectorAll('.wavecanvas').forEach(cv=>{if(cv._clip)waveform(cv,cv._clip)})}$('#timeline').addEventListener('scroll',()=>{if(!waveformScrollRaf)waveformScrollRaf=requestAnimationFrame(refreshVisibleWaveforms)},{passive:true});
-function pixelsPerSecond(){return StudioTimelineNavigation.pixelsPerSecond($('#timeline').clientWidth,zoom)}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){selectedRecordTrackId=recordTrackIdFor();let d=projectDuration(),pps=pixelsPerSecond();$('#app').classList.toggle('zoom-overview',pps<2);let w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let rulerStep=StudioTimelineNavigation.rulerStep(pps),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let tm=0;tm<=d;tm+=rulerStep){let s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(88,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(selectedRecordTrackId===t.id)lane.classList.add('active-destination');placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'');ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-top"><button class="track-arm game-btn game-btn-compact game-btn-dark '+(selectedRecordTrackId===t.id?'is-active':'')+'" data-arm type="button" aria-pressed="'+(selectedRecordTrackId===t.id?'true':'false')+'" aria-label="Destination '+t.name+'"><span class="track-arm-name">'+t.name+'</span><span class="track-arm-rec">● REC</span></button><button class="track-more game-btn game-btn-compact game-btn-secondary" data-track-menu type="button" aria-label="Menu '+t.name+'">⋯</button></div><div class="track-control-buttons"><button class="game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')+'" data-mute title="Muet">'+(t.muted?'🔇':'🔊')+' MUET</button><button class="game-btn game-btn-compact game-btn-secondary" data-vol title="Volume">🔊 '+Math.round(t.gain*100)+'%</button></div>';bindRecordTrackControl(ctrl,t);controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
+function pixelsPerSecond(){return StudioTimelineNavigation.pixelsPerSecond($('#timeline').clientWidth,zoom)}function rowsFor(arr){let ends=[];return arr.slice().sort((a,b)=>a.start-b.start).map(c=>{let row=ends.findIndex(x=>x<=c.start+.01);if(row<0)row=ends.length;ends[row]=c.start+c.len;return[c,row]})}function render(){selectedRecordTrackId=recordTrackIdFor();let d=projectDuration(),pps=pixelsPerSecond();$('#app').classList.toggle('zoom-overview',pps<2);let w=Math.max($('#timeline').clientWidth,d*pps);$('#canvas').style.width=w+'px';let rulerStep=StudioTimelineNavigation.rulerStep(pps),$r=$('#ruler');$r.innerHTML='';$r.style.position='relative';for(let tm=0;tm<=d;tm+=rulerStep){let s=document.createElement('span');s.style.position='absolute';s.style.left=(tm*pps)+'px';s.textContent=fmt(tm).slice(0,5);$r.appendChild(s)}let root=$('#tracks'),controls=$('#track-controls');root.innerHTML='';controls.innerHTML='';tracks.forEach((t,ti)=>{let sec=document.createElement('div');sec.className='track';sec.innerHTML='<div class="lane"></div>';let lane=sec.querySelector('.lane');lane.dataset.trackId=t.id;let arr=clips.filter(c=>c.track===t.id),placed=rowsFor(arr),maxRow=placed.length?Math.max(...placed.map(x=>x[1])):0,laneHeight=Math.max(88,(maxRow+1)*71+5);lane.style.height=laneHeight+'px';if(selectedRecordTrackId===t.id)lane.classList.add('active-destination');placed.forEach(([c,row])=>{let e=document.createElement('div');e.className='clip '+(t.type==='sound'?'sound ':'')+(selected===c?'sel':'');e.style.top=(5+row*71)+'px';e.style.setProperty('--track-color',t.color||'#16a97d');e.style.left=(c.start*pps)+'px';e.style.width=(c.len*pps)+'px';e._clip=c;e.innerHTML='<canvas class="wavecanvas"></canvas><span class="clipname">'+(t.type==='voice'?'VOIX':c.name.slice(0,15))+'</span><span class="trimhandle left"></span><span class="trimhandle right"></span>';clipGesture(e,c,d);trimGesture(e.querySelector('.left'),c,'left');trimGesture(e.querySelector('.right'),c,'right');renderSilenceMarkers(e,c,pps);lane.appendChild(e);let wave=e.querySelector('canvas');wave._clip=c;requestAnimationFrame(()=>waveform(wave,c))});root.appendChild(sec);let ctrl=document.createElement('div');ctrl.className='track-control'+(selectedRecordTrackId===t.id?' record-armed':'');ctrl.dataset.trackId=t.id;ctrl.style.height=(laneHeight)+'px';ctrl.innerHTML='<div class="track-top"><button class="track-arm game-btn game-btn-compact game-btn-dark '+(selectedRecordTrackId===t.id?'is-active':'')+'" data-arm type="button" aria-pressed="'+(selectedRecordTrackId===t.id?'true':'false')+'" aria-label="Destination '+t.name+'"><span class="track-arm-name">'+t.name+'</span><span class="track-arm-rec">● REC</span></button><button class="track-more game-btn game-btn-compact game-btn-secondary" data-track-menu type="button" aria-label="Menu '+t.name+'">⋯</button></div><div class="track-control-buttons"><button class="game-btn game-btn-compact game-btn-dark game-btn-secondary '+(t.muted?'is-active':'')+'" data-mute title="Muet">'+(t.muted?'🔇':'🔊')+' MUET</button><button class="game-btn game-btn-compact game-btn-secondary" data-vol title="Volume">🔊 '+Math.round(t.gain*100)+'%</button></div>';bindRecordTrackControl(ctrl,t);controls.appendChild(ctrl)});if(liveRec){let sec=[...root.querySelectorAll('.track')].find((x,i)=>tracks[i]?.id===liveRec.track);let lane=sec?.querySelector('.lane');if(lane){let e=document.createElement('div');e.className='liveclip';e.id='liveclip';e.style.left=(liveRec.start*pps)+'px';e.style.width=(Math.max(.03,liveRec.len)*pps)+'px';e.innerHTML='<canvas id="livewave"></canvas><span>● VOIX</span>';lane.appendChild(e)}}$('#addtrack').style.display=tracks.length<4?'block':'none';setCursor(cursor);renderSelection();buttons()}
 function dragLaneAt(clientY){for(const lane of document.querySelectorAll('#tracks .lane[data-track-id]')){let r=lane.getBoundingClientRect();if(clientY>=r.top&&clientY<=r.bottom)return{lane,trackId:lane.dataset.trackId}}return null}
 function setDragLaneFeedback(lane){document.querySelectorAll('#tracks .lane.drag-target').forEach(x=>x.classList.remove('drag-target'));if(lane)lane.classList.add('drag-target')}
 function clipGesture(el,c,d){
@@ -890,6 +897,45 @@ async function playSilencePreview(pauseIndex=null){
     $('#silence-preview-all').textContent='▶ RECOMMENCER';
     silencePreviewTimer=setTimeout(stopSilencePreview,(to-from)*1000+160);
   }catch(error){stopSilencePreview();$('#silence-status').textContent='Écoute impossible : '+(error.message||String(error))}
+}
+function renderSilenceMarkers(clipElement,clip,pps){
+  for(const marker of StudioSilenceEditor.markers(clip)){
+    const button=document.createElement('button');
+    button.type='button';button.className='silence-marker';
+    button.style.left=(marker.at*pps)+'px';
+    button.dataset.pauseIndex=String(marker.pauseIndex);
+    button.title='Silence réduit · toucher pour restaurer cette pause';
+    button.setAttribute('aria-label','Silence réduit à '+fmt(clip.start+marker.at)+'. Restaurer uniquement cette pause.');
+    // Never let the tap turn into a clip drag, track pan or playhead seek.
+    for(const type of ['pointerdown','pointerup','pointermove','pointercancel'])
+      button.addEventListener(type,event=>event.stopPropagation());
+    button.addEventListener('click',event=>{
+      event.preventDefault();event.stopPropagation();
+      restoreSingleSilence(clip.id,marker.pauseIndex);
+    });
+    clipElement.appendChild(button);
+  }
+}
+function restoreSingleSilence(clipId,pauseIndex){
+  const clip=clips.find(c=>c.id===clipId),pause=clip?.silenceEdit?.pauses?.[pauseIndex];
+  if(!clip||!pause?.reduced||recording||micStarting)return false;
+  const removed=Number(pause.cutEnd)-Number(pause.cutStart);
+  if(!Number.isFinite(removed)||removed<=0)return false;
+  const at=StudioSilenceEditor.markers(clip).find(x=>x.pauseIndex===pauseIndex)?.at;
+  const textAt=Number.isFinite(at)?fmt(clip.start+at):'cet endroit';
+  if(!window.confirm('Restaurer le silence à '+textAt+' ?\\nCette pause retrouvera '+removed.toFixed(2)+' s. Les clips suivants de cette piste se décaleront, mais les autres silences resteront réduits.'))return false;
+  stopPlay();
+  const nextEdit=JSON.parse(JSON.stringify(clip.silenceEdit)),oldLen=clip.len;
+  nextEdit.pauses[pauseIndex].reduced=false;
+  const newLen=StudioSilenceEditor.duration(clip,nextEdit);
+  if(newLen<=oldLen||!Number.isFinite(newLen))return false;
+  checkpoint(); // One undo restores this pause AND the subsequent clip positions.
+  const oldEnd=clip.start+oldLen;
+  clip.silenceEdit=nextEdit;clip.len=newLen;
+  StudioSilenceEditor.ripple(clips,clip,oldEnd,newLen-oldLen);
+  render();markProjectDirty();
+  msg('Pause restaurée ✓ · trait rose retiré · autres pauses conservées');
+  return true;
 }
 function applySilenceEdit(){
   const draft=silenceDraftClip(),session=silenceSession;
