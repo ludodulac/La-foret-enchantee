@@ -139,7 +139,7 @@ console.log('INSERT_AT_PLAYHEAD_RECORD PASS');
   console.log('TRACK_VOLUME_SLIDER PASS');
 
   // Playback consumes track gain, and snapshots persist track objects/gain.
-  assert(playbackSource.includes('g.gain.value=c.gain*(t?.gain??1)'));
+  assert(playbackSource.includes('gain.gain.value=c.gain*(t?.gain??1)')&&playbackSource.includes('StudioSilenceEditor.segments(c)'));
   assert(localSnapshotSource.includes('tracks:tracks.map(t=>({...t}))'));
   assert(html.includes('function serializableProject(){return{version:1')&&html.includes('tracks:tracks.map(t=>({...t}))'));
   console.log('TRACK_VOLUME_PLAYBACK_GAIN PASS');
