@@ -8,7 +8,20 @@ function outputMode(opts){return opts?.output==='opfs'?'opfs':'memory'}
 function planExport(start,end,opts={}){finite('début',start);finite('fin',end);if(start<0||end<=start)throw Error('plage export invalide');let duration=end-start,frames=Math.ceil(duration*SAMPLE_RATE);if(!Number.isSafeInteger(frames)||frames<1)throw Error('nombre de frames invalide');let wavBytes=44+frames*PCM_BYTES_PER_FRAME,mode=outputMode(opts),estimatedPeakBytes=mode==='opfs'?OPFS_RENDER_BYTES:wavBytes+SCRATCH_BYTES;if(estimatedPeakBytes>MAX_PEAK_BYTES)throw Error('export trop volumineux ('+(estimatedPeakBytes/1048576).toFixed(0)+' Mo estimés)');return{start,end,duration,frames,sampleRate:SAMPLE_RATE,wavBytes,scratchBytes:SCRATCH_BYTES,pcmChunkBytes:PCM_CHUNK_BYTES,estimatedPeakBytes,outputMode:mode}}
 function validateClip(c,i){let p='clip '+(i+1)+' ';['start','trim','len','gain','trackGain'].forEach(k=>finite(p+k,c[k]));if(c.start<0||c.trim<0||c.len<0)throw Error(p+'temps négatif');if(!c.buffer||typeof c.buffer.getChannelData!=='function')throw Error(p+'buffer absent');finite(p+'duration',c.buffer.duration);finite(p+'length',c.buffer.length);finite(p+'sampleRate',c.buffer.sampleRate);if(c.buffer.duration<0||c.buffer.length<0||c.buffer.sampleRate<=0||!Number.isSafeInteger(c.buffer.length))throw Error(p+'buffer invalide');if(c.buffer.numberOfChannels<1||c.buffer.numberOfChannels>32)throw Error(p+'canaux invalides');if(c.trim+c.len>c.buffer.duration+Math.max(.02,2/c.buffer.sampleRate))throw Error(p+'trim/len dépassent le buffer')}
 function validatePlan(clips,start,end,opts={}){let plan=planExport(start,end,opts);if(!Array.isArray(clips)||clips.length>200)throw Error('nombre de clips invalide');clips.forEach(validateClip);return plan}
-function buildJobs(clips,p){let jobs=[];clips.forEach((c,i)=>{validateClip(c,i);if(c.muted||c.trackMuted)return;let from=Math.max(p.start,c.start),to=Math.min(p.end,c.start+c.len);if(to<=from)return;let a=Math.max(0,Math.floor((from-p.start)*p.sampleRate)),b=Math.min(p.frames,Math.ceil((to-p.start)*p.sampleRate));if(b<a)throw Error('clip '+(i+1)+' indices invalides');let l=c.buffer.getChannelData(0),r=c.buffer.numberOfChannels>1?c.buffer.getChannelData(1):l;jobs.push({c,a,b,l,r,g:c.gain*c.trackGain})});return jobs}
+function buildJobs(clips,p){let jobs=[];clips.forEach((c,i)=>{validateClip(c,i);if(c.muted||c.trackMuted)return;
+  const slices=Array.isArray(c.slices)?c.slices:[{at:0,trim:c.trim,len:c.len}];
+  if(slices.length>2000)throw Error('Trop de segments audio');
+  for(const slice of slices){
+    if(!Number.isFinite(slice.at)||!Number.isFinite(slice.trim)||!Number.isFinite(slice.len)||slice.at<0||slice.trim<0||slice.len<=0||slice.at+slice.len>c.len+.025||slice.trim+slice.len>c.buffer.duration+.025)throw Error('Segment audio invalide');
+    const part={...c,start:c.start+slice.at,trim:slice.trim,len:slice.len};
+    let from=Math.max(p.start,part.start),to=Math.min(p.end,part.start+part.len);
+    if(to<=from)continue;
+    let a=Math.max(0,Math.floor((from-p.start)*p.sampleRate)),b=Math.min(p.frames,Math.ceil((to-p.start)*p.sampleRate));
+    if(b<a)throw Error('clip '+(i+1)+' indices invalides');
+    let l=c.buffer.getChannelData(0),r=c.buffer.numberOfChannels>1?c.buffer.getChannelData(1):l;
+    jobs.push({c:part,a,b,l,r,g:c.gain*c.trackGain});
+  }
+});return jobs}
 function writeWavHeader(v,n,sr){let p=0,str=s=>{for(let x of s)v.setUint8(p++,x.charCodeAt(0))},u16=x=>{v.setUint16(p,x,true);p+=2},u32=x=>{v.setUint32(p,x,true);p+=4};str('RIFF');u32(36+n*4);str('WAVEfmt ');u32(16);u16(1);u16(2);u32(sr);u32(sr*4);u16(4);u16(16);str('data');u32(n*4)}
 function wavHeaderBuffer(n,sr){let b=new ArrayBuffer(44);writeWavHeader(new DataView(b),n,sr);return b}
 function pcm16(x){x=Math.max(-1,Math.min(1,x));return x<0?x*32768:x*32767}
