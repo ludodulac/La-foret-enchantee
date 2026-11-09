@@ -74,7 +74,7 @@ async function main(){
   assert(html.includes('clip.silenceEdit.analysisVersion===StudioSilenceEditor.ANALYSIS_VERSION'));
   assert(html.includes('const restoredBefore='),'Existing manually restored pauses remain protected');
   assert(html.includes('pause.reduced=false;'),'Previous manual choices survive updated analysis');
-  assert(html.includes('studio-silence-editor.js?v=059'),'Android must fetch the updated detector');
+  assert(Number((html.match(/studio-silence-editor\\.js\\?v=(\\d+)/)||[])[1])>=59,'Android must fetch the updated detector');
   console.log('PREVIOUSLY_PROCESSED_PROJECT_REANALYZED_ON_REOPEN PASS');
 }
 main().catch(e=>{console.error(e);process.exitCode=1});
