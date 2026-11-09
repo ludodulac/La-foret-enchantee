@@ -84,7 +84,7 @@ assert(html.slice(returnStart,returnEnd).includes('invalidateAudioPreload()'));
 
 // Safety barrier and Web Audio scheduling remain unchanged.
 assert(html.includes("async function preparePlayback(from){let ids=new Set();clips.forEach(c=>{let t=tracks.find(x=>x.id===c.track),off=Math.max(0,from-c.start),remain=c.len-off;if(!c.muted&&!t?.muted&&remain>0)ids.add(sourceIdFor(c))});let entries=await Promise.all([...ids].map(async id=>[id,await getDecodedSource(id)]));return new Map(entries)}"));
-assert(html.includes("s.start(now+Math.max(0,c.start-from),c.trim+off,remain)"));
+assert(html.includes("s.start(now+Math.max(0,c.start+fromLocal-from),span.trim+fromLocal-span.at,until-fromLocal)")&&html.includes("StudioSilenceEditor.segments(c)"),'Playhead source timing is preserved across virtual non-destructive slices');
 
 console.log('Studio background playback preload 004 PASS');
 
