@@ -50,6 +50,8 @@ jobs:
         run: node tests/studio-zoom-pan-audio-cleanup-056.test.cjs
       - name: Check Android microphone release and dictation guard 054
         run: node tests/studio-mobile-mic-guardian-054.test.cjs
+      - name: Test pink silence markers, individual tap restoration, ripple and undo 060
+        run: node tests/studio-pink-silence-markers-060.test.cjs
       - name: Test adaptive silence with lavalier background hiss and quiet speech 059
         run: node tests/studio-adaptive-silence-noise-059.test.cjs
       - name: Test non-destructive silence restoration, ripple, persistence and WAV export 057
