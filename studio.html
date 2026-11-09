@@ -442,7 +442,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],liveClipGainNodes=new Map(),draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,micStarting=false,micStream=null,micGeneration=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
-function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){if(undo.length>30)undo.splice(0,undo.length-30);if(redo.length>30)redo.splice(0,redo.length-30);let canUndo=undo.length>0,canRedo=redo.length>0;$('#undo').disabled=!canUndo;$('#undo-quick').disabled=!canUndo;$('#redo').disabled=!canRedo;$('#redo-quick').disabled=!canRedo;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;if(has){$('#clipvol').value=Math.round(selected.gain*100);$('#clipvol-value').textContent=Math.round(selected.gain*100)+' %'}let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
+function projectDuration(){let end=Math.max(liveDuration,0,...clips.map(c=>c.start+c.len));return Math.max(15,Math.ceil((end+1)/5)*5)}function snapshot(){return{clips:clips.map(c=>({...c})),tracks:tracks.map(t=>({...t})),selectedRecordTrackId:recordTrackIdFor()}}function restore(s){clips=s.clips;tracks=s.tracks;selectedRecordTrackId=recordTrackIdFor(s.selectedRecordTrackId);selected=null;$('#editor').classList.remove('show');render();markProjectDirty()}function checkpoint(){undo.push(snapshot());if(undo.length>30)undo.shift();redo=[];buttons();markProjectDirty()}function buttons(){if(undo.length>30)undo.splice(0,undo.length-30);if(redo.length>30)redo.splice(0,redo.length-30);let canUndo=undo.length>0,canRedo=redo.length>0;$('#undo').disabled=!canUndo;$('#undo-quick').disabled=!canUndo;$('#redo').disabled=!canRedo;$('#redo-quick').disabled=!canRedo;let has=!!selected;$('#app').classList.toggle('clip-selected',has);$('#cut').disabled=!has;$('#duplicate').disabled=!has;$('#clipmute').disabled=!has;$('#del').disabled=!has;$('#clipvol').disabled=!has;$('#silence-open').disabled=!has;if(has){$('#clipvol').value=Math.round(selected.gain*100);$('#clipvol-value').textContent=Math.round(selected.gain*100)+' %'}let n=$('#clip-context-name');if(n)n.textContent=selected?(selected.name||'Morceau sélectionné'):''}
 const TRIM_GUTTER_PX=22;
 function recordTrackIdFor(id=selectedRecordTrackId){return tracks.some(t=>t.id===id)?id:(tracks.find(t=>t.type==='voice')?.id||tracks[0]?.id||null)}
 function selectRecordTrack(id,dirty=true){let next=recordTrackIdFor(id);if(!next)return false;let changed=selectedRecordTrackId!==next;selectedRecordTrackId=next;document.querySelectorAll('.track-control').forEach(el=>{let armed=el.dataset.trackId===next;el.classList.toggle('record-armed',armed);let arm=el.querySelector('[data-arm]');if(arm){arm.classList.toggle('is-active',armed);arm.setAttribute('aria-pressed',armed?'true':'false')}});if(changed&&dirty)markProjectDirty();return true}
@@ -777,6 +777,136 @@ $('#clipvol').oninput=e=>{
 };
 $('#clipvol').onchange=finishClipVolumeEdit;
 $('#clipvol').onblur=finishClipVolumeEdit;
+// Silence reductions are virtual playback/export cuts: no copied or
+// recompressed audio, and every rejected pause remains recoverable.
+let silenceSession=null,silenceRequest=0,silencePreviewSources=[],silencePreviewGain=null,silencePreviewTimer=null;
+function stopSilencePreview(){
+  for(const node of silencePreviewSources){try{node.stop()}catch{}try{node.disconnect()}catch{}}
+  silencePreviewSources=[];try{silencePreviewGain?.disconnect()}catch{}silencePreviewGain=null;
+  clearTimeout(silencePreviewTimer);silencePreviewTimer=null;
+  $('#silence-preview-all').textContent='▶ ÉCOUTER LE RÉSULTAT';
+}
+function closeSilenceEditor(){
+  silenceRequest++;if(silenceSession?.controller)silenceSession.controller.abort();
+  stopSilencePreview();silenceSession=null;$('#silence-panel').hidden=true;
+}
+function silenceDraftClip(){
+  let session=silenceSession,original=clips.find(c=>c.id===session?.clipId);
+  if(!session?.edit||!original)return null;
+  return{...original,len:StudioSilenceEditor.duration(original,session.edit),silenceEdit:session.edit};
+}
+function updateSilenceList(){
+  let session=silenceSession,container=$('#silence-list');container.innerHTML='';
+  let draft=silenceDraftClip();
+  if(!session?.edit||!draft)return;
+  let pauses=session.edit.pauses,total=StudioSilenceEditor.duration(draft);
+  let removed=Math.max(0,session.edit.originalDuration-total);
+  let restored=pauses.filter(p=>!p.reduced).length;
+  $('#silence-status').textContent=pauses.length?pauses.length+' pauses détectées · '+removed.toFixed(2)+' s retirées · '+restored+' restaurée(s)':'Aucun silence intérieur assez long pour être réduit.';
+  $('#silence-apply').disabled=pauses.length===0;
+  $('#silence-preview-all').disabled=false;
+  pauses.forEach((pause,index)=>{
+    let row=document.createElement('div');row.className='silence-row'+(!pause.reduced?' is-restored':'');
+    const summary=document.createElement('span'),title=document.createElement('b'),info=document.createElement('small');
+    title.textContent='Pause '+(index+1)+' · '+fmt(pause.start);
+    info.textContent=(pause.end-pause.start).toFixed(2)+' s → '+(pause.reduced?(pause.end-pause.start-(pause.cutEnd-pause.cutStart)).toFixed(2)+' s':'durée originale');
+    summary.append(title,info);
+    let hear=document.createElement('button');hear.type='button';hear.className='game-btn game-btn-compact game-btn-secondary';hear.textContent='▶ ÉCOUTER';
+    hear.onclick=()=>playSilencePreview(index);
+    let toggle=document.createElement('button');toggle.type='button';toggle.className='game-btn game-btn-compact '+(pause.reduced?'game-btn-dark':'game-btn-green');toggle.textContent=pause.reduced?'↩ RESTAURER':'✓ RÉDUIRE';
+    toggle.onclick=()=>{stopSilencePreview();pause.reduced=!pause.reduced;updateSilenceList()};
+    row.append(summary,hear,toggle);container.appendChild(row);
+  });
+}
+async function analyzeSilenceClip(mode){
+  const session=silenceSession;if(!session)return;
+  const token=++silenceRequest,clip=clips.find(c=>c.id===session.clipId);
+  if(!clip)return closeSilenceEditor();
+  session.controller?.abort();session.controller=new AbortController();
+  stopSilencePreview();
+  $('#silence-list').innerHTML='';$('#silence-status').textContent='Analyse des pauses…';
+  $('#silence-preview-all').disabled=true;$('#silence-apply').disabled=true;
+  try{
+    const buffer=await getDecodedSource(sourceIdFor(clip));
+    if(token!==silenceRequest||session!==silenceSession)return;
+    session.buffer=buffer;
+    if(clip.silenceEdit&&clip.silenceEdit.mode===mode)session.edit=JSON.parse(JSON.stringify(clip.silenceEdit));
+    else{
+      const originalDuration=clip.silenceEdit?.originalDuration??clip.len;
+      session.edit=await StudioSilenceEditor.analyze(buffer,clip.trim,originalDuration,mode,{
+        signal:session.controller.signal,
+        onProgress:p=>{if(token===silenceRequest)$('#silence-status').textContent='Analyse des pauses : '+Math.round(p*100)+' %'}
+      });
+    }
+    if(token!==silenceRequest||session!==silenceSession)return;
+    updateSilenceList();
+  }catch(error){
+    if(token!==silenceRequest||session!==silenceSession)return;
+    console.error('ANALYSE SILENCES',error);
+    $('#silence-status').textContent='Analyse impossible : '+(error.message||String(error));
+  }
+}
+function openSilenceEditor(){
+  if(!selected)return msg('Sélectionne d’abord un enregistrement');
+  if(recording||micStarting)return msg('Arrête l’enregistrement avant de traiter les silences');
+  stopPlay();closeSilenceEditor();
+  silenceSession={clipId:selected.id,edit:null,buffer:null,controller:null};
+  $('#silence-panel').hidden=false;
+  $('#silence-mode').value=selected.silenceEdit?.mode||'natural';
+  analyzeSilenceClip($('#silence-mode').value);
+}
+async function playSilencePreview(pauseIndex=null){
+  const draft=silenceDraftClip(),session=silenceSession;
+  if(!draft||!session?.buffer)return;
+  stopSilencePreview();
+  let from=0,to=draft.len;
+  if(pauseIndex!==null){
+    const p=session.edit.pauses[pauseIndex];if(!p)return;
+    const time=StudioSilenceEditor.outputTimeAtSource(draft,p.start);
+    from=Math.max(0,time-1.6);to=Math.min(draft.len,time+2.6);
+  }
+  if(to<=from)return;
+  try{
+    await ctx.resume();if(session!==silenceSession)return;
+    let t=tracks.find(t=>t.id===draft.track);
+    silencePreviewGain=ctx.createGain();silencePreviewGain.gain.value=draft.gain*(t?.gain??1);silencePreviewGain.connect(ctx.destination);
+    let now=ctx.currentTime+.025,scheduled=0;
+    for(const span of StudioSilenceEditor.segments(draft)){
+      let left=Math.max(from,span.at),right=Math.min(to,span.at+span.len);
+      if(right<=left+.000001)continue;
+      const node=ctx.createBufferSource();node.buffer=session.buffer;node.connect(silencePreviewGain);
+      node.start(now+left-from,span.trim+left-span.at,right-left);
+      silencePreviewSources.push(node);scheduled++;
+    }
+    if(!scheduled){stopSilencePreview();return}
+    $('#silence-preview-all').textContent='▶ RECOMMENCER';
+    silencePreviewTimer=setTimeout(stopSilencePreview,(to-from)*1000+160);
+  }catch(error){stopSilencePreview();$('#silence-status').textContent='Écoute impossible : '+(error.message||String(error))}
+}
+function applySilenceEdit(){
+  const draft=silenceDraftClip(),session=silenceSession;
+  if(!draft||!session)return;
+  const clip=clips.find(c=>c.id===session.clipId);
+  if(!clip||recording||micStarting)return;
+  const nextEdit=JSON.parse(JSON.stringify(session.edit));
+  const nextLen=StudioSilenceEditor.duration(clip,nextEdit),oldLen=clip.len;
+  if(nextLen<.08)return msg('Résultat trop court pour être appliqué');
+  if(JSON.stringify(clip.silenceEdit||null)===JSON.stringify(nextEdit)&&Math.abs(oldLen-nextLen)<.00001){closeSilenceEditor();return}
+  stopSilencePreview();checkpoint();
+  const oldEnd=clip.start+oldLen;
+  clip.silenceEdit=nextEdit;clip.len=nextLen;
+  const shifted=StudioSilenceEditor.ripple(clips,clip,oldEnd,nextLen-oldLen);
+  closeSilenceEditor();render();markProjectDirty();
+  msg('Silences ajustés · '+shifted+' clip(s) suivant(s) recalés · Annuler disponible ✓');
+}
+$('#silence-open').onclick=openSilenceEditor;
+$('#silence-close').onclick=closeSilenceEditor;
+$('#silence-cancel').onclick=closeSilenceEditor;
+$('#silence-mode').onchange=e=>analyzeSilenceClip(e.target.value);
+$('#silence-preview-all').onclick=()=>playSilencePreview();
+$('#silence-preview-stop').onclick=stopSilencePreview;
+$('#silence-apply').onclick=applySilenceEdit;
+
 function wav(ab){let n=ab.length,ch=ab.numberOfChannels,sr=ab.sampleRate,b=new ArrayBuffer(44+n*ch*2),v=new DataView(b),p=0,str=s=>{for(let x of s)v.setUint8(p++,x.charCodeAt(0))},u16=x=>{v.setUint16(p,x,true);p+=2},u32=x=>{v.setUint32(p,x,true);p+=4};str('RIFF');u32(36+n*ch*2);str('WAVEfmt ');u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);str('data');u32(n*ch*2);for(let i=0;i<n;i++)for(let c=0;c<ch;c++){let x=Math.max(-1,Math.min(1,ab.getChannelData(c)[i]));v.setInt16(p,x<0?x*32768:x*32767,true);p+=2}return new Blob([b],{type:'audio/wav'})}
 
 const localStore=StudioAutosave.createIndexedDbStore();
