@@ -151,5 +151,18 @@
   function clipSlicesForExport(c){
     return segments(c).map(s=>({at:s.at,trim:s.trim,len:s.len}));
   }
-  return{FRAME_SECONDS,MAX_PAUSES,ANALYSIS_VERSION,MODES,settings,analyze,segments,duration,sourceAt,slice,ripple,outputTimeAtSource,clipSlicesForExport};
+  // Each visible pink marker is the exact edit join, not the start of the
+  // original silence. Restored pauses have no marker, while other edits keep
+  // their correct output positions after earlier restorations.
+  function markers(c){
+    if(!c?.silenceEdit?.pauses?.length)return[];
+    return c.silenceEdit.pauses.flatMap((pause,pauseIndex)=>{
+      const removed=Number(pause.cutEnd)-Number(pause.cutStart);
+      if(!pause.reduced||!Number.isFinite(removed)||removed<=.00001)return[];
+      const at=outputTimeAtSource(c,Number(pause.cutStart));
+      if(!Number.isFinite(at)||at<-.00001||at>c.len+.00001)return[];
+      return[{pauseIndex,at:round(clamp(at,0,c.len)),removed:round(removed)}];
+    });
+  }
+  return{FRAME_SECONDS,MAX_PAUSES,ANALYSIS_VERSION,MODES,settings,analyze,segments,duration,sourceAt,slice,ripple,outputTimeAtSource,clipSlicesForExport,markers};
 });
