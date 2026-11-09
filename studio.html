@@ -216,6 +216,26 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   .volrow output{font-size:9px}
   .editor button{font-size:8px}
 }
+
+.studio-silences-tool{margin:8px 0;display:block}
+.studio-silences-tool button{width:100%;min-height:38px}
+#silence-panel[hidden]{display:none!important}
+.silence-panel{position:fixed;inset:0;background:#010812e8;z-index:120;display:flex;align-items:center;justify-content:center;padding:10px}
+.silence-box{background:#0a1c31;border:2px solid #328dff;box-shadow:5px 5px 0 #02050b;width:min(98vw,690px);max-height:calc(100dvh - 24px);overflow-y:auto;padding:12px;color:#f0f6ff}
+.silence-header{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:15px}
+.silence-header button{width:42px;height:38px}
+.silence-box p{font-size:12px;line-height:1.4;color:#bdcfe3;margin:8px 0}
+.silence-box label{display:flex;align-items:center;gap:10px;font-size:12px}
+#silence-mode{min-height:40px;background:#123258;color:white;border:1px solid #398eff;flex:1}
+.silence-actions,.silence-footer{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+.silence-actions button,.silence-footer button{min-height:42px;font-size:10px}
+.silence-list{display:grid;gap:7px;max-height:39dvh;overflow:auto;padding:3px 2px}
+.silence-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center;background:#122743;border:1px solid #2d5890;padding:8px}
+.silence-row b{display:block;font-size:11px}
+.silence-row small{color:#b7cae4;font-size:10px}
+.silence-row button{font-size:9px;min-height:35px;padding:4px}
+.silence-row.is-restored{border-color:#3ca77a}
+@media(max-width:390px){.silence-row{grid-template-columns:minmax(0,1fr) auto}.silence-row button:nth-of-type(1){grid-column:1/2}}
 </style></head><body class="studio-gate">
 <section class="project-library-screen" id="project-library-screen">
   <header class="project-library-header">
@@ -347,6 +367,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <div class="bpm" id="bpm">80 BPM</div>
     <button class="game-btn game-btn-compact" id="bpm-plus">＋</button>
   </div>
+  <div class="studio-silences-tool"><button class="game-btn game-btn-compact game-btn-green" id="silence-open" type="button">✂ RÉDUIRE LES SILENCES DU CLIP</button></div>
   <div class="studio-maintenance">
     <button class="game-btn game-btn-compact game-btn-dark" id="clean-unused-audio" type="button">🧹 VIDER LA CORBEILLE</button>
     <small>Efface les sons inutilisés et l’historique Annuler/Rétablir de ce projet, sans toucher aux autres projets.</small>
@@ -354,6 +375,23 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
   </div>
 </div>
 
+<section class="silence-panel" id="silence-panel" role="dialog" aria-modal="true" aria-label="Réduire les silences" hidden>
+  <div class="silence-box">
+    <div class="silence-header"><strong>✂ RÉDUIRE LES SILENCES</strong><button id="silence-close" class="game-btn game-btn-compact" type="button">✕</button></div>
+    <p>Les pauses peuvent être restaurées une par une. Le fichier original reste intact.</p>
+    <label>STYLE : <select id="silence-mode"><option value="natural">🌿 Naturel · 0,25 s</option><option value="dynamic">⚡ Dynamique · 0,18 s</option></select></label>
+    <p id="silence-status" role="status" aria-live="polite">Analyse du son…</p>
+    <div class="silence-actions">
+      <button id="silence-preview-all" class="game-btn game-btn-standard" type="button" disabled>▶ ÉCOUTER LE RÉSULTAT</button>
+      <button id="silence-preview-stop" class="game-btn game-btn-compact game-btn-secondary" type="button">■ STOP</button>
+    </div>
+    <div id="silence-list" class="silence-list" aria-label="Silences détectés"></div>
+    <div class="silence-footer">
+      <button id="silence-cancel" class="game-btn game-btn-compact game-btn-dark" type="button">ANNULER</button>
+      <button id="silence-apply" class="game-btn game-btn-standard game-btn-green" type="button" disabled>✓ APPLIQUER AU MONTAGE</button>
+    </div>
+  </div>
+</section>
 <div class="track-popover" id="track-volume-panel" aria-hidden="true">
   <div class="track-popover-title" id="track-volume-title">VOLUME PISTE</div>
   <div class="track-volume-row"><input id="track-volume-slider" type="range" min="0" max="150" value="100"><b id="track-volume-value">100%</b></div>
@@ -400,7 +438,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-silence-editor.js"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],liveClipGainNodes=new Map(),draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,micStarting=false,micStream=null,micGeneration=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
