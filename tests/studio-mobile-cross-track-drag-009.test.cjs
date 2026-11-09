@@ -32,7 +32,7 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
     releasePointerCapture(id){state.captured.delete(id)}
   };
   const context={
-    console,Math,StudioTimelineNavigation,moveArmedClipId:null,document:{querySelector(){return null},querySelectorAll(sel){
+    console,Math,StudioTimelineNavigation,document:{querySelector(){return null},querySelectorAll(sel){
       if(sel==='#tracks .lane[data-track-id]')return lanes;
       if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));
       return[];
@@ -47,7 +47,7 @@ function makeHarness({start=12.4,track='A',extraClips=[]}={}){
   return{context,clip,clips,tracks,lanes,undo,redo,state,el};
 }
 function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}){
-  h.context.moveArmedClipId=h.clip.id;
+  h.context.selected=h.clip;
   h.el.onpointerdown(event(downX,downY,pointerId));
   h.el.onpointermove(event(moveX,moveY,pointerId));
   if(cancel)h.el.onpointercancel(event(moveX,moveY,pointerId));else h.el.onpointerup(event(moveX,moveY,pointerId));
@@ -77,11 +77,28 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
     console.log('TOUCH_TAP_SELECTS_AUDIO_WITHOUT_MOVING PASS');
   }
 
+  // Actual two-step Android workflow: tap a recording, then drag it without
+  // arming a separate movement button.
+  {
+    const h=makeHarness();
+    h.el.onpointerdown(event(100,50,31));
+    h.el.onpointerup(event(100,50,31));
+    assert.strictEqual(h.context.selected,h.clip,'Tap selects the recording');
+    h.el.onpointerdown(event(100,50,32));
+    h.el.onpointermove(event(150,50,32));
+    h.el.onpointerup(event(150,50,32));
+    assert.equal(h.clip.start,12.9);
+    assert.equal(h.clip.track,'A');
+    assert.equal(h.undo.length,1);
+    assert.equal(h.state.dirty,1);
+    console.log('TAP_TO_SELECT_THEN_DIRECT_HORIZONTAL_DRAG PASS');
+  }
+
   // 1 + 13 HORIZONTAL_DRAG / EXISTING_HORIZONTAL_DRAG
   {
     const h=makeHarness();drag(h,{moveX:150,moveY:50});
     assert.equal(h.clip.start,12.9);assert.equal(h.clip.track,'A');assert.equal(h.undo.length,1);assert.equal(h.state.dirty,1);
-    console.log('EXPLICIT_MOVE_MODE_HORIZONTAL_DRAG PASS start 12.4 -> 12.9; track A unchanged');
+    console.log('SELECTED_CLIP_HORIZONTAL_DRAG PASS start 12.4 -> 12.9; track A unchanged');
     console.log('EXISTING_HORIZONTAL_DRAG PASS dx/pixelsPerSecond behavior preserved');
   }
 
@@ -122,7 +139,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
   // 8 INVALID_VERTICAL_DROP: keep last valid lane, no phantom track.
   {
     const h=makeHarness();
-    h.context.moveArmedClipId=h.clip.id;
+    h.context.selected=h.clip;
     h.el.onpointerdown(event(100,50));
     h.el.onpointermove(event(120,170));assert.equal(h.clip.track,'B');
     h.el.onpointermove(event(140,999));assert.equal(h.clip.track,'B');
@@ -166,7 +183,7 @@ function drag(h,{downX=100,downY=50,moveX=100,moveY=50,cancel=false,pointerId=1}
     function runPlayback(trackMuted){
       const gains=[],starts=[];
       const c={id:'birds',track:'B',sourceId:'src-birds',start:4,trim:0,len:2,gain:.7,muted:false};
-      const context={console,Map,Math,clips:[c],tracks:[{id:'A',gain:1,muted:false},{id:'B',gain:.5,muted:trackMuted}],sources:[],playing:false,metroOn:false,t0:0,tick:null,recording:false,
+      const context={console,Map,Math,clips:[c],tracks:[{id:'A',gain:1,muted:false},{id:'B',gain:.5,muted:trackMuted}],sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
         sourceIdFor:x=>x.sourceId,ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
         startMetro:()=>{},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual:()=>{},setCursor:()=>{},projectDuration:()=>30,$:()=>({textContent:''})};
       vm.createContext(context);vm.runInContext(playbackSource,context);

@@ -25,7 +25,7 @@ function makeHarness({ids=['A'],runtime=null}={}){
     Promise,Map,Set,Math,performance:{now:()=>1000},
     setInterval:fn=>({fn}),clearInterval:()=>{},
     playGeneration:state.playGeneration,playPreparing:state.playPreparing,playing:state.playing,tick:state.tick,
-    sources:state.sources,cursor:state.cursor,metroOn:state.metroOn,t0:state.t0,recording:state.recording,
+    sources:state.sources,liveClipGainNodes:new Map(),cursor:state.cursor,metroOn:state.metroOn,t0:state.t0,recording:state.recording,
     tracks:state.tracks,clips:state.clips,
     $:sel=>elements[sel==='#play'?'play':'play'],
     stopMetro:()=>{state.metroStops++},

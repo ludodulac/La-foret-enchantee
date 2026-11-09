@@ -19,15 +19,15 @@ async function main(){
   assert(Nav.isTap(50,100,54,102,0,0),'Short finger tap seeks');
   assert(!Nav.isTap(50,100,80,100,0,50),'Horizontal swipe is not a seek');
   assert(!Nav.isTap(50,100,52,100,0,200),'Content scrolling alone disallows seek');
-  assert(html.includes('id="zoom-fit"')&&html.includes('id="move-clip"'));
+  assert(html.includes('id="zoom-fit"')&&!html.includes('id="move-clip"'));
   assert(html.includes('StudioTimelineNavigation.fitZoom('));
   assert(html.includes('StudioTimelineNavigation.clampZoom('));
-  assert(html.includes("panOnly=e.pointerType==='touch'&&moveArmedClipId!==c.id"));
+  assert(html.includes("panOnly=e.pointerType==='touch'&&selected?.id!==c.id"));
   assert(html.includes("if(panOnly){panScrollStart=$('#timeline').scrollLeft;return}"));
   assert(html.includes("if(StudioTimelineNavigation.isTap(tap.x,tap.y"));
   assert(html.includes("el.onpointercancel=e=>finish(e,true)"),'Canceled touch must not move the clip');
   assert(html.includes('.clip{touch-action:pan-x}'),'Native horizontal gesture over clips');
-  assert(html.includes('.clip.move-armed{touch-action:none}'),'Only armed clip captures touch');
+  assert(html.includes('.clip.sel{touch-action:none}'),'Selected clip captures touch for movement');
   // Run actual empty-space timeline handlers: swipe must not seek, tap does.
   const start=html.indexOf('let blankPointer=null;');
   const end=html.indexOf("let ph=$('#playhead');",start);

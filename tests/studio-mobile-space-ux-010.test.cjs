@@ -59,12 +59,12 @@ assert(css.includes('.timeline{display:block;position:relative'));
 assert(css.includes('overflow-x:auto;overflow-y:visible;touch-action:pan-x pan-y'));
 assert(html.includes('.clip{position:absolute') || html.includes('.clip{'));
 assert(html.includes('.clip{touch-action:pan-x}'),'Finger scrolls over audio clips');
-assert(html.includes('.clip.move-armed{touch-action:none}'),'Only explicit move mode captures finger');
+assert(html.includes('.clip.sel{touch-action:none}'),'Selected recording captures finger drag');
 console.log('TIMELINE_DOMINANT PASS flex multipiste viewport 120..480px, owns remaining core height');
 console.log('MULTI_TRACK_VISIBLE_OR_SCROLLABLE PASS responsive flex height 120..480px + overflow-y auto');
 console.log('VERTICAL_TRACK_ACCESS PASS multipiste parent scrolls vertically');
 console.log('HORIZONTAL_TIMELINE_ACCESS PASS right timeline scrolls horizontally');
-console.log('TOUCH_SCROLL_CONTRACT PASS finger pan over clips; selected move-armed captures deliberate drag');
+console.log('TOUCH_SCROLL_CONTRACT PASS unselected clips pan; selected clip drags directly');
 
 // Trim geometry remains the 010 human requirement.
 assert(css.includes('.trimhandle{width:24px;background:transparent!important'));
@@ -102,12 +102,12 @@ function lane(id,top,bottom){return{dataset:{trackId:id},classList:classList(),g
  const lanes=[lane('A',100,176),lane('B',183,259),lane('C',266,342)];
  const clip={id:'small',track:'A',sourceId:'src',start:2,trim:0,len:1,gain:1,muted:false};
  const state={captured:new Set(),dirty:0},el={style:{},parentElement:lanes[0],setPointerCapture:id=>state.captured.add(id),hasPointerCapture:id=>state.captured.has(id),releasePointerCapture:id=>state.captured.delete(id)};
- const context={console,Math,moveArmedClipId:clip.id,document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]}},pixelsPerSecond:()=>100,snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},selected:clip,$:sel=>sel==='#editor'?{classList:{add(){}}}:sel==='#clipvol'?{value:0}:{textContent:''}};
+ const context={console,Math,document:{querySelectorAll(sel){if(sel==='#tracks .lane[data-track-id]')return lanes;if(sel==='#tracks .lane.drag-target')return lanes.filter(x=>x.classList.contains('drag-target'));return[]}},pixelsPerSecond:()=>100,snapshot:()=>({clips:[{...clip}],tracks:[{id:'A'},{id:'B'},{id:'C'}]}),undo:[],redo:[],buttons:()=>{},markProjectDirty:()=>state.dirty++,render:()=>{},selected:clip,$:sel=>sel==='#editor'?{classList:{add(){}}}:sel==='#clipvol'?{value:0}:{textContent:''}};
  vm.createContext(context);vm.runInContext(dragSource,context);context.clipGesture(el,clip,20);
  const e=(x,y,id=7)=>({clientX:x,clientY:y,pointerId:id,pointerType:'touch',isPrimary:true,preventDefault(){},stopPropagation(){}});
  el.onpointerdown(e(50,130));el.onpointermove(e(80,210));el.onpointerup(e(80,210));
  assert.equal(clip.start,2.3);assert.equal(clip.track,'B');assert.equal(context.undo.length,1);assert.equal(state.dirty,1);
- console.log('MOVE_SELECTED_CLIP PASS explicit DÉPLACER mode allows selected clip movement');
+ console.log('MOVE_SELECTED_CLIP PASS selected clip moves directly without separate mode');
  console.log('CROSS_TRACK_DRAG_009 PASS A -> B');
 }
 assert(dragSource.includes("el.onpointercancel=e=>finish(e,true)"));assert(dragSource.includes("c.start=startState.start;c.track=startState.track"));
@@ -548,7 +548,7 @@ async function recordInto(selectedId){
   // Actual playback applies the selected destination track state to the recorded clip.
   const gains=[],starts=[],recorded={...r2.clips[0],gain:.8,muted:false,start:3,trim:0,len:1.25,sourceId:'src-rec'};
   const playCtx={
-    console,Map,Math,clips:[recorded],tracks:r2.tracks,sources:[],playing:false,metroOn:false,t0:0,tick:null,recording:false,
+    console,Map,Math,clips:[recorded],tracks:r2.tracks,sources:[],liveClipGainNodes:new Map(),playing:false,metroOn:false,t0:0,tick:null,recording:false,
     sourceIdFor:x=>x.sourceId,
     ctx:{currentTime:10,destination:{},createBufferSource:()=>({connect(dest){return dest},start(...a){starts.push(a)}}),createGain:()=>{const g={gain:{value:1},connect(dest){gains.push(g.gain.value);return dest}};return g}},
     startMetro(){},setInterval:()=>1,performance:{now:()=>1000},updateLiveRecordingVisual(){},setCursor(){},projectDuration:()=>30,$:()=>({textContent:''})
