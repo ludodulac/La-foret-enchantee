@@ -438,7 +438,7 @@ button:disabled{opacity:.38!important;filter:saturate(.35);box-shadow:1px 1px 0 
     <button class="game-btn game-btn-standard" id="export-error-close" type="button">FERMER</button>
   </div>
 </div>
-<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-silence-editor.js"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
+<div class="toast" id="toast"></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="js/supabase.js"></script><script src="js/auth.js"></script><script src="js/studio-export-core.js"></script><script src="js/studio-mp3-export.js"></script><script src="js/audio-publish.js"></script><script src="js/foret-r2-media.js"></script><script src="js/studio-waveform-core.js"></script><script src="js/studio-autosave.js"></script><script src="js/studio-audio-runtime.js"></script><script src="js/studio-timeline-navigation.js"></script><script src="js/studio-silence-editor.js?v=059"></script><script src="js/studio-mic-guard.js"></script><script src="js/studio-playback-preload.js"></script><script>
 (async()=>{const session=await requireAuth();if(!session)return;document.body.classList.remove("studio-gate")})();
 const $=s=>document.querySelector(s),ctx=new(window.AudioContext||window.webkitAudioContext)();let clips=[],tracks=[{id:'voice',name:'🎙️ VOIX 1',type:'voice',gain:1,muted:false,color:'#785cff'}],selected=null,selectedRecordTrackId='voice',recorder,chunks=[],recording=false,playing=false,playPreparing=false,playGeneration=0,cursor=0,zoom=1,t0=0,tick,undo=[],redo=[],sources=[],liveClipGainNodes=new Map(),draggingHead=false,seekResumePlayback=false,pinch=null,metroOn=false,bpm=80,metroTimer=null,metroNext=0,liveDuration=0,liveRec=null,liveAnalyser=null,liveMic=null,liveAnim=0,micStarting=false,micStream=null,micGeneration=0,selectionStart=null,selectionEnd=null;
 const msg=s=>{let e=$('#toast');e.textContent=s;e.style.display='block';clearTimeout(e.t);e.t=setTimeout(()=>e.style.display='none',1600)},fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0');
@@ -830,13 +830,21 @@ async function analyzeSilenceClip(mode){
     const buffer=await getDecodedSource(sourceIdFor(clip));
     if(token!==silenceRequest||session!==silenceSession)return;
     session.buffer=buffer;
-    if(clip.silenceEdit&&clip.silenceEdit.mode===mode)session.edit=JSON.parse(JSON.stringify(clip.silenceEdit));
+    if(clip.silenceEdit&&clip.silenceEdit.mode===mode&&clip.silenceEdit.analysisVersion===StudioSilenceEditor.ANALYSIS_VERSION)
+      session.edit=JSON.parse(JSON.stringify(clip.silenceEdit));
     else{
+      // Re-check older projects with the improved ambient-noise detector.
+      // Explicit "Restaurer" decisions made before this update are retained.
       const originalDuration=clip.silenceEdit?.originalDuration??clip.len;
+      const restoredBefore=clip.silenceEdit?.mode===mode?(clip.silenceEdit.pauses||[]).filter(p=>!p.reduced):[];
       session.edit=await StudioSilenceEditor.analyze(buffer,clip.trim,originalDuration,mode,{
         signal:session.controller.signal,
-        onProgress:p=>{if(token===silenceRequest)$('#silence-status').textContent='Analyse des pauses : '+Math.round(p*100)+' %'}
+        onProgress:p=>{if(token===silenceRequest)$('#silence-status').textContent='Analyse adaptée au bruit de fond : '+Math.round(p*100)+' %'}
       });
+      for(const pause of session.edit.pauses)if(restoredBefore.some(old=>{
+        const overlap=Math.min(pause.end,old.end)-Math.max(pause.start,old.start);
+        return overlap>.15||(Math.abs(pause.start-old.start)<.3&&Math.abs(pause.end-old.end)<.3);
+      }))pause.reduced=false;
     }
     if(token!==silenceRequest||session!==silenceSession)return;
     updateSilenceList();
