@@ -157,8 +157,11 @@ jobs:
           grep -q 'adminSessionPromise' js/auth.js
           grep -q 'admin-auth-pending' js/auth.js
           grep -q "js/admin-blog-safety.js" js/auth.js
-      - name: Check Supabase project consistency
+      - name: Check independent Cloudflare backend setup
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'jwyayfkssyagvnablttg' js/supabase.js
+          grep -q 'LUDODIO_API' js/supabase.js
+          grep -q 'LUDODIO_DB' cloudflare/ludodio-api-worker.js
+          grep -q 'LUDODIO_MEDIA' cloudflare/ludodio-api-worker.js
+          node --input-type=module --check < cloudflare/ludodio-api-worker.js
