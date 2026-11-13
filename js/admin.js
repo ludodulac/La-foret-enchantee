@@ -291,7 +291,12 @@ function updateSubSelect(selId, catId) {
 }
 
 async function uploadFile(bucket, path, file) {
-  // Only stories and their covers move to R2. Blog and other assets are unchanged.
+  if (dbClient.cloudMode) {
+    const { data, error } = await dbClient.storage.from(bucket).upload(path, file, { upsert: false });
+    if (error) throw error;
+    return data.path;
+  }
+  // Compatibilité avec l'ancien stockage pendant la migration.
   if (bucket === 'audios' || bucket === 'images') {
     if (!window.ForestR2Media) throw Error('Le module Cloudflare des contes est indisponible.');
     return window.ForestR2Media.upload(dbClient, bucket, file);
@@ -305,7 +310,9 @@ async function removeFiles(entries) {
   const oldBuckets = {};
   const tasks = [];
   for (const item of entries.filter(entry => entry?.path)) {
-    if (item.path.startsWith('r2:')) {
+    if (dbClient.cloudMode) {
+      tasks.push(dbClient.storage.from(item.bucket).remove([item.path]).then(({error}) => { if (error) throw error; }));
+    } else if (item.path.startsWith('r2:')) {
       if (!window.ForestR2Media?.isR2Path(item.path)) {
         tasks.push(Promise.reject(Error('Référence R2 invalide : suppression refusée')));
         continue;
