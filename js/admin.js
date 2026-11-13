@@ -310,6 +310,7 @@ async function removeFiles(entries) {
   const oldBuckets = {};
   const tasks = [];
   for (const item of entries.filter(entry => entry?.path)) {
+    if (/^ej:[0-9a-f-]{36}$/i.test(item.path)) continue; // L'original Espace Jeunesse ne doit jamais être supprimé ici.
     if (dbClient.cloudMode) {
       tasks.push(dbClient.storage.from(item.bucket).remove([item.path]).then(({error}) => { if (error) throw error; }));
     } else if (item.path.startsWith('r2:')) {
@@ -352,8 +353,9 @@ async function handleAddAudio(e) {
     const subId = document.getElementById('audio-sub').value || null;
     const imgFile = document.getElementById('audio-img').files[0];
     const audFile = document.getElementById('audio-file').files[0];
+    const espaceJeunesseId = window.EJAudioPicker?.selectedId?.() || '';
 
-    if (!title || !audFile) throw new Error('Titre et fichier audio requis.');
+    if (!title || (!audFile && !espaceJeunesseId)) throw new Error('Titre et fichier audio requis.');
 
     let imagePath = null;
     if (imgFile) {
@@ -361,10 +363,10 @@ async function handleAddAudio(e) {
       uploaded.push({ bucket: 'images', path: imagePath });
     }
 
-    const audPath = await uploadFile('audios', makeStoragePath(title, audFile.name), audFile);
-    uploaded.push({ bucket: 'audios', path: audPath });
+    const audPath = audFile ? await uploadFile('audios', makeStoragePath(title, audFile.name), audFile) : 'ej:' + espaceJeunesseId;
+    if (audFile) uploaded.push({ bucket: 'audios', path: audPath });
 
-    const duration = await getAudioDuration(audFile);
+    const duration = audFile ? await getAudioDuration(audFile) : null;
     const { error: dbErr } = await dbClient.from('audios').insert({
       title,
       description: description || null,
