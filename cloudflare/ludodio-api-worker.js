@@ -164,7 +164,9 @@ async function databaseQuery(request,env,admin){
     }else if(op==='insert'){
       const values=Array.isArray(q.values)?q.values:[q.values];
       if(!values.length||values.length>50||values.some(row=>!row||typeof row!=='object'||Array.isArray(row)))throw Error('Données non valides');
-      for(const row of values){
+      for(const raw of values){
+        const row={...raw};
+        if((table==='studio_sound_library'||table==='studio_projects')&&!row.id)row.id=crypto.randomUUID();
         const fields=Object.keys(row);
         if(!fields.length)throw Error('Ligne vide');
         const args=fields.map(key=>{column(table,key);return readValue(table,key,row[key])});
