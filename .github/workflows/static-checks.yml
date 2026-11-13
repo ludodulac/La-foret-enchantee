@@ -159,6 +159,10 @@ jobs:
           grep -q 'adminSessionPromise' js/auth.js
           grep -q 'admin-auth-pending' js/auth.js
           grep -q "js/admin-blog-safety.js" js/auth.js
+      - name: Validate safe Ludodio migration scripts
+        run: |
+          python -m py_compile scripts/ludodio_prepare_migration.py
+          python -m py_compile scripts/ludodio_import_r2.py
       - name: Check independent Cloudflare backend setup
         shell: bash
         run: |
