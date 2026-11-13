@@ -65,6 +65,15 @@
           <div class="form-group"><label for="audio-img">Image de couverture</label><input type="file" id="audio-img" accept="image/*"><div class="upload-hint">JPG, PNG · 600×600 px recommandé</div></div>
           <div class="form-group" style="grid-column:1/-1"><label for="audio-desc-in">Description</label><textarea id="audio-desc-in" placeholder="Courte description…"></textarea></div>
           <div class="form-group" style="grid-column:1/-1"><label for="audio-file">Fichier audio *</label><input type="file" id="audio-file" accept="audio/*" required><div class="upload-hint">MP3, M4A, OGG</div></div>
+<div class="form-group" style="grid-column:1/-1" id="ej-audio-source">
+ <label for="ej-audio-select">Ou relier un MP3 de la médiathèque Espace Jeunesse</label>
+ <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <select id="ej-audio-select" aria-label="MP3 Espace Jeunesse" style="flex:1;min-width:180px"><option value="">— Choisir un MP3 Espace Jeunesse —</option></select>
+  <button type="button" class="btn-inline" id="ej-audio-refresh">Actualiser</button>
+ </div>
+ <p class="upload-hint" id="ej-audio-message" role="status">Fichier unique sur Cloudflare, sans duplication.</p>
+ <audio id="ej-audio-preview" controls preload="none" hidden style="width:100%;max-width:460px"></audio>
+</div>
         </div>
         <button type="submit" class="btn-primary" id="btn-add-audio">Ajouter l’histoire</button>
       </form>
@@ -120,6 +129,7 @@
 <script src="js/auth.js"></script>
 <script src="js/foret-r2-media.js"></script>
 <script src="js/admin.js"></script>
+<script src="js/ej-audio-picker.js?v=20261114"></script>
 <script src="js/admin-blog.js"></script>
 
 </body>
