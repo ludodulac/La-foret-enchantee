@@ -14,4 +14,4 @@ database_id = "REMPLACER_PAR_ID_D1"
 
 [[r2_buckets]]
 binding = "LUDODIO_MEDIA"
-bucket_name = "foret-enchantee-contes"
+bucket_name = "ludodio-media"
