@@ -7,6 +7,9 @@ const dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STORAGE_URL = `${SUPABASE_URL}/storage/v1/object/public`;
 
 function getPublicUrl(bucket, path) {
+  // Le fichier est stocké UNE fois dans R2 Espace Jeunesse ; Ludodio ne copie rien.
+  if (bucket === 'audios' && /^ej:[0-9a-f-]{36}$/i.test(String(path||'')))
+    return 'https://espace-jeunesse-api.rondes.workers.dev/media/' + path.slice(3);
   // R2 references coexist with all legacy Supabase paths. No data migration.
   if (typeof path === 'string' && path.startsWith('r2:')) {
     const key = path.slice(3);
