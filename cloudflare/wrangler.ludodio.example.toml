@@ -1,0 +1,17 @@
+# Modèle : copier dans wrangler.ludodio.toml et renseigner le vrai D1 ID.
+# Ne jamais ajouter ADMIN_PIN ou SESSION_SECRET dans ce fichier public.
+name = "ludodio-api"
+main = "cloudflare/ludodio-api-worker.js"
+compatibility_date = "2026-11-13"
+
+[vars]
+ALLOWED_ORIGIN = "https://ludodulac.github.io"
+
+[[d1_databases]]
+binding = "LUDODIO_DB"
+database_name = "ludodio"
+database_id = "REMPLACER_PAR_ID_D1"
+
+[[r2_buckets]]
+binding = "LUDODIO_MEDIA"
+bucket_name = "foret-enchantee-contes"
