@@ -19,11 +19,12 @@ Cette branche **ne doit pas être fusionnée avant migration réelle et test uti
 
 ## Ce qui reste indispensable avant mise en ligne
 
-1. **Cloudflare** : créer une base D1 `ludodio`, saisir son véritable `database_id` dans une configuration Wrangler issue de `wrangler.ludodio.example.toml`. Lier un bucket R2 `LUDODIO_MEDIA` (possiblement le bucket existant `foret-enchantee-contes`, sans effacer ses objets).
+1. **Cloudflare** : créer une base D1 `ludodio`, saisir son véritable `database_id` dans une configuration Wrangler issue de `wrangler.ludodio.example.toml`. Créer le **nouveau bucket R2 dédié** `ludodio-media` et le lier comme `LUDODIO_MEDIA`. Ne pas réutiliser les buckets de Célébrations ou de l'ancien Worker des contes.
 2. Ajouter **deux secrets serveur**, `ADMIN_PIN` (code choisi par le propriétaire ; `lfe` possible mais très court) et `SESSION_SECRET` (aléatoire et long, non partagé). Ne jamais les mettre dans GitHub.
 3. Créer les tables : `wrangler d1 execute ludodio --remote --file cloudflare/ludodio-d1-schema.sql` après vérification de la configuration.
 4. **Sauvegarder et transférer sans suppression** les contenus existants. Inventaire Supabase contrôlé le 13 novembre 2026 : 2 contes, 2 articles, 2 catégories de contes, 2 sous-catégories, 2 catégories de journal ; 2 médias audio et 256 images (253 couvertures/illustrations et 3 images du journal), soit environ **19 Mo** de fichiers. Préserver IDs, catégories, dates, texte riche, booléens et références média.
-5. Placer les fichiers dans R2 sous les préfixes `audios/`, `images/`, `blog-images/`, et les sons studio sous `studio-sounds/`. Normaliser les chemins D1 vers `r2:<bucket>/<chemin>`; vérifier chaque GET/HEAD avant tout basculement. Pour les anciens chemins `r2:contes/...`, le lecteur historique est conservé.
+5. Préparer une copie privée avec `python scripts/ludodio_prepare_migration.py --output /tmp/ludodio-export` (`requests` et les secrets Supabase `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` en variables d'environnement). **L'export lit uniquement les données Ludodio, sans rien supprimer de Supabase**. Ensuite exécuter `python scripts/ludodio_import_r2.py --source /tmp/ludodio-export` pour simuler et ajouter `--apply` pour transférer/contrôler les médias (boto3, `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, bucket `ludodio-media`). N'envoyer ni données privées ni clés dans GitHub. Importer `/tmp/ludodio-export/ludodio-data.sql` dans D1 une fois les médias confirmés. 
+5bis. Placer les fichiers dans R2 sous les préfixes `audios/`, `images/`, `blog-images/`, et les sons studio sous `studio-sounds/`. Normaliser les chemins D1 vers `r2:<bucket>/<chemin>`; vérifier chaque GET/HEAD avant tout basculement. Pour les anciens chemins `r2:contes/...`, le lecteur historique est conservé.
 6. Déployer le nouveau Worker à `https://ludodio-api.rondes.workers.dev` (ou modifier la constante `LUDODIO_API` du client si Cloudflare choisit une autre URL) **sans remplacer** le Worker R2 déjà utilisé.
 7. Vérifier en environnement isolé : code incorrect, code exact, connexion à un seul formulaire, chargement public, lecture de chaque conte, images, journal, ajout d'une histoire, import MP3, publication d'un brouillon, upload/écoute d'un son Studio, déconnexion et refus d'écriture non authentifiée.
 8. Uniquement lorsque le transfert et les tests passent, fusionner cette branche pour basculer GitHub Pages. Garder l'ancienne base Supabase en lecture/backup durant la période de vérification.
@@ -41,4 +42,4 @@ Un code écrit en clair dans JavaScript **ne protège pas** une administration p
 ## État réel
 
 - PR #61 : **fusionnée**, suppression du bouton redondant du Journal, lien Ludodio Studio explicite.
-- Cette migration : **code préparé, données non transférées, Worker non déployé, site officiel non basculé**.
+- Cette migration : **scripts d'export et de copie préparés, mais pas exécutés**, données non transférées, Worker non déployé, site officiel non basculé. L'environnement Cloudflare et les secrets ne sont pas connectés à cette conversation.
