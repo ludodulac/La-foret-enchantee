@@ -107,7 +107,9 @@ jobs:
           test -f supabase/migrations/20260904_unify_admin_permissions.sql
           test -f supabase/migrations/20260904_add_fk_indexes.sql
           test -f supabase/migrations/20260904_optimize_article_select_policies.sql
-      - name: Check footer admin entry and Supabase auth
+      - name: Check one-code Cloudflare authentication and D1 permissions
+        run: node tests/ludodio-cloudflare-pin-001.test.cjs
+      - name: Check footer navigation and single PIN form
         run: node tests/admin-footer-navigation-001.test.cjs
       - name: Check Katpist branding and inline categories
         run: node tests/katpist-admin-simplification-001.test.cjs
