@@ -30,6 +30,7 @@ function ludodioPath(bucket,path){
   return bucket+'/'+path;
 }
 function getPublicUrl(bucket,path){
+  if(bucket==='audios' && /^ej:[0-9a-f-]{36}$/i.test(String(path||'')))return 'https://espace-jeunesse-api.rondes.workers.dev/media/'+path.slice(3);
   if(typeof path!=='string'||!path)return '';
   if(path.startsWith('r2:contes/')||path.startsWith('r2:couvertures/')){
     const key=path.slice(3);
