@@ -31,11 +31,16 @@ function ludodioPath(bucket,path){
 }
 function getPublicUrl(bucket,path){
   if(typeof path!=='string'||!path)return '';
-  if(path.startsWith('r2:')&&(path.startsWith('r2:contes/')||path.startsWith('r2:couvertures/'))){
-    return 'https://foret-enchantee-stockage.rondes.workers.dev/media/'+path.slice(3).split('/').map(encodeURIComponent).join('/');
+  if(path.startsWith('r2:contes/')||path.startsWith('r2:couvertures/')){
+    const key=path.slice(3);
+    if(!/^(?:contes\/[a-z0-9_-]+\.mp3|couvertures\/[a-z0-9_-]+\.(?:jpg|jpeg|png|webp))$/i.test(key))return '';
+    return 'https://foret-enchantee-stockage.rondes.workers.dev/media/'+key.split('/').map(encodeURIComponent).join('/');
   }
-  const key=ludodioPath(bucket,path);
-  return LUDODIO_API+'/media/'+key.split('/').map(encodeURIComponent).join('/');
+  try{
+    const key=ludodioPath(bucket,path);
+    if(!/^(?:audios|images|blog-images|studio-sounds)\/[a-z0-9_./-]+$/i.test(key)||key.includes('..')||key.includes('//'))return '';
+    return LUDODIO_API+'/media/'+key.split('/').map(encodeURIComponent).join('/');
+  }catch{return ''}
 }
 class LudodioQuery {
   constructor(table){this.table=table;this.op='select';this.filters=[];this.columns='*';this.ordering=null;this.maxRows=500;this.expectSingle=false;}
