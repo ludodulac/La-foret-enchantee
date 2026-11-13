@@ -29,7 +29,7 @@ for(const file of ['index.html','admin.html','login.html','studio.html','audio.h
  assert(source.includes('Ludodio'),file+' new brand missing');
 }
 assert(main.includes('forest-admin-entry'),'Footer administration entry retained');
-assert(read('js/admin-entry-footer.js').includes("'lfe'"),'Existing LFE navigation code retained');
+assert(read('js/admin-entry-footer.js').includes('dbClient.auth.signInWithPassword'),'Le code est vérifié côté serveur');
 new vm.Script(script,{filename:'admin-inline-taxonomy.js'});
 function element(id){return {id,value:'',hidden:id.endsWith('-create'),disabled:false,listeners:{},addEventListener(k,fn){this.listeners[k]=fn},focus(){this.focused=true},removeAttribute(k){if(k==='disabled')this.disabled=false},querySelector(sel){if(sel==='button[data-taxonomy-save]')return elements.get(id.replace(/-create$/,'')+'-savebutton');throw Error('Unexpected selector '+sel)}}}
 const elements=new Map();
