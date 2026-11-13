@@ -1,6 +1,4 @@
-/* Petit code de navigation, pas un mécanisme d'authentification.
- * L'accès véritable reste protégé par Supabase et la fonction requireAuth().
- */
+/* Un seul formulaire : le code est vérifié par Cloudflare, jamais dans ce fichier public. */
 (() => {
   'use strict';
   const openButton=document.getElementById('forest-admin-entry');
@@ -10,18 +8,15 @@
   const error=document.getElementById('forest-admin-code-error');
   const cancel=document.getElementById('forest-admin-cancel');
   if(!openButton||!gate||!form||!input||!error||!cancel)return;
-  let previousFocus=null;
+  const submit=form.querySelector('button[type=submit]');
+  let previousFocus=null,busy=false;
   function showGate(){
     previousFocus=document.activeElement;
-    input.value='';
-    error.hidden=true;
-    gate.hidden=false;
-    input.focus();
+    input.value='';error.hidden=true;gate.hidden=false;input.focus();
   }
   function closeGate(){
-    gate.hidden=true;
-    input.value='';
-    error.hidden=true;
+    if(busy)return;
+    gate.hidden=true;input.value='';error.hidden=true;
     if(previousFocus?.isConnected)previousFocus.focus();
   }
   openButton.addEventListener('click',showGate);
@@ -30,22 +25,33 @@
   gate.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();closeGate();return}
     if(event.key==='Tab'){
-      const focusable=[input,cancel,form.querySelector('button[type=submit]')];
-      const first=focusable[0],last=focusable[focusable.length-1];
-      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
-      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+      const controls=[input,cancel,submit];
+      if(event.shiftKey&&document.activeElement===controls[0]){event.preventDefault();submit.focus()}
+      else if(!event.shiftKey&&document.activeElement===submit){event.preventDefault();input.focus()}
     }
   });
-  form.addEventListener('submit',event=>{
+  form.addEventListener('submit',async event=>{
     event.preventDefault();
-    if(input.value.trim().toLowerCase()!=='lfe'){
-      error.textContent='Code incorrect.';
-      error.hidden=false;
-      input.focus();
-      input.select();
-      return;
-    }
-    // Ne délivre aucun droit administrateur : Supabase vérifie toujours la session.
-    window.location.assign('admin.html');
+    if(busy)return;
+    const code=input.value.trim();
+    if(!code){error.textContent='Saisis ton code.';error.hidden=false;return}
+    busy=true;submit.disabled=true;error.hidden=true;submit.textContent='Vérification…';
+    try{
+      const {error:authError}=await dbClient.auth.signInWithPassword({password:code});
+      if(authError)throw authError;
+      const {data:authorized,error:permissionError}=await dbClient.rpc('is_app_admin');
+      if(permissionError||authorized!==true){
+        await dbClient.auth.signOut();
+        throw permissionError||Error('Accès refusé');
+      }
+      window.location.assign('admin.html');
+    }catch(err){
+      error.textContent=err?.message||'Code incorrect ou service inaccessible.';
+      error.hidden=false;input.select();input.focus();
+    }finally{busy=false;submit.disabled=false;submit.textContent='Continuer'}
   });
+  if(window.location.hash==='#administration'){
+    history.replaceState(null,'',window.location.pathname+window.location.search);
+    showGate();
+  }
 })();
