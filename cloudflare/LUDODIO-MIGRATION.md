@@ -1,4 +1,4 @@
-# Ludodio — sortie de Supabase, accès simple (préparation non déployée)
+# Ludodio — sortie de Supabase, accès simple (copie Cloudflare partielle, bascule en attente)
 
 ## Parcours proposé
 
@@ -39,7 +39,20 @@ La migration supprime la dépendance de Ludodio aux quotas **Supabase**, pas les
 
 Un code écrit en clair dans JavaScript **ne protège pas** une administration publique : les internautes peuvent afficher ce fichier. Le Worker conserve donc le code côté serveur, sans e-mail ni second formulaire, avec une durée de session et une limite de tentatives. Ce n'est pas un abonnement d'authentification.
 
-## État réel
+
+## État réel au 14 novembre 2026 — migration partielle validée
+
+- Ressources **créées** sur le même compte Cloudflare : D1 `ludodio`, R2 `ludodio-media` et Worker `ludodio-api`. Elles ne touchent pas Célébrations et sont distinctes d'Espace Jeunesse.
+- **10 enregistrements déjà publiés** transférés dans D1 : 2 contes, 2 articles, 2 catégories de contes, 2 sous-catégories, 2 catégories de journal. Contrôle D1 OK.
+- **252 images WebP** provenant du dossier GitHub `assets/illustrations/admin-library` recopiées dans R2 sous `images/admin-library`. Les 252 fichiers ont été relus par le Worker et comparés par SHA-256 : contrôle OK. Taille totale 2 212 832 octets. Ces 252 fichiers ont des tailles exactement identiques à celles relevées dans la source Supabase.
+- **6 fichiers originaux restent à récupérer** : les 2 fichiers audio (1 M4A, 1 WAV), les 3 images du journal (2 JPG, 1 PNG), la couverture WebP des Musiciens de Brême. Ne jamais remplacer par des fichiers factices.
+- Blocage source confirmé par un test depuis GitHub Actions : Supabase renvoie HTTP 402 `exceed_cached_egress_quota` sur les appels REST **et** sur les téléchargements de fichiers. Le plan est plafonné et ne laisse pas récupérer ces 6 fichiers tant que Supabase n'a pas débloqué son egress, ou tant qu'une copie locale n'a pas été fournie.
+- Un secret de session cryptographiquement aléatoire a été installé sur le Worker. **ADMIN_PIN n'est volontairement pas défini** : il faut que le propriétaire choisisse un code fort dans les paramètres Cloudflare du Worker (ou via un secret CI privé). Ne pas copier le mot de passe Espace Jeunesse ni inventer un code court connu publiquement.
+- **AUCUNE BASCULE DU SITE OFFICIEL** : `main` et GitHub Pages de Ludodio continuent d'utiliser leur fonctionnement actuel. La PR #62 reste non fusionnée jusqu'à récupération des 6 fichiers, configuration de l'ADMIN_PIN et tests finaux (écoute, import, édition, Studio, journal).
+- Les tables et fichiers Supabase, notamment les données de Célébrations, n'ont pas été modifiés ni supprimés. Le nouveau Cloudflare ne doit pas être considéré comme une copie exhaustive tant que les six objets n'y sont pas.
+- Migration reproductible depuis les workflows GitHub Actions du dépôt `ludodulac/espace-jeunesse` : `ludodio-bootstrap.yml`, `ludodio-restore-github.yml`, `ludodio-api-activate.yml`. Ne relancer l'import complet depuis Supabase que lorsque l'accès source sera rétabli et les inventaires actualisés.
+
+## État des PR
 
 - PR #61 : **fusionnée**, suppression du bouton redondant du Journal, lien Ludodio Studio explicite.
 - Cette migration : **scripts d'export et de copie préparés, mais pas exécutés**, données non transférées, Worker non déployé, site officiel non basculé. L'environnement Cloudflare et les secrets ne sont pas connectés à cette conversation.
