@@ -8,9 +8,12 @@
   const BASE='https://foret-enchantee-stockage.rondes.workers.dev';
   const R2=/^r2:(contes\/[a-z0-9_-]+\.mp3|couvertures\/[a-z0-9_-]+\.(?:jpg|jpeg|png|webp))$/i;
   const MAX_AUDIO=60*1024*1024,MAX_COVER=10*1024*1024;
-  function isR2Path(path){return typeof path==='string'&&R2.test(path)}
+  function isR2Path(path){return typeof path==='string'&&(R2.test(path)||/^r2:(?:audios\/[a-z0-9_\/-]+\.(?:mp3|m4a|wav|ogg)|images\/[a-z0-9_\/-]+\.(?:jpg|jpeg|png|webp))$/i.test(path))}
   function publicUrl(path){
     if(!isR2Path(path))throw Error('Référence de média R2 non reconnue');
+    if(path.startsWith('r2:audios/')||path.startsWith('r2:images/')){
+      return 'https://ludodio-api.rondes.workers.dev/media/'+path.slice(3);
+    }
     return BASE+'/media/'+path.slice(3);
   }
   function kindForBucket(bucket){
@@ -53,6 +56,13 @@
   }
   async function upload(dbClient,bucket,file){
     const cfg=checkedMedia(bucket,file);
+    if(dbClient?.cloudMode){
+      const suffix=cfg.kind==='audio'?'mp3':cfg.mime.split('/')[1].replace('jpeg','jpg');
+      const path='studio/'+crypto.randomUUID()+'.'+suffix;
+      const {data,error}=await dbClient.storage.from(bucket).upload(path,file,{contentType:cfg.mime,upsert:false});
+      if(error)throw error;
+      return data.path;
+    }
     const result=await send(dbClient,'/api/upload?kind='+cfg.kind,{
       method:'POST',headers:{'Content-Type':cfg.mime},body:file
     });
@@ -66,6 +76,12 @@
   }
   async function remove(dbClient,path){
     if(!isR2Path(path))throw Error('Média Cloudflare inconnu');
+    if(dbClient?.cloudMode&&(path.startsWith('r2:audios/')||path.startsWith('r2:images/'))){
+      const bucket=path.split('/')[0].slice(3);
+      const {error}=await dbClient.storage.from(bucket).remove([path]);
+      if(error)throw error;
+      return {removed:true};
+    }
     const key=path.slice(3);
     if(!/^(?:contes|couvertures)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:mp3|jpg|jpeg|png|webp)$/i.test(key))throw Error('Fichier Cloudflare non géré : suppression refusée');
     return send(dbClient,'/api/media/'+key,{method:'DELETE'});

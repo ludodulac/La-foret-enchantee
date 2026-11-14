@@ -1,49 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#171a34">
-  <meta name="robots" content="noindex, nofollow">
-  <title>Connexion — Ludodio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/admin-2026.css">
-  <style>
-    body.admin-experience{min-height:100dvh}.login-page{min-height:100dvh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% -12%,rgba(159,148,232,.20),transparent 36%)}.login-card{width:min(440px,100%);padding:34px;border-radius:30px;background:linear-gradient(145deg,#2b3051,#242947);border:1px solid rgba(255,255,255,.08);box-shadow:0 28px 80px rgba(3,5,20,.34);text-align:left}.login-logo{display:flex;align-items:center;gap:12px;color:#fff;font-family:"Nunito",sans-serif;font-size:1.4rem;font-weight:950;letter-spacing:-.04em}.login-logo-mark{width:52px;height:52px;border-radius:17px;display:grid;place-items:center;background:#f3d56c;color:#171a34;font-size:1.35rem}.login-sub{margin:8px 0 28px;color:#aeb4c8}.password-wrap{position:relative}.password-wrap input{padding-right:50px;width:100%}.btn-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:11px;background:#3b4164;border:0;color:#fff;font-size:1rem;cursor:pointer}.login-card .btn-primary{width:100%;max-width:none;margin-top:6px}.login-message{border-radius:13px;padding:12px 14px;margin-top:1rem;text-align:center;font-size:.88rem;display:none}.login-message.success{display:block;background:rgba(131,207,155,.14);color:#dff8e6;border:1px solid rgba(131,207,155,.24)}.login-message.error{display:block;background:rgba(255,170,164,.12);color:#ffd8d5;border:1px solid rgba(255,170,164,.20)}.login-back{margin:22px 0 0;text-align:center}.login-back a{font-size:.78rem;color:#8f96b1;text-decoration:none}.login-back a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}@media(max-width:520px){.login-page{padding:16px}.login-card{padding:26px 20px;border-radius:24px}}
-  </style>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="refresh" content="0;url=index.html#administration">
+<title>Administration — Ludodio</title>
 </head>
-<body class="admin-experience">
-  <div class="login-page"><div class="login-card">
-    <div class="login-logo"><span class="login-logo-mark">⌁</span><span>Ludodio</span></div>
-    <div class="login-sub">Administration de la médiathèque</div>
-    <form id="login-form" novalidate>
-      <div class="form-group"><label for="email">Adresse e-mail</label><input type="email" id="email" autocomplete="email" required></div>
-      <div class="form-group"><label for="password">Mot de passe</label><div class="password-wrap"><input type="password" id="password" autocomplete="current-password" required><button type="button" class="btn-eye" id="btn-eye" aria-label="Afficher le mot de passe">◉</button></div></div>
-      <button class="btn-primary" id="btn-login" type="submit">Se connecter</button>
-    </form>
-    <div class="login-message" id="login-message" role="status" aria-live="polite"></div>
-    <p class="login-back"><a href="index.html">← Retour au site</a></p>
-  </div></div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/auth.js"></script>
-  <script>
-    const message = document.getElementById('login-message');
-    const button = document.getElementById('btn-login');
-    function showMessage(text, type) { message.textContent = text; message.className = `login-message ${type}`; }
-    async function isAuthorizedAdmin() { const { data, error } = await dbClient.rpc('is_app_admin'); return !error && data === true; }
-    getSession().then(async session => { if (!session) return; if (await isAuthorizedAdmin()) location.replace('admin.html'); else await dbClient.auth.signOut(); });
-    document.getElementById('btn-eye').addEventListener('click', () => { const input = document.getElementById('password'); const reveal = input.type === 'password'; input.type = reveal ? 'text' : 'password'; document.getElementById('btn-eye').textContent = reveal ? '◌' : '◉'; document.getElementById('btn-eye').setAttribute('aria-label', reveal ? 'Masquer le mot de passe' : 'Afficher le mot de passe'); });
-    document.getElementById('login-form').addEventListener('submit', async event => {
-      event.preventDefault(); const email = document.getElementById('email').value.trim(); const password = document.getElementById('password').value; if (!email || !password) return showMessage('Renseigne ton e-mail et ton mot de passe.', 'error');
-      button.disabled = true; button.textContent = 'Connexion…'; message.className = 'login-message';
-      try { const { error } = await signIn(email, password); if (error) throw error; if (!(await isAuthorizedAdmin())) { await dbClient.auth.signOut(); showMessage('Ce compte est valide mais ne fait pas partie des administrateurs autorisés.', 'error'); return; } showMessage('Connexion réussie.', 'success'); location.replace('admin.html'); }
-      catch (error) { showMessage(error?.message || 'Connexion impossible.', 'error'); }
-      finally { button.disabled = false; button.textContent = 'Se connecter'; }
-    });
-  </script>
-</body>
+<body><p>Connexion Ludodio : <a href="index.html#administration">ouvrir le formulaire de code sur le site des contes</a>.</p>
+<script>location.replace('index.html#administration')</script></body>
 </html>
