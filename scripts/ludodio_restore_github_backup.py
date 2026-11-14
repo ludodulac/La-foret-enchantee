@@ -51,7 +51,7 @@ bucket_name = "{BUCKET}"
   wr("d1","execute","ludodio","--remote","--file=cloudflare/ludodio-data-public.sql",
      f"--config={cfg}")
   print("10 published source rows restored (2 audios, 2 articles, 6 categories)",flush=True)
-  wr("deploy",f"--config={cfg}","--keep-vars","--strict")
+  wr("deploy",f"--config={cfg}","--keep-vars")
   # Public read works, but ADMIN_PIN deliberately NOT configured: owner must choose a strong secret.
   with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
    def validate(file):
