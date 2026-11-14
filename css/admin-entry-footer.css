@@ -12,3 +12,44 @@
 @media(max-width:700px){
   .forest-public-footer{margin-top:38px;padding-bottom:18px}
 }
+
+/* Accès unique par code : la fenêtre n'apparaît qu'après clic sur Administration. */
+.forest-admin-footer-link {
+  color:inherit;
+  background:transparent;
+  font:inherit;
+  border:0;
+  border-bottom:1px solid currentColor;
+  cursor:pointer;
+  padding:3px 0;
+  margin-left:18px;
+}
+.forest-admin-footer-link:hover,.forest-admin-footer-link:focus-visible{color:#f0d18e}
+.forest-admin-gate[hidden],.forest-admin-gate-error[hidden]{display:none!important}
+.forest-admin-gate {
+  position:fixed;
+  z-index:30000;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:rgba(10,14,28,.78);
+  padding:18px;
+}
+.forest-admin-gate-dialog {
+  background:#fffaf2;
+  border-radius:18px;
+  padding:24px;
+  width:min(440px,100%);
+  box-shadow:0 20px 60px rgba(0,0,0,.27);
+  color:#1c2b38;
+}
+.forest-admin-gate-dialog h2{margin:0 0 6px;font-size:24px}
+.forest-admin-gate-dialog p{font-size:14px;margin:7px 0 16px;line-height:1.5}
+.forest-admin-gate-dialog label{display:block;font-weight:700;margin:10px 0 6px}
+.forest-admin-gate-dialog input{font:inherit;border:1px solid #afbdc6;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;color:#1c2b38;background:#fff}
+.forest-admin-gate-error{color:#ad3030;font-weight:600}
+.forest-admin-gate-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.forest-admin-gate-actions button{font:inherit;border:1px solid #c4ccd1;border-radius:10px;padding:10px 17px;min-height:44px;cursor:pointer}
+.forest-admin-continue{background:#254d6a;color:white;border-color:#254d6a!important;font-weight:700!important}
+@media(max-width:600px){.forest-admin-gate-dialog{padding:20px}.forest-admin-footer-link{margin-left:12px}}
