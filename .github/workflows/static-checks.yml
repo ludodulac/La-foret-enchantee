@@ -109,6 +109,8 @@ jobs:
           test -f supabase/migrations/20260904_optimize_article_select_policies.sql
       - name: Check one-code Cloudflare authentication and D1 permissions
         run: node tests/ludodio-cloudflare-pin-001.test.cjs
+      - name: Confirm empty Ludodio media library and Cloudflare-only runtime
+        run: node tests/ludodio-clean-start-20261114.test.cjs
       - name: Check footer navigation and single PIN form
         run: node tests/admin-footer-navigation-001.test.cjs
       - name: Check Katpist branding and inline categories
