@@ -1,44 +1,29 @@
-# La Forêt Enchantée
+# Ludodio — médiathèque de contes et Studio audio
 
-La Forêt Enchantée est une médiathèque personnelle audio construite en HTML, CSS et JavaScript avec Supabase pour les données, l’authentification et le stockage.
+Le site d'écoute Ludodio démarre **sans histoires, sans images et sans catégories prédéfinies**. Le Studio de montage audio reste une application distincte, avec sa propre sonothèque et ses projets de travail.
 
-## Surfaces principales
+## Architecture actuelle
 
-- `index.html` — médiathèque audio jeunesse ;
-- `audio.html?id=…` — fiche et lecteur d’une histoire ;
-- `blog.html` / `article.html` — journal ;
-- `login.html` / `admin.html` — administration.
+- Site public : GitHub Pages `ludodulac.github.io/La-foret-enchantee/`.
+- API : Worker Cloudflare `ludodio-api`.
+- Données d'écoute : D1 `ludodio` (catalogue initialement vide).
+- Fichiers des contes/couvertures créés ensuite : R2 `ludodio-media` (initialement vide).
+- Administration : code personnel `ADMIN_PIN` défini **exclusivement dans les secrets du Worker** ; `SESSION_SECRET` fort et aléatoire ; pas de compte Supabase.
+- Liaison optionnelle des MP3 d'Espace Jeunesse via `ej:<uuid>` : pas de copie de fichier ; la médiathèque et les petits sons de montage ne sont pas mélangés.
 
-## Backend
+La banque d'images proposées a été entièrement supprimée du site et du dépôt courant. L'éditeur conserve le bouton permettant d'importer une **nouvelle** couverture conçue par l'utilisateur ; aucun choix de couverture prédéfinie ne s'affiche.
 
-Le projet Supabase de référence est **La forêt enchantée** (`jwyayfkssyagvnablttg`).
+## Sécurité
 
-Il conserve les données de la médiathèque et du blog. Les comptes administrateurs autorisés sont centralisés dans `public.app_admins`.
+Les actions de création, modification et suppression passent par l'API Cloudflare avec jeton de session signé. Les visites anonymes ne peuvent lire que les histoires et articles explicitement publiés. Les médias publiés sont accessibles par lien direct ; les fichiers de travail du Studio restent séparés.
 
-Les migrations nécessaires au projet sont versionnées dans `supabase/migrations/`.
+N'inscrire aucune valeur d'`ADMIN_PIN` ni de `SESSION_SECRET` dans le dépôt, les scripts du navigateur ou les journaux GitHub Actions. Le site public peut afficher son catalogue vide avant la création du code personnel, mais l'administration reste alors verrouillée.
 
-## Sécurité et intégrité des médias
+## Préservation des autres projets
 
-Les visiteurs gardent un accès en lecture aux contenus publics. Les écritures sont réservées aux comptes présents dans `app_admins` via les politiques RLS.
+Le projet Supabase historique est partagé avec Célébrations : **ne pas le supprimer ni le désactiver**. Seules les anciennes données et fichiers strictement propres à Ludodio peuvent être nettoyés ; les tables, comptes et médias d'autres applications doivent rester intacts.
 
-Pour les audios, les remplacements suivent l’ordre **upload nouveau → mise à jour SQL → suppression ancien**. Une erreur de base ne doit donc plus supprimer un fichier encore référencé.
+## Tests
 
-Le blog applique désormais le même principe aux couvertures et aux médias inline : la base est mise à jour avant de supprimer un média ancien, et un nouveau fichier est nettoyé si son écriture SQL échoue.
+La CI vérifie les parcours de connexion, la protection des API, la conservation du Studio, l'absence d'anciens modèles proposés et l'état vide de démarrage.
 
-Le rendu public du Journal échappe les métadonnées et filtre le HTML riche avant affichage afin de retirer scripts, handlers d’événements, URL `javascript:` et embeds non autorisés, tout en conservant les liens, images et vidéos YouTube légitimes.
-
-Le back-office masque son interface tant que l’autorisation `app_admins` n’est pas validée. Les extensions UX et sécurité Blog ne sont chargées qu’après cette validation ; les politiques RLS restent la protection serveur de référence.
-
-## Expérience publique
-
-La médiathèque, les fiches audio et le Journal partagent la même direction visuelle premium et responsive. Le Journal conserve ses URLs et son modèle de données existants, mais utilise une couche de présentation modernisée dans `css/blog-2026.css`.
-
-La médiathèque conserve recherche, filtres, vues grille/liste, mini-player, reprise d’écoute et historique récent. Une couche d’accessibilité améliore aussi la navigation clavier et l’annonce des cartes et états de navigation.
-
-## Développement
-
-Le site reste volontairement léger : pas de framework applicatif ni de dépendance de build obligatoire.
-
-Un workflow GitHub Actions vérifie notamment la syntaxe JavaScript, la présence des surfaces publiques et administratives, les contrats DOM essentiels, la cohérence du projet Supabase, la sécurité du blog et l’orchestration du back-office.
-
-Le workflow utilise une version actuelle de `actions/checkout` compatible avec le runtime Node 24 des runners GitHub Actions.
