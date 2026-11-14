@@ -107,7 +107,11 @@ jobs:
           test -f supabase/migrations/20260904_unify_admin_permissions.sql
           test -f supabase/migrations/20260904_add_fk_indexes.sql
           test -f supabase/migrations/20260904_optimize_article_select_policies.sql
-      - name: Check footer admin entry and Supabase auth
+      - name: Check one-code Cloudflare authentication and D1 permissions
+        run: node tests/ludodio-cloudflare-pin-001.test.cjs
+      - name: Confirm empty Ludodio media library and Cloudflare-only runtime
+        run: node tests/ludodio-clean-start-20261114.test.cjs
+      - name: Check footer navigation and single PIN form
         run: node tests/admin-footer-navigation-001.test.cjs
       - name: Check Katpist branding and inline categories
         run: node tests/katpist-admin-simplification-001.test.cjs
@@ -157,8 +161,11 @@ jobs:
           grep -q 'adminSessionPromise' js/auth.js
           grep -q 'admin-auth-pending' js/auth.js
           grep -q "js/admin-blog-safety.js" js/auth.js
-      - name: Check Supabase project consistency
+      - name: Check independent Cloudflare backend setup
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'jwyayfkssyagvnablttg' js/supabase.js
+          grep -q 'LUDODIO_API' js/supabase.js
+          grep -q 'LUDODIO_DB' cloudflare/ludodio-api-worker.js
+          grep -q 'LUDODIO_MEDIA' cloudflare/ludodio-api-worker.js
+          node --input-type=module --check < cloudflare/ludodio-api-worker.js

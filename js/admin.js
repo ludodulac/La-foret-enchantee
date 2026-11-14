@@ -291,7 +291,12 @@ function updateSubSelect(selId, catId) {
 }
 
 async function uploadFile(bucket, path, file) {
-  // Only stories and their covers move to R2. Blog and other assets are unchanged.
+  if (dbClient.cloudMode) {
+    const { data, error } = await dbClient.storage.from(bucket).upload(path, file, { upsert: false });
+    if (error) throw error;
+    return data.path;
+  }
+  // Compatibilité avec l'ancien stockage pendant la migration.
   if (bucket === 'audios' || bucket === 'images') {
     if (!window.ForestR2Media) throw Error('Le module Cloudflare des contes est indisponible.');
     return window.ForestR2Media.upload(dbClient, bucket, file);
@@ -305,9 +310,10 @@ async function removeFiles(entries) {
   const oldBuckets = {};
   const tasks = [];
   for (const item of entries.filter(entry => entry?.path)) {
-    // Une référence vers Espace Jeunesse ne nous appartient pas : ne jamais supprimer son fichier R2.
-    if (/^ej:[0-9a-f-]{36}$/i.test(item.path)) continue;
-    if (item.path.startsWith('r2:')) {
+    if (/^ej:[0-9a-f-]{36}$/i.test(item.path)) continue; // L'original Espace Jeunesse ne doit jamais être supprimé ici.
+    if (dbClient.cloudMode) {
+      tasks.push(dbClient.storage.from(item.bucket).remove([item.path]).then(({error}) => { if (error) throw error; }));
+    } else if (item.path.startsWith('r2:')) {
       if (!window.ForestR2Media?.isR2Path(item.path)) {
         tasks.push(Promise.reject(Error('Référence R2 invalide : suppression refusée')));
         continue;
@@ -357,11 +363,9 @@ async function handleAddAudio(e) {
       uploaded.push({ bucket: 'images', path: imagePath });
     }
 
-    // Mode lien : conserver seulement l'UUID, aucun second import audio.
-    const audPath = audFile
-      ? await uploadFile('audios', makeStoragePath(title, audFile.name), audFile)
-      : 'ej:' + espaceJeunesseId;
+    const audPath = audFile ? await uploadFile('audios', makeStoragePath(title, audFile.name), audFile) : 'ej:' + espaceJeunesseId;
     if (audFile) uploaded.push({ bucket: 'audios', path: audPath });
+
     const duration = audFile ? await getAudioDuration(audFile) : null;
     const { error: dbErr } = await dbClient.from('audios').insert({
       title,

@@ -190,7 +190,7 @@ function render() {
   if (!audios.length) {
     const emptyCopy = state.view === 'recent' && !state.query
       ? '<div class="empty-state"><strong>Aucune écoute récente</strong><span>Les histoires que tu lanceras apparaîtront ici pour les retrouver rapidement.</span></div>'
-      : '<div class="empty-state"><strong>Aucun contenu trouvé</strong><span>Essaie un autre mot ou enlève le filtre de catégorie.</span></div>';
+      : (state.audios.length===0 ? '<div class="empty-state"><strong>Bienvenue sur Ludodio</strong><span>La bibliothèque est prête à accueillir de nouveaux contes. Les prochaines histoires apparaîtront ici.</span></div>' : '<div class="empty-state"><strong>Aucun résultat</strong><span>Essaie un autre mot ou enlève le filtre de catégorie.</span></div>');
     main.innerHTML = emptyCopy;
     return;
   }

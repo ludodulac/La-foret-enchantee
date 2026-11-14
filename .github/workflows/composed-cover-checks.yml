@@ -40,9 +40,9 @@ jobs:
           const fs = require('fs');
           const items = JSON.parse(fs.readFileSync('assets/covers/manifest.json', 'utf8'));
           const index = JSON.parse(fs.readFileSync('assets/covers/keywords.json', 'utf8'));
-          if (!Array.isArray(items) || items.length !== 252) throw new Error('252 illustrations attendues.');
-          if (!index || typeof index.baseUrl !== 'string' || !/^https:\/\//.test(index.baseUrl)) throw new Error('baseUrl publique requise.');
-          if (!index.concepts || typeof index.concepts !== 'object') throw new Error('Index sémantique manquant.');
+          if (!Array.isArray(items) || items.length !== 0) throw new Error('Le catalogue de couvertures doit être vide.');
+          if (!index || index.baseUrl !== '') throw new Error('Ancien catalogue public désactivé.');
+          if (!index.concepts || typeof index.concepts !== 'object' || Object.keys(index.concepts).length !== 0) throw new Error('Anciennes suggestions toujours présentes.');
           const ids = new Set();
           for (const item of items) {
             if (!item.id || !item.label || !/^s[1-5]_r\d+_c\d+\.webp$/.test(item.file || '')) throw new Error('Entrée de catalogue invalide.');

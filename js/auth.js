@@ -16,7 +16,7 @@ async function getSession() {
 async function requireAuth() {
   const session = await getSession();
   if (!session) {
-    window.location.href = 'login.html?next=admin.html';
+    window.location.replace('index.html#administration');
     return null;
   }
 
@@ -24,7 +24,7 @@ async function requireAuth() {
   if (error || isAdmin !== true) {
     console.warn('Accès administration refusé', error || 'Compte non autorisé');
     await dbClient.auth.signOut();
-    window.location.href = 'login.html?unauthorized=1&next=admin.html';
+    window.location.replace('index.html#administration');
     return null;
   }
   return session;

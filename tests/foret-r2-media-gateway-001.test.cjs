@@ -117,17 +117,17 @@ function req(url,method='GET',{origin=ORIGIN,token='ci-token',type='audio/mpeg',
   assert.equal(r.status,200);assert(!mockObjects.has(uploaded.path.slice(3)));
   console.log('R2-001 ALLOWED ADMIN UPLOAD, PUBLIC READ, RESTRICTED DELETE PASS');
 
-  // Client resolves old and new paths without modifying the main site player.
-  const sb={SUPABASE_URL:'https://legacy.supabase.co',STORAGE_URL:'https://legacy.supabase.co/storage/v1/object/public'};
-  vm.runInNewContext(supaSource.slice(supaSource.indexOf('function getPublicUrl')),sb);
-  assert.equal(sb.getPublicUrl('audios','legacy.mp3'),sb.STORAGE_URL+'/audios/legacy.mp3');
-  assert.equal(sb.getPublicUrl('images','old.jpg'),sb.STORAGE_URL+'/images/old.jpg');
+  // Après migration, les chemins relatifs pointent vers Cloudflare ; les anciens R2 restent compatibles.
+  const sb={};
+  vm.runInNewContext(supaSource,sb);
+  assert.equal(sb.getPublicUrl('audios','legacy.mp3'),'https://ludodio-api.rondes.workers.dev/media/audios/legacy.mp3');
+  assert.equal(sb.getPublicUrl('images','old.jpg'),'https://ludodio-api.rondes.workers.dev/media/images/old.jpg');
   assert.equal(sb.getPublicUrl('audios','r2:contes/a.mp3'),BASE+'/media/contes/a.mp3');
   assert.equal(sb.getPublicUrl('images','r2:couvertures/a.webp'),BASE+'/media/couvertures/a.webp');
   assert.equal(sb.getPublicUrl('images','r2:../../hack'),'', 'Do not resolve arbitrary media URLs');
   assert(appScript.includes("getPublicUrl('audios', audio.audio_path)"));
   assert(audioScript.includes("getPublicUrl('audios', item.audio_path)"));
-  console.log('R2-001 NEW + LEGACY PLAYER URL COMPATIBILITY PASS');
+  console.log('R2-001 CLOUDFLARE PATHS + EXISTING R2 COMPATIBILITY PASS');
 
   assert(html.includes('<script src="js/foret-r2-media.js"></script>'));
   assert(html.indexOf('js/foret-r2-media.js')<html.indexOf('js/admin.js'));
